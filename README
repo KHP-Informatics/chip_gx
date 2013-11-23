@@ -1,0 +1,20 @@
+################################################################################################################################################################
+##
+## Authors : Dr Stephen J Newhouse                                                    
+## Email :   stephen..j.newhouse@gmail.com
+## Date :    15-Nov-2013
+## Title :   Microarry pre-processing for Illumina BeadArray data. 
+## Verison:  1.00
+## Source:   Genomestudio
+##
+## Usage:    $ Rscrpit gx_illumina_pipeline_preProcessing.1.0.R <project.config>
+## 
+## Essential Files/Data
+##
+## 1) Final reports from Genomestudio: a) Sample, b) Group Probe, c) Control Probe, d) probe annotations 
+## 2) Phenotype file:  must contain the following columns:- Sample.ID,SEX,GROUPS,TISSUE,PHENOTYPE,Study_ID 
+##
+## OPTIONAL BUT HIGHLY RECOMMENDED
+## 1) Technical information file with batch processing and lab realted data eg Sample.ID,RIN,RNA_YIELD,DATE_CHIP_RUN,DATE_RNA_EXTRACTED
+##
+#################################################################################################################################################################

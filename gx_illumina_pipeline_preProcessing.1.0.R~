@@ -1,13 +1,40 @@
 #!/share/bin/Rscript
-rm(list=ls())
-######################################################################################################################################################################################
-## Authors : Stephen Newhouse, Amos Forlarin
-## Email : stephen..j.newhouse@gmail.com
-## Date : 15 Nov 2013
-## Verison: 1.00
-######################################################################################################################################################################################
 
-######################################################################################################################################################################################
+rm(list=ls())
+
+################################################################################################################################################################
+##
+## Authors : Dr Stephen J Newhouse                                                    
+## Email :   stephen..j.newhouse@gmail.com
+## Date :    15-Nov-2013
+## Title :   Microarry pre-processing for Illumina BeadArray data. 
+## Verison:  1.00
+## Source:   Genomestudio
+##
+## Usage:    $ Rscrpit gx_illumina_pipeline_preProcessing.1.0.R <project.config>
+## 
+## Essential Files/Data
+##
+## 1) Final reports from Genomestudio: a) Sample, b) Group Probe, c) Control Probe, d) probe annotations 
+## 2) Phenotype file:  must contain the following columns:- Sample.ID,SEX,GROUPS,TISSUE,PHENOTYPE,Study_ID 
+##
+## OPTIONAL BUT HIGHLY RECOMMENDED
+## 1) Technical information file with batch processing and lab realted data eg Sample.ID,RIN,RNA_YIELD,DATE_CHIP_RUN,DATE_RNA_EXTRACTED
+##
+#################################################################################################################################################################
+
+
+cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
+cat("########################################################################################","\r","\n")
+cat("## Authors : Dr Stephen J Newhouse","\r","\n")                                                    
+cat("## Email :   stephen..j.newhouse@gmail.com","\r","\n")
+cat("## Date :    15-Nov-2013","\r","\n")
+cat("## Title :   Microarry pre-processing for Illumina BeadArray data.","\r","\n") 
+cat("## Verison:  1.00","\r","\n")
+cat("## Source:   Genomestudio","\r","\n")
+cat("## Usage:    $ Rscrpit gx_illumina_pipeline_preProcessing.1.0.R <project.config>","\r","\n")
+cat("########################################################################################","\r","\n")
+cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
 
 cat(" Loading Libraries ","\r","\n")
 
@@ -27,8 +54,11 @@ source("./pre_process_gx.R")
 source("./SampleNetwork_1.0.r")
 source("./ModuleSampleNetwork_0.5.r")
 
-######################################################################################################################################################################################
+sessionInfo()
 
+cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 ## some functins
 negBeadOutlierRepMean <- function(x) { 
 		z_out_samp <- abs(  as.numeric( scale(x) )  ) > 2
@@ -37,18 +67,23 @@ negBeadOutlierRepMean <- function(x) {
 		new_x <- ifelse( abs(  as.numeric( scale(x) )  ) > 2, mean_pop, x ) 
 		return(new_x)
 }
-######################################################################################################################################################################################
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 options(stringsAsFactors = FALSE)
 
-##args <- commandArgs(trailingOnly=TRUE);
+##  args <- commandArgs(trailingOnly=TRUE);
 ##  config_file <- args[1];
 
 config_file <- "project.config"
 
 project_settings <- read.table(config_file, head=T,sep="\t",as.is=T,fill=TRUE)
 
-######################################################################################################################################################################################
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+
+cat("\n"," START PRE_PROCESSING!" ,"\r","\n")
+
+cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
 
 #########################
 ## 1: Project settings ##
@@ -74,10 +109,6 @@ norm_method <- project_settings$norm_method ## "rsn" # quantile, rsn, or both
 transform_method <- project_settings$transform_method ## "vst" # log2, vst or both
 mbcb_method <- project_settings$mbcb_method ## NP or MLE
 
-## mbcb_method=="NP"
-
-mbcb_method=="MLE"
-
 cat(" Data Dir ",project_dir,"\r","\n")
 cat(" Set Working Dir to ", project_dir,"\r","\n")
 
@@ -102,10 +133,7 @@ cat(" Making processing directory. mkdir ./",out_dir,"\r","\n")
 
 system( paste(" mkdir ./",out_dir,sep="") )
 
-## groups data ??
-
-
-######################################################################################################################################################################################
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 ########################
 ### Read sample table ##
@@ -141,7 +169,7 @@ write.table(raw_sample_data,file=paste(out_dir,"/",project_name,".sample.pheno.t
 
 cat(" Number of samples = ",raw_n_samples,"\r","\n")
 
-######################################################################################################################################################################################
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 ############################################################
 ## Create Raw LumiBatch object                            ##
@@ -151,22 +179,22 @@ cat(" Number of samples = ",raw_n_samples,"\r","\n")
 ## Readging Genomestudio Final Report file & Calling lumiR() ##
 ###############################################################
 
- ## load(paste(out_dir,"/",project_name,".raw_lumiBatch.probe_annotations.RData",sep=""))
+ ## load(paste(out_dir,"/",project_name,".eset_raw.probe_annotations.RData",sep=""))
 
-cat(" Readging Genomestudio Final Report file ","\r","\n")
+cat(" Reading Genomestudio Final Report file :",gs_report,"\r","\n")
 cat(" Calling lumiR() on ", gs_report,"\r","\n")
 
-raw_lumiBatch <- lumiR(gs_report, lib.mapping="lumiHumanIDMapping",
+eset_raw <- lumiR(gs_report, lib.mapping="lumiHumanIDMapping",
 annotationColumn = c('PROBE_ID','CHROMOSOME','SYMBOL','DEFINITION','ACCESSION','ENTREZ_GENE_ID','PROBE_TYPE','PROBE_START','PROBE_SEQUENCE','PROBE_CHR_ORIENTATION','PROBE_COORDINATES',
 'CHROMOSOME','TRANSCRIPT','ILMN_GENE','REFSEQ_ID','UNIGENE_ID','SYMBOL','PROTEIN_PRODUCT'))
 
 ## 9-12.4GB RAM!!!!
 
-cat( print(raw_lumiBatch) )
+cat( print(eset_raw) )
 
 cat(" Getting Chip Info ","\r","\n")
 
-chip <- getChipInfo(raw_lumiBatch)
+chip <- getChipInfo(eset_raw)
 
 cat(" chip version: ", chip$chipVersion, "\r","\n")
 cat(" chip species: ", chip$species, "\r","\n")
@@ -182,7 +210,7 @@ cat(" Number of samples = ",raw_n_samples,"\r","\n")
 
 cat(" adding Sample Report to pData() slot","\r","\n")
 
-pData(raw_lumiBatch) <- raw_sample_data;
+pData(eset_raw) <- raw_sample_data;
 
 ################################################
 ## getting probe annotaions from fData() slot ##
@@ -202,7 +230,7 @@ probe_annotations$nuID <- probeID2nuID( probe_annotations$ProbeID , lib.mapping 
 
 rownames(probe_annotations) <- probe_annotations$nuID
 
-fData(raw_lumiBatch) <- probe_annotations
+fData(eset_raw) <- probe_annotations
 
 system(paste(" rm ",anno_table,".tmp",sep="") )
 
@@ -210,27 +238,28 @@ system(paste(" rm ",anno_table,".tmp",sep="") )
 
 cat(" getting probe annotations from fData() slot ","\r","\n")
 
-probe_annotations <- fData(raw_lumiBatch) 
+probe_annotations <- fData(eset_raw) 
 
 probe_annotations$nuID <- rownames(probe_annotations)
 
 }
 
-cat(" saving probe annotaions as",paste(out_dir,"/",project_name,".raw_lumiBatch.probe_annotations.RData",sep=""),"\r","\n")
+cat(" saving probe annotaions as",paste(out_dir,"/",project_name,".eset_raw.probe_annotations.RData",sep=""),"\r","\n")
 
-save(probe_annotations,file=paste(out_dir,"/",project_name,".raw_lumiBatch.probe_annotations.RData",sep="") )
+save(probe_annotations,file=paste(out_dir,"/",project_name,".eset_raw.probe_annotations.RData",sep="") )
 
-write.table(probe_annotations,file=paste(out_dir,"/",project_name,".raw_lumiBatch.probe_annotations.txt",sep=""),sep="\t",quote=F,row.names=F )
+write.table(probe_annotations,file=paste(out_dir,"/",project_name,".eset_raw.probe_annotations.txt",sep=""),sep="\t",quote=F,row.names=F )
 
 ##########################
-## Save raw_lumiBatch ####
+## Save eset_raw #########
 ##########################
 
-cat(" Saving raw_lumiBatch as ", paste(out_dir,"/",project_name,".raw_lumiBatch.RData",sep=""), "\r","\n")
+cat(" Saving eset_raw as ", paste(out_dir,"/",project_name,".eset_raw.RData",sep=""), "\r","\n")
 
-save(raw_lumiBatch , file=paste(out_dir,"/",project_name,".raw_lumiBatch.RData",sep="") )## This is raw data pre-qc
+save(eset_raw , file=paste(out_dir,"/",project_name,".eset_raw.RData",sep="") )## This is raw data pre-qc
 
-######################################################################################################################################################################################
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+
 
 ## ADD TECH INFO OPTION OF PROCESSING DATES, RIN AND YEILDS. If true do pca col be these factors - 10,20,30,40,50...percentiles for quant data
 
@@ -238,15 +267,15 @@ save(raw_lumiBatch , file=paste(out_dir,"/",project_name,".raw_lumiBatch.RData",
 ## PLOTS RAW DATA ##
 ####################
 
-library(scatterplot3d)
+eset <- eset_raw
 
-raw_qc_plots_pdf <- paste(out_dir,"/",project_name,".raw_lumiBatch.qc.plots.pdf",sep="")
+qc_plots_pdf <- paste(out_dir,"/",project_name,".eset_raw.qc.plots.pdf",sep="")
 
-chip_col <- labels2colors( as.character(pData(raw_lumiBatch)$Sentrix.Barcode))
+chip_col <- labels2colors( as.character(pData(eset)$Sentrix.Barcode))
 
-cat(" Start basic QC plots of raw_lumiBatch. Saved to: ",raw_qc_plots_pdf,"\r","\n")
+cat(" Start basic QC plots of eset_raw. Saved to: ",qc_plots_pdf,"\r","\n")
 
-datExprs0 <- exprs(raw_lumiBatch) 
+datExprs0 <- exprs(eset) 
 
 cat(" calculate pca for plots ")
 
@@ -255,18 +284,20 @@ pca_raw <- prcomp(t(datExprs0))$x
 cat(" plotting... ","\r","\n")
 
 pdf(raw_qc_plots_pdf, width=16.5,height=11.7) ## A3 
-	plot(raw_lumiBatch, what='boxplot', main=paste(project_name," raw_lumiBatch Boxplot",sep=""), col=chip_col )
-	plot(raw_lumiBatch, what='density', main=paste(project_name," raw_lumiBatch Density",sep="") )
-	plot(raw_lumiBatch, what='cv',main=paste(project_name," raw_lumiBatch density plot of coefficient of varience",sep="")  )
+	plot(eset, what='boxplot', main=paste(project_name," eset_raw Boxplot",sep=""), col=chip_col )
+	plot(eset, what='density', main=paste(project_name," eset_raw Density",sep="") )
+	plot(eset, what='cv',main=paste(project_name," eset_raw density plot of coefficient of varience",sep="")  )
 	scatterplot3d(pca_raw[,"PC1"],pca_raw[,"PC2"],pca_raw[,"PC3"], main="3D Scatterplot coloured by chip ",color=chip_col)
 	tmp_iac <- outlierSamples(datExprs0,thresh=iac_sd_thrs, showplots=TRUE)
 dev.off()
 
-cat(" finished basic QC plots of raw_lumiBatch. Saved to: ",raw_qc_plots_pdf,"\r","\n")
+cat(" finished basic QC plots of eset_raw. Saved to: ",raw_qc_plots_pdf,"\r","\n")
 
 rm("datExprs0","tmp_iac","pca_raw");
 
 gc()
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 ######################################################################
 ## IAC QC                                                           ##
@@ -277,9 +308,9 @@ if(iac_check==1) {
 
 cat(" Starting inter-array correlation quality control step ","\n","\r")
 
-datExprs0 <- exprs(raw_lumiBatch) 
+datExprs0 <- exprs(eset_raw)
 
-pdf(file=paste(out_dir,"/",project_name,".raw_lumiBatch.iac_outliers.pdf",sep=""), width=8,height=6 )
+pdf(file=paste(out_dir,"/",project_name,".eset_raw.iac_outliers.pdf",sep=""), width=8,height=6 )
 
 iac_outlierSamples <-  outlierSamples(datExprs0,thresh=iac_sd_thrs, showplots=T) ## optional :- but worth one round of outlier detection
 
@@ -291,9 +322,9 @@ dev.off()
 cat(" meanIAC: ", iac_outlierSamples$meanIAC , "\r","\n")
 
 ## add iac sd to pData
-cat(" addingd IAC sd to pData() slot of raw_lumiBatch ", "\r","\n")
+cat(" addingd IAC sd to pData() slot of eset_raw ", "\r","\n")
 
-pData(raw_lumiBatch)$iac_sd <- iac_outlierSamples$numbersd
+pData(eset_raw)$iac_sd <- iac_outlierSamples$numbersd
 
 ## iac outliers
 iac_outliers <- iac_outlierSamples$samples_to_remove
@@ -314,29 +345,31 @@ cat(" saving list of iac outliers to: ",paste(out_dir,"/",project_name,".IAC.out
 
 write.table(poorChips,file=paste(out_dir,"/",project_name,".IAC.outliers.txt",sep=""),quote=F,row.names=F,sep="\t")
 
-##  remove iac samples
-sel_samp <- (sampleNames(raw_lumiBatch) %in% names(iac_outliers) )==FALSE
+#########################
+##  remove iac samples ##
+#########################
+sel_samp <- (sampleNames(eset_raw) %in% names(iac_outliers) )==FALSE
 
-sel_samp_names <- sampleNames(raw_lumiBatch)[sel_samp]
+sel_samp_names <- sampleNames(eset_raw)[sel_samp]
 
-cat(" removing iac outliers from raw_lumiBatch","\r","\n")
+cat(" removing iac outliers from eset_raw","\r","\n")
 
-raw_lumiBatch_iac <- raw_lumiBatch[,sel_samp]
+eset_raw_iac <- eset_raw[,sel_samp]
 
 cat(" update Control Probe data slot..subsetting to remaining samples ", "\r","\n")
 
 ## update control data slot
-update_controlData <- getControlData(raw_lumiBatch_iac)
+update_controlData <- getControlData(eset_raw_iac)
 
 update_controlData  <- update_controlData[,c("controlType","ProbeID",sel_samp_names)]
 
-raw_lumiBatch_iac <- addControlData2lumi(update_controlData , raw_lumiBatch_iac)
+eset_raw_iac <- addControlData2lumi(update_controlData , eset_raw_iac)
 
-cat(" saving updated raw_lumiBatch post IAC to: ",paste(out_dir,"/",project_name,".raw_lumiBatch_postIAC.RData",sep=""), "\r","\n" )
+cat(" saving updated eset_raw post IAC to: ",paste(out_dir,"/",project_name,".eset_raw_postIAC.RData",sep=""), "\r","\n" )
 
-save(raw_lumiBatch_iac , file=paste(out_dir,"/",project_name,".raw_lumiBatch_postIAC.RData",sep="") )
+save(eset_raw_iac , file=paste(out_dir,"/",project_name,".eset_raw_postIAC.RData",sep="") )
 
-cat(" Number of samples after iac outlier removal: ", length(sampleNames(raw_lumiBatch_iac)), "\r","\n" )
+cat(" Number of samples after iac outlier removal: ", length(sampleNames(eset_raw_iac)), "\r","\n" )
 
 } else {
 
@@ -348,13 +381,15 @@ cat(" Skipping inter-array correlation quality control step ","\n","\r")
 ## PLOTS POST IAC RAW DATA ##
 #############################
 
-raw_qc_plots_pdf <- paste(out_dir,"/",project_name,".raw_lumiBatch.post.iac.qc.plots.pdf",sep="")
+eset <- eset_raw_iac
 
-chip_col <- labels2colors( as.character(pData(raw_lumiBatch_iac)$Sentrix.Barcode))
+qc_plots_pdf <- paste(out_dir,"/",project_name,".eset_raw.post.iac.qc.plots.pdf",sep="")
 
-cat(" Start basic QC plots of post IAC raw_lumiBatch. Saved to: ",raw_qc_plots_pdf,"\r","\n")
+chip_col <- labels2colors( as.character(pData(eset_raw_iac)$Sentrix.Barcode))
 
-datExprs0 <- exprs(raw_lumiBatch_iac) 
+cat(" Start basic QC plots of post IAC eset_raw_iac. Saved to: ",qc_plots_pdf,"\r","\n")
+
+datExprs0 <- exprs(eset)
 
 cat(" calculate pca for plots post IAC ")
 
@@ -363,14 +398,14 @@ pca_raw <- prcomp(t(datExprs0))$x
 cat(" plotting post IAC... ","\r","\n")
 
 pdf(raw_qc_plots_pdf, width=16.5,height=11.7) ## A3 
-	plot(raw_lumiBatch, what='boxplot', main=paste(project_name," raw_lumiBatch Boxplot",sep=""), col=chip_col )
-	plot(raw_lumiBatch, what='density', main=paste(project_name," raw_lumiBatch Density",sep="") )
-	plot(raw_lumiBatch, what='cv',main=paste(project_name," raw_lumiBatch density plot of coefficient of varience",sep="")  )
+	plot(eset_raw, what='boxplot', main=paste(project_name," eset_raw_iac Boxplot",sep=""), col=chip_col )
+	plot(eset_raw, what='density', main=paste(project_name," eset_raw_iac Density",sep="") )
+	plot(eset_raw, what='cv',main=paste(project_name," eset_raw_iac density plot of coefficient of varience",sep="")  )
 	scatterplot3d(pca_raw[,"PC1"],pca_raw[,"PC2"],pca_raw[,"PC3"], main="3D Scatterplot coloured by chip ",color=chip_col)
 	tmp_iac <- outlierSamples(datExprs0,thresh=iac_sd_thrs, showplots=TRUE)
 dev.off()
 
-cat(" finished basic QC plots of post IAC raw_lumiBatch. Saved to: ",raw_qc_plots_pdf,"\r","\n")
+cat(" finished basic QC plots of post IAC eset_raw_iac. Saved to: ",raw_qc_plots_pdf,"\r","\n")
 
 rm("datExprs0","tmp_iac","pca_raw")
 gc()
@@ -385,9 +420,9 @@ preIAC <- iac_outlierSamples$meanIAC
 
 rm("iac_outlierSamples")
 
-datExprs0 <- exprs(raw_lumiBatch_iac) 
+datExprs0 <- exprs(eset_raw_iac) 
 
-pdf(file=paste(out_dir,"/",project_name,".raw_lumiBatch.post.iac_outliers.pdf",sep=""), width=8,height=6 )
+pdf(file=paste(out_dir,"/",project_name,".eset_raw.post.iac_outliers.pdf",sep=""), width=8,height=6 )
 
 iac_outlierSamples <-  outlierSamples(datExprs0,thresh=iac_sd_thrs, showplots=T) ## optional :- but worth one round of outlier detection
 
@@ -403,19 +438,21 @@ cat(" meanIAC post IAC QC: ", postIAC,"\r","\n")
 rm("datExprs0")
 gc()
 
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+
 ##############################################################
 ## background correct using mbcb                            ##
 ##############################################################
 
 cat(" Start background correction ", "\r","\n")
 
-sig <- paste(out_dir,"/",project_name,".raw_lumiBatch_exprsSignal.txt",sep="")
-neg <- paste(out_dir,"/",project_name,".raw_lumiBatch_negative.control.txt",sep="")
+sig <- paste(out_dir,"/",project_name,".eset_raw_exprsSignal.txt",sep="")
+neg <- paste(out_dir,"/",project_name,".eset_raw_negative.control.txt",sep="")
 
 ## get negative control bead data
 cat(" get negative control bead data","\r","\n")
 
-negativeControl <- getControlData(raw_lumiBatch_iac)
+negativeControl <- getControlData(eset_raw_iac)
 negativeControl <- subset(negativeControl, negativeControl$controlType=="NEGATIVE")
 negativeControl_orig <- negativeControl[,c(3:dim(negativeControl)[2])]
 
@@ -433,7 +470,7 @@ write.table(negativeControl, file=neg, sep="\t");
 ## get expression data
 cat(" get expression bead data ","\r","\n")
 
-expressionSignal <- exprs(raw_lumiBatch_iac)
+expressionSignal <- exprs(eset_raw_iac)
 
 ## save expression data
 write.table(expressionSignal, file=sig, sep="\t");
@@ -451,9 +488,9 @@ cat(" run background correct using mbcb  ","\r","\n")
 
 gx_mbcb <- mbcb.correct(signal,negCon,npBool=TRUE,mleBool=TRUE, isRawBead=FALSE)
 
-cat(" saveing raw mbcb data to ",paste(out_dir,"/",project_name,".raw_lumiBatch.mbcb.RData",sep=""), "\r","\n")
+cat(" saveing raw mbcb data to ",paste(out_dir,"/",project_name,".eset_raw.mbcb.RData",sep=""), "\r","\n")
 
-save(gx_mbcb , file=paste(out_dir,"/",project_name,".raw_lumiBatch.mbcb.correct.RData",sep=""))
+save(gx_mbcb , file=paste(out_dir,"/",project_name,".eset_raw.mbcb.correct.RData",sep=""))
 
 if(mbcb_method=="NP") { gx_mbcb <- gx_mbcb$NP }
 
@@ -463,36 +500,36 @@ cat(" mbcb complete ","\r","\n")
 
 ## replace names with original as R adds "X" to numbers
 
-cat(" replace names with original sampleNames(raw_lumiBatch) as R adds X to numbers ","\r","\n")
+cat(" replace names with original sampleNames(eset_raw) as R adds X to numbers ","\r","\n")
 
-colnames(gx_mbcb) <- sampleNames(raw_lumiBatch_iac)
+colnames(gx_mbcb) <- sampleNames(eset_raw_iac)
 
 ## make new eset for bk corrected data
 
 cat(" Creating Background Corrected Data set: bgCor_lumiBatch ","\r","\n")
 
-bkCor_lumiBatch <- raw_lumiBatch_iac
+eset_bkCor <- eset_raw_iac
 
 ## replace old exprs data with new mbcb bk corrected data
 cat(" replace old exprs data with new mbcb Background corrected data ","\r","\n")
 
-exprs(bkCor_lumiBatch) <- as.matrix(gx_mbcb)
+exprs(eset_bkCor) <- as.matrix(gx_mbcb)
 
-cat(" Saveing Background Corrected Data set: ",paste(out_dir,"/",project_name,".bkCor_lumiBatch.RData",sep=""),"\r","\n")
+cat(" Saveing Background Corrected Data set: ",paste(out_dir,"/",project_name,".eset_bkCor.RData",sep=""),"\r","\n")
 
-save(bkCor_lumiBatch, file=paste(out_dir,"/",project_name,".bkCor_lumiBatch.RData",sep="")  , compress=T)
+save(eset_bkCor, file=paste(out_dir,"/",project_name,".eset_bkCor.RData",sep="")  , compress=T)
 
 #############################
 ## PLOTS POST bkCor        ##
 #############################
 
-bkCor_qc_plots_pdf <- paste(out_dir,"/",project_name,".bkCor_lumiBatch.post.bkCor.qc.plots.pdf",sep="")
+bkCor_qc_plots_pdf <- paste(out_dir,"/",project_name,".eset_bkCor.post.bkCor.qc.plots.pdf",sep="")
 
-chip_col <- labels2colors( as.character(pData(bkCor_lumiBatch)$Sentrix.Barcode))
+chip_col <- labels2colors( as.character(pData(eset_bkCor)$Sentrix.Barcode))
 
-cat(" Start basic QC plots of post IAC raw_lumiBatch. Saved to: ",bkCor_qc_plots_pdf,"\r","\n")
+cat(" Start basic QC plots of post IAC eset_raw. Saved to: ",bkCor_qc_plots_pdf,"\r","\n")
 
-datExprs0 <- exprs(bkCor_lumiBatch) 
+datExprs0 <- exprs(eset_bkCor) 
 
 cat(" calculate pca for plots post bkCor ")
 
@@ -501,14 +538,14 @@ pca_raw <- prcomp(t(datExprs0))$x
 cat(" plotting post IAC... ","\r","\n")
 
 pdf(bkCor_qc_plots_pdf, width=16.5,height=11.7) ## A3
-	plot(bkCor_lumiBatch, what='boxplot', main=paste(project_name," bkCor_lumiBatch Boxplot",sep=""), col=chip_col )
-	plot(bkCor_lumiBatch, what='density', main=paste(project_name," bkCor_lumiBatch Density",sep="") )
-	plot(bkCor_lumiBatch, what='cv',main=paste(project_name," bkCor_lumiBatch density plot of coefficient of varience",sep="")  )
+	plot(eset_bkCor, what='boxplot', main=paste(project_name," eset_bkCor Boxplot",sep=""), col=chip_col )
+	plot(eset_bkCor, what='density', main=paste(project_name," eset_bkCor Density",sep="") )
+	plot(eset_bkCor, what='cv',main=paste(project_name," eset_bkCor density plot of coefficient of varience",sep="")  )
 	scatterplot3d(pca_raw[,"PC1"],pca_raw[,"PC2"],pca_raw[,"PC3"], main="3D Scatterplot coloured by chip ",color=chip_col)
 	tmp_iac <- outlierSamples(datExprs0,thresh=iac_sd_thrs, showplots=TRUE)
 dev.off()
 
-cat(" finished basic QC plots of post bkCor on raw_lumiBatch. Saved to: ",bkCor_qc_plots_pdf,"\r","\n")
+cat(" finished basic QC plots of post bkCor on eset_raw. Saved to: ",bkCor_qc_plots_pdf,"\r","\n")
 
 rm("datExprs0","tmp_iac","pca_raw")
 gc()
@@ -522,9 +559,9 @@ cat(" Checking IAC after bkCor ","\n","\n")
 
 rm("iac_outlierSamples")
 
-datExprs0 <- exprs(bkCor_lumiBatch) 
+datExprs0 <- exprs(eset_bkCor) 
 
-pdf(file=paste(out_dir,"/",project_name,".bkCor_lumiBatch.iac_outliers.pdf",sep=""), width=8,height=6 )
+pdf(file=paste(out_dir,"/",project_name,".eset_bkCor.iac_outliers.pdf",sep=""), width=8,height=6 )
 
 iac_outlierSamples <-  outlierSamples(datExprs0,thresh=iac_sd_thrs, showplots=T) ## optional :- but worth one round of outlier detection
 
@@ -538,38 +575,37 @@ cat(" meanIAC pre  IAC QC: ", preIAC, "\r","\n")
 cat(" meanIAC post IAC QC: ", postIAC,"\r","\n")
 cat(" meanIAC post bkCor: ",  postbkCorIAC,"\r","\n")
 
-
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 ##################################
 ## Sex Check based on XIST GENE ##
 ##################################
 
-load(paste(out_dir,"/",project_name,".raw_lumiBatch.postIAC.RData",sep=""))
-load(paste(out_dir,"/",project_name,".bkCor_lumiBatch.RData",sep=""))
+cat(" Checking Gender based on XIST gene expression","\r","\n")
 
-## get neg control data from bkCor_lumiBatch
-negativeControl <- getControlData(bkCor_lumiBatch)
+##load(paste(out_dir,"/",project_name,".eset_raw_postIAC.RData",sep=""))
+##load(paste(out_dir,"/",project_name,".eset_bkCor.RData",sep=""))
+
+## get neg control data from eset_bkCor
+negativeControl <- getControlData(eset_bkCor)
 negativeControl <- subset(negativeControl, negativeControl$controlType=="NEGATIVE")
 negativeControl <- negativeControl[,c(3:dim(negativeControl)[2])]
 
 ## get neg control info mean,sd,max etc
 neg_max <- apply(negativeControl,2,max)
-
 neg_sd <- apply(negativeControl,2,sd)
-
 neg_mean <- apply(negativeControl,2,mean)
-
 neg_2sd <- neg_mean + 2*neg_sd
 
 ## get XIST gene postion
-xist_raw <- fData(raw_lumiBatch_iac)$ILMN_GENE=="XIST";
+xist_raw <- fData(eset_raw_iac)$ILMN_GENE=="XIST";
 
-xist_bkCor <- fData(bkCor_lumiBatch)$ILMN_GENE=="XIST";
+xist_bkCor <- fData(eset_bkCor)$ILMN_GENE=="XIST";
 
 ## get XIST gene expression signal
-xist_gx_raw  <- exprs(raw_lumiBatch_iac[xist_raw, ]  ) 
+xist_gx_raw  <- exprs(eset_raw_iac[xist_raw, ]  ) 
 xist_gx_raw <- as.data.frame( t(xist_gx_raw)); 
 
-xist_gx_bkCor <- exprs(bkCor_lumiBatch[xist_bkCor , ]  ) 
+xist_gx_bkCor <- exprs(eset_bkCor[xist_bkCor , ]  ) 
 xist_gx_bkCor <- as.data.frame( t(xist_gx_bkCor)); 
 
 ## cobine raw and bkCro gx data
@@ -592,174 +628,303 @@ xist_gx$XIST_Gender_2sd <- ifelse(xist_gx$bkCor_XIST > xist_gx$neg_2sd,1,0)  ###
 
 xist_gx$XIST_z <-  ( xist_gx$bkCor_XIST - xist_gx$neg_mean ) / xist_gx$neg_sd
 
+xist_gx$Sample.ID <- rownames(xist_gx)
+
 head(xist_gx)
-
-##plot(xist_gx$bkCor_XIST, type="p", col=2+xist_gx$XIST_Gender_2sd );points(xist_gx$neg_2sd,col="blue", type="b")
-
-##plot(xist_gx$XIST_z , type="p", col=2+xist_gx$XIST_Gender_2sd );abline(h=2)
 
 xist_gx$xist_gender <- ifelse(xist_gx$bkCor_XIST > xist_gx$neg_2sd,"Female","Male")
 
-##xist_gx$XIST_z_pval <-  ifelse(xist_gx$bkCor_XIST > xist_gx$neg_2sd, xist_gx$XIST_z_pval <-  2*pnorm(-(xist_gx$XIST_z) ) ,xist_gx$XIST_z_pval <- 1)
-
 head(xist_gx)
 
-## summary(xist_gx$XIST_z[xist_gx$XIST_Gender_2sd==1]);summary(xist_gx$XIST_z[xist_gx$XIST_Gender_2sd==0])
-##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##   1.535  20.160  36.950  51.880  69.240 336.100 
-##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-## -19.490 -10.580  -8.181  -8.403  -6.307   1.276 
-## summary(xist_gx$XIST_z_pval[xist_gx$XIST_Gender_2sd==1]);summary(xist_gx$XIST_z_pval[xist_gx$XIST_Gender_2sd==0])
-
-
-pdf(file=paste(out_dir,"/",project_name,".bgCor_lumiBatch.XIST.pdf",sep=""))
-plot( raw_sample_data$neg_2sd, raw_sample_data$XIST, col=(raw_sample_data$xist_gx+2), ylab="XIST",xlab="MAX_NEG_BEAD", main="Green=Expressed above background")
-plot( log2(raw_sample_data$XIST), col=(raw_sample_data$xist_gx+2), ylab="XIST",xlab="Index", main="Green=Expressed above background")
-#points(1:raw_n_samples, log2(raw_sample_data$neg_max), col="black")
+pdf(file=paste(out_dir,"/",project_name,".bgCor_lumiBatch.XIST.pdf",sep=""),height=8,width-11)
+plot(xist_gx$bkCor_XIST, type="p", col=2+xist_gx$XIST_Gender_2sd, pch=19 , cex=0.6);points(xist_gx$neg_2sd,col="blue", type="l")
 dev.off()
 
-pData(bkCor_lumiBatch) <- raw_sample_data
+pData(eset_bkCor)$xist_gender <- xist_gx$xist_gender 
+
+save(xist_gx, file=paste(out_dir,"/",project_name,".bgCor_lumiBatch.XIST.RData",sep=""))
+
+write.table(xist_gx, file=paste(out_dir,"/",project_name,".bgCor_lumiBatch.XIST.csv",sep=""),sep=",",row.names=F)
+
+## check sex 
+
+pData(eset_bkCor)$gender_missmatch <- ifelse( pData(eset_bkCor)$xist_gender == pData(eset_bkCor)$SEX, "PASS","GENDER_MISSMATCH" ) 
+
+save(eset_bkCor, file=paste(out_dir,"/",project_name,".eset_bkCor.RData",sep=""))
+
+n_gender_fails <- sum( pData(eset_bkCor)$gender_missmatch=="GENDER_MISSMATCH" )
+
+if ( n_gender_fails > 0 ) {
+    cat(" WARNING: Youn have GENDER_MISSMATCH samples!!!!!!! N=[",n_gender_fails,"]","\r","\n")
+} else {
+  cat(" Congratulations! \n All your Males are Male and Females are Female. \n You have NO GENDER_MISSMATCH samples!!!", "\r","\n")
+}
 
 
-
-
+#--------------------------------------------------------------------------------------------------------------------------------------------------------#
 ############################
 ## PROBE ABOVE BACKGROUND ##
 ############################
 
+cat(" Calculating Probde Detection rates. \n Probe is seen as Detected if it has signal intensity >= 2SD of the mean intensity of the negative control beads","\r","\n")
+
 ## get expression matrix
-gx <- exprs(bgCor_lumiBatch)
+gx <- exprs(eset_bkCor)
 
 ## get negative bead ranges mean or max or >2SD mean  of neg beads
 
-2SD_of_mean_neg <- neg_mean + (2*neg_sd)
+neg_2sd <- neg_mean + 2*neg_sd
 
 ## sweep through gx matrix to id probes > 2SD Mean of 
-det <- sweep(gx, 1, 2SD_of_mean_neg,">")
+det <- sweep(gx, 1, neg_2sd,">=")
 
 ## probe_detection counts
 probe_detection <- rowSums(det)
 
+## probes_not_detected_in_any_sample
+n_samples <- dim(gx)[2]
+
+## probe annotations 
+probes_not_detected_in_any_sample <- probe_detection==0
+probes_detected_in_80_sample <- probe_detection>=n_samples*0.80
+probes_detected_in_all_sample <- probe_detection==n_samples 
+
+probe_annotations_0_detected <- fData(eset_bkCor[probes_not_detected_in_any_sample,])
+probe_annotations_80_detected  <- fData(eset_bkCor[probes_detected_in_80_sample ,])
+probe_annotations_100_detected  <- fData(eset_bkCor[probes_detected_in_all_sample,])
+
+fData(eset_bkCor)$n_detected <- probe_detection 
+fData(eset_bkCor)$n_detected_call_rate <- round( probe_detection/n_samples ,3)
+
+
 ## sample_detection counts
+n_probes <- dim(eset_bkCor)[1]
+
 sample_detection <- colSums(det)
 
-## probes_not_detected_in_any_sample
-probes_not_detected_in_any_sample <- probe_detection==0
+pData(eset_bkCor)$n_probes_detected <- sample_detection
 
+pData(eset_bkCor)$n_probes_detected_call_rate <- round( sample_detection/n_probes ,3)
 
+plot(pData(eset_bkCor)$n_probes_detected_call_rate)
+
+plot(pData(eset_bkCor)$n_probes_detected ,pData(eset_bkCor)$Detected.Genes..0.01.)
+
+save(eset_bkCor, file=paste(out_dir,"/",project_name,".eset_bkCor.RData",sep=""))
+
+#--------------------------------------------------------------------------------------------------------------------------------------------------------#
 ## get group information from pData() slot 
 
-group_names <- uniuqe(pData(bkCor_lumiBatch)$GROUPS);
+group_names <- unique(pData(eset_bkCor)$GROUPS);
 
-groups  <- pData(bkCor_lumiBatch)$GROUPS
+groups  <- pData(eset_bkCor)$GROUPS
 
 n_groups <- length(group_names)
+
+##
+gx <- exprs(eset_bkCor)
 
 ## loop through each group and id probes > 2SD mean neg beads in X% of samples/group 
 
 for(n in group_names ) {
 
-cat(" Finding probes in sample group ",n," with signal intensity >= 2SD mean intensity of the negative control beads ","\r","\n")
+cat(" Finding probes in ",probe_det," of sample group [",n,"] with signal intensity >= 2SD mean intensity of the negative control beads ","\r","\n")
 
 group_label <- paste(n)
 
-sel_samples <- pData(bkCor_lumiBatch)$GROUPS==n;
+sel_samples <- pData(eset_bkCor)$GROUPS==n;
 
 n_samples_in_group <- dim(gx[,sel_samples])[2];
 
-cat(" Number of samples in group ",n," = ",n_samples_in_group,"\r","\n")
+cat(" Number of samples in group [",n,"] = ",n_samples_in_group,"\r","\n")
 
-detection_matrix <- sweel(gx[,sel_samples],1,neg,">")
+detection_matrix <- sweep(gx[,sel_samples],1,neg_2sd[sel_samples],">=")
 
 group_probe_detection <- rowSums(detection_matrix) >= probe_det*n_samples_in_group
 
 group_probe_detection_nuID <- rownames( gx[group_probe_detection, ])
 
-cat(" Number of probes in group ",n," with signal intensity >= 2SD mean intensity of the negative control beads = ", length(group_probe_detection_nuID) ,"\r","\n")
+cat(" Number of probes in group [",n,"] with signal intensity >= 2SD mean intensity of the negative control beads = ", length(group_probe_detection_nuID) ,"\r","\n")
 
-cat(" Writing probe list to ",paste(project_dir,"/",project_name,".",group_label,".detected_probes_nuID",sep=""), "\r","\n" )
+cat(" Writing probe list to ",paste(out_dir,"/",project_name,".GROUP.",group_label,".detected_probes_nuID.txt",sep=""), "\r","\n" )
 
-write.table(group_probe_detection_nuID,file=paste(project_dir,"/",project_name,".",group_label,".detected_probes_nuID",sep="") )
+det_probes <- as.data.frame(group_probe_detection_nuID)
 
+colnames(det_probes) <- c("nuID")
+
+write.table( det_probes ,file=paste(out_dir,"/",project_name,".GROUP.",group_label,".detected_probes_nuID.txt",sep=""),row.names=FALSE,quote=FALSE,col.names=FALSE)
 
 }
+#--------------------------------------------------------------------------------------------------------------------------------------------------------#
+## Y CHROM EXPRESSION IN XIST MALES
 
-cat project_dir/project_name.***.detected_probes_nuID | sort | uniq >>   project_dir/project_name.***.detected_probes_nuID_final;
+cat(" Y Chromosome probe detection based on XIST males","\r","\n")
 
-good_probes <- read.table()
+xist_males <- pData(eset_bkCor)$xist_gender=="Male"
+
+gx_y <- exprs(eset_bkCor[fData(eset_bkCor)$CHR=="Y",])
+
+detection_matrix_y <- sweep( gx_y[,xist_males],1, neg_2sd[xist_males ],">=")
+
+y_probe_detection <- rowSums(detection_matrix_y) >= probe_det * sum(xist_males==TRUE)
+
+y_probe_detection_nuID <- rownames( gx_y[y_probe_detection, ])
+
+y_det_probes <- as.data.frame(y_probe_detection_nuID)
+
+colnames(y_det_probes) <- c("nuID")
+
+write.table( y_det_probes ,file=paste(out_dir,"/",project_name,".GROUP.Y.detected_probes_nuID.txt",sep=""),row.names=FALSE,quote=FALSE,col.names=FALSE)
+
+#--------------------------------------------------------------------------------------------------------------------------------------------------------#
+#######################
+
+cat(" writing final good probe list to ",paste(out_dir,"/",project_name,".detected_probes_nuID_final.txt",sep=""),"\r","\n")
+
+system(paste("cat ",out_dir,"/",project_name,"****.detected_probes_nuID.txt | sort | uniq >> ",out_dir,"/",project_name,".detected_probes_nuID_final.txt", sep="") )
+
+good_probes <- read.table(file=paste(out_dir,"/",project_name,".detected_probes_nuID_final.txt",sep=""),head=FALSE)
+
+good_probes <- paste(good_probes[,1])
+
+n_good_probes <- length(good_probes)
+
+cat(" Total number of good probes = ",n_good_probes,"\n","\r" )
+
+good_probes_annotation <- fData(eset_bkCor[good_probes,])
+
+good_probes_annotation$raw_mean <- apply( exprs(eset_bkCor[good_probes,]), 1,mean) 
+good_probes_annotation$raw_sd <- apply( exprs(eset_bkCor[good_probes,]), 1,sd) 
+good_probes_annotation$raw_var <- apply( exprs(eset_bkCor[good_probes,]), 1,var) 
+good_probes_annotation$raw_min <- apply( exprs(eset_bkCor[good_probes,]), 1,min) 
+good_probes_annotation$raw_max <- apply( exprs(eset_bkCor[good_probes,]), 1,max) 
+
+head(good_probes_annotation)
+
+cat(" saving good probe annotations to ",paste(out_dir,"/",project_name,".detected_probes_nuID_final.***",sep=""),"\r","\n")
+
+save(good_probes_annotation, file=paste(out_dir,"/",project_name,".detected_probes_nuID_final.RData",sep="") )
+
+write.table(good_probes_annotation, file=paste(out_dir,"/",project_name,".detected_probes_nuID_final.tsv",sep=""),quote=F,sep="\t",row.names=F )
+#--------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 
-## do same where grop is SEX and limit to Y CHR FOR MEN AND X FOR WOMEN
+####################################################################
+# 8. vst transform 
+####################################################################
+
+cat(" TRANSFORM DATA. Method =",transform_method,"\r","\n")
+
+if(transform_method=="vst") {
+  eset <- eset_bkCor
+  eset_lumiT  <- lumiT(eset, ifPlot = FALSE, method="vst" )
+}
+if(transform_method=="log2") {
+  eset <-  eset_bkCor
+  eset_lumiT  <- lumiT(eset, ifPlot = FALSE, method="log2" )
+}
+
+## SAVE
+save(eset_lumiT , file=paste(out_dir,"/",project_name,".eset_lumiT.RData",sep="") )
+
+## PLOTS ##
+qc_plots_pdf <- paste(out_dir,"/",project_name,".eset_lumiT.qc.plots.pdf",sep="")
+chip_col <- labels2colors( as.character(pData(eset_lumiT  )$Sentrix.Barcode))
+cat(" Start basic QC plots of eset_lumiT. Saved to: ",qc_plots_pdf,"\r","\n")
+datExprs0 <- exprs(eset_lumiT) 
+cat(" calculate pca for plots ")
+pca_raw <- prcomp(t(datExprs0))$x
+cat(" plotting... ","\r","\n")
+pdf(qc_plots_pdf, width=16.5,height=11.7) ## A3 
+plot(eset_lumiT, what='boxplot', main=paste(project_name," eset_raw Boxplot",sep=""), col=chip_col )
+plot(eset_lumiT, what='density', main=paste(project_name," eset_raw Density",sep="") )
+plot(eset_lumiT, what='cv',main=paste(project_name," eset_raw density plot of coefficient of varience",sep="")  )
+scatterplot3d(pca_raw[,"PC1"],pca_raw[,"PC2"],pca_raw[,"PC3"], main="3D Scatterplot coloured by chip ",color=chip_col)
+tmp_iac <- outlierSamples(datExprs0,thresh=iac_sd_thrs, showplots=TRUE)
+dev.off()
+cat(" finished basic QC plots of eset_lumiT Saved to: ",raw_qc_plots_pdf,"\r","\n")
+rm("datExprs0","tmp_iac","pca_raw");
+gc()
+## iac
+cat(" Checking IAC after eset_lumiT ","\n","\n")
+rm("iac_outlierSamples")
+datExprs0 <- exprs(eset_lumiT) 
+pdf(file=paste(out_dir,"/",project_name,".eset_lumiT.iac_outliers.pdf",sep=""), width=8,height=6 )
+iac_outlierSamples <-  outlierSamples(datExprs0,thresh=iac_sd_thrs, showplots=T) ## optional :- but worth one round of outlier detection
+plot(iac_outlierSamples$samplemeanIAC)
+dev.off()
+eset_lumiT_IAC <- iac_outlierSamples$meanIAC
+cat(" meanIAC post VST: ",  eset_lumiT_IAC,"\r","\n")
 
 
 
-## add option for probe detection level
 
-probes_detected_in_50percent_sample <- probe_detection_mbcbNP>=0.50*n_samples
-probes_detected_in_80percent_sample <- probe_detection_mbcbNP>=0.80*n_samples
-probes_detected_in_100percet_sample <- probe_detection_mbcbNP==n_samples
+#--------------------------------------------------------------------------------------------------------------------------------------------------------#
 
-good_probes <- probes_detected_in_80percent_sample
+####################################################################
+# normalise
+####################################################################
 
-##############################################################
-## sample detection rate based on detected/expressed probes ## 
-##############################################################
+cat(" NORMALISE DATA. Method =",norm_method,"\r","\n")
 
-sample_detection_mbcbNPVSTQN <- detectionCall(eset_mbcbNP[probes_detected_in_80percent_sample , ], Th = 0.05, type = c('sample') )
+if(norm_method=="rsn") {
+  eset_lumiN  <- lumiN(eset_lumiT, ifPlot = FALSE, method="rsn" )
+}
 
-n_probes <- sum(probes_detected_in_80percent_sample==TRUE)
+if(norm_method=="quantile") {
+  eset_lumiN  <- lumiN(eset_lumiT, ifPlot = FALSE, method="quantile" )
+}
+## SAVE
+save(eset_lumiN , file=paste(out_dir,"/",project_name,".eset_lumiN.RData",sep="") )
 
-good_samples <- sample_detection_mbcbNP>=0.80*n_probes
+## PLOTS ##
+qc_plots_pdf <- paste(out_dir,"/",project_name,".eset_lumiN.qc.plots.pdf",sep="")
+chip_col <- labels2colors( as.character(pData(eset_lumiN  )$Sentrix.Barcode))
+cat(" Start basic QC plots of eset_lumiN. Saved to: ",qc_plots_pdf,"\r","\n")
+datExprs0 <- exprs(eset_lumiN) 
+cat(" calculate pca for plots ")
+pca_raw <- prcomp(t(datExprs0))$x
+cat(" plotting... ","\r","\n")
+pdf(qc_plots_pdf, width=16.5,height=11.7) ## A3 
+plot(eset_lumiN, what='boxplot', main=paste(project_name," eset_raw Boxplot",sep=""), col=chip_col )
+plot(eset_lumiN, what='density', main=paste(project_name," eset_raw Density",sep="") )
+plot(eset_lumiN, what='cv',main=paste(project_name," eset_raw density plot of coefficient of varience",sep="")  )
+scatterplot3d(pca_raw[,"PC1"],pca_raw[,"PC2"],pca_raw[,"PC3"], main="3D Scatterplot coloured by chip ",color=chip_col)
+tmp_iac <- outlierSamples(datExprs0,thresh=iac_sd_thrs, showplots=TRUE)
+dev.off()
+cat(" finished basic QC plots of eset_lumiN Saved to: ",raw_qc_plots_pdf,"\r","\n")
+rm("datExprs0","tmp_iac","pca_raw");
+gc()
+## iac
+cat(" Checking IAC after eset_lumiN ","\n","\n")
+rm("iac_outlierSamples")
+datExprs0 <- exprs(eset_lumiN) 
+pdf(file=paste(out_dir,"/",project_name,".eset_lumiN.iac_outliers.pdf",sep=""), width=8,height=6 )
+iac_outlierSamples <-  outlierSamples(datExprs0,thresh=iac_sd_thrs, showplots=T) ## optional :- but worth one round of outlier detection
+plot(iac_outlierSamples$samplemeanIAC)
+dev.off()
+eset_lumiN_IAC <- iac_outlierSamples$meanIAC
+cat(" meanIAC post normalise: ",  eset_lumiN_IAC,"\r","\n")
 
-## subset to good samples and good probes
+#--------------------------------------------------------------------------------------------------------------------------------------------------------#
 
-eset_mbcbNP_good <- eset_mbcbNP[ good_probes , good_samples ]
+## IAC on eset_lumiN
 
+eset_final <- eset_lumiN[good_probes,]
 
-#-----------------------------------------------------------# 
-# 8. vst transform removing poorChips
-#-----------------------------------------------------------# 
-
-## add option for log2 or vst transform
-
-eset_mbcbNPVST  <- lumiT(eset_mbcbNP_good, ifPlot = FALSE, method="vst" )
-eset_mbcbNPLOG2 <- lumiT(eset_mbcbNP_good, ifPlot = FALSE, method="log2" ) ###method = c("vst", 'log2', 'cubicRoot'))
+save(eset_final , file=paste(out_dir,"/",project_name,".eset_final.RData",sep="") )
 
 
-#-----------------------------------------------------------# 
-# 9. quantile normalise
-#-----------------------------------------------------------# 
 
-# add option for qn or normalise
-
-eset_mbcbNPLOG2TQN <- lumiN(eset_mbcbNPLOG2, method="quantile")
-eset_mbcnNPLOG2RSN <- lumiN(eset_mbcbNPLOG2, method="rsn")
-
+cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
+cat(" END PRE_PROCESSING!" ,"\r","\n")
+cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
 ##
-eset_mbcbNPVSTQN <- lumiN(eset_mbcbNPVST, method="quantile")
-eset_mbcnNPVSTRSN <- lumiN(eset_mbcbNPVST, method="rsn")
-
-
-
-#  method: five different between chips normalization methods
-#          ("quantile", "rsn", "ssn", "loess", "vsn", "rankinvariant")
-
-system( paste(" chmod 776 ",out_dir,"/",project_name),sep="""
+system( paste(" chmod 776 ",out_dir,"/",project_name,"***",sep=""))
 
 sessionInfo()
-#-----------------------------------------------------------# 
-# 10. basic plots 
-#-----------------------------------------------------------# 
 
-#-----------------------------------------------------------# 
-# 11. Analysis ready data
-#-----------------------------------------------------------# 
- 
-LIMMA/SAM/basic stats
-WGCNA
-ML
-RF
-
+rm(list=ls())
 
 
 
