@@ -283,7 +283,7 @@ pca_raw <- prcomp(t(datExprs0))$x
 
 cat(" plotting... ","\r","\n")
 
-pdf(raw_qc_plots_pdf, width=16.5,height=11.7) ## A3 
+pdf(qc_plots_pdf, width=16.5,height=11.7) ## A3 
 	plot(eset, what='boxplot', main=paste(project_name," eset_raw Boxplot",sep=""), col=chip_col )
 	plot(eset, what='density', main=paste(project_name," eset_raw Density",sep="") )
 	plot(eset, what='cv',main=paste(project_name," eset_raw density plot of coefficient of varience",sep="")  )
@@ -291,7 +291,7 @@ pdf(raw_qc_plots_pdf, width=16.5,height=11.7) ## A3
 	tmp_iac <- outlierSamples(datExprs0,thresh=iac_sd_thrs, showplots=TRUE)
 dev.off()
 
-cat(" finished basic QC plots of eset_raw. Saved to: ",raw_qc_plots_pdf,"\r","\n")
+cat(" finished basic QC plots of eset_raw. Saved to: ",qc_plots_pdf,"\r","\n")
 
 rm("datExprs0","tmp_iac","pca_raw");
 
@@ -397,7 +397,7 @@ pca_raw <- prcomp(t(datExprs0))$x
 
 cat(" plotting post IAC... ","\r","\n")
 
-pdf(raw_qc_plots_pdf, width=16.5,height=11.7) ## A3 
+pdf(qc_plots_pdf, width=16.5,height=11.7) ## A3 
 	plot(eset_raw, what='boxplot', main=paste(project_name," eset_raw_iac Boxplot",sep=""), col=chip_col )
 	plot(eset_raw, what='density', main=paste(project_name," eset_raw_iac Density",sep="") )
 	plot(eset_raw, what='cv',main=paste(project_name," eset_raw_iac density plot of coefficient of varience",sep="")  )
@@ -405,7 +405,7 @@ pdf(raw_qc_plots_pdf, width=16.5,height=11.7) ## A3
 	tmp_iac <- outlierSamples(datExprs0,thresh=iac_sd_thrs, showplots=TRUE)
 dev.off()
 
-cat(" finished basic QC plots of post IAC eset_raw_iac. Saved to: ",raw_qc_plots_pdf,"\r","\n")
+cat(" finished basic QC plots of post IAC eset_raw_iac. Saved to: ",qc_plots_pdf,"\r","\n")
 
 rm("datExprs0","tmp_iac","pca_raw")
 gc()
@@ -417,8 +417,6 @@ gc()
 cat(" Checking IAC after 1st round of IAC QC ","\n","\n")
 
 preIAC <- iac_outlierSamples$meanIAC
-
-rm("iac_outlierSamples")
 
 datExprs0 <- exprs(eset_raw_iac) 
 
@@ -508,44 +506,44 @@ colnames(gx_mbcb) <- sampleNames(eset_raw_iac)
 
 cat(" Creating Background Corrected Data set: bgCor_lumiBatch ","\r","\n")
 
-eset_bkCor <- eset_raw_iac
+eset_bkcor <- eset_raw_iac
 
 ## replace old exprs data with new mbcb bk corrected data
 cat(" replace old exprs data with new mbcb Background corrected data ","\r","\n")
 
-exprs(eset_bkCor) <- as.matrix(gx_mbcb)
+exprs(eset_bkcor) <- as.matrix(gx_mbcb)
 
-cat(" Saveing Background Corrected Data set: ",paste(out_dir,"/",project_name,".eset_bkCor.RData",sep=""),"\r","\n")
+cat(" Saveing Background Corrected Data set: ",paste(out_dir,"/",project_name,".eset_bkcor.RData",sep=""),"\r","\n")
 
-save(eset_bkCor, file=paste(out_dir,"/",project_name,".eset_bkCor.RData",sep="")  , compress=T)
+save(eset_bkcor, file=paste(out_dir,"/",project_name,".eset_bkcor.RData",sep="")  , compress=T)
 
 #############################
-## PLOTS POST bkCor        ##
+## PLOTS POST bkcor        ##
 #############################
 
-bkCor_qc_plots_pdf <- paste(out_dir,"/",project_name,".eset_bkCor.post.bkCor.qc.plots.pdf",sep="")
+qc_plots_pdf <- paste(out_dir,"/",project_name,".eset_bkcor.post.bkcor.qc.plots.pdf",sep="")
 
-chip_col <- labels2colors( as.character(pData(eset_bkCor)$Sentrix.Barcode))
+chip_col <- labels2colors( as.character(pData(eset_bkcor)$Sentrix.Barcode))
 
-cat(" Start basic QC plots of post IAC eset_raw. Saved to: ",bkCor_qc_plots_pdf,"\r","\n")
+cat(" Start basic QC plots of post IAC eset_raw. Saved to: ",qc_plots_pdf,"\r","\n")
 
-datExprs0 <- exprs(eset_bkCor) 
+datExprs0 <- exprs(eset_bkcor) 
 
-cat(" calculate pca for plots post bkCor ")
+cat(" calculate pca for plots post bkcor ")
 
 pca_raw <- prcomp(t(datExprs0))$x
 
 cat(" plotting post IAC... ","\r","\n")
 
-pdf(bkCor_qc_plots_pdf, width=16.5,height=11.7) ## A3
-	plot(eset_bkCor, what='boxplot', main=paste(project_name," eset_bkCor Boxplot",sep=""), col=chip_col )
-	plot(eset_bkCor, what='density', main=paste(project_name," eset_bkCor Density",sep="") )
-	plot(eset_bkCor, what='cv',main=paste(project_name," eset_bkCor density plot of coefficient of varience",sep="")  )
+pdf(qc_plots_pdf, width=16.5,height=11.7) ## A3
+	plot(eset_bkcor, what='boxplot', main=paste(project_name," eset_bkcor Boxplot",sep=""), col=chip_col )
+	plot(eset_bkcor, what='density', main=paste(project_name," eset_bkcor Density",sep="") )
+	plot(eset_bkcor, what='cv',main=paste(project_name," eset_bkcor density plot of coefficient of varience",sep="")  )
 	scatterplot3d(pca_raw[,"PC1"],pca_raw[,"PC2"],pca_raw[,"PC3"], main="3D Scatterplot coloured by chip ",color=chip_col)
 	tmp_iac <- outlierSamples(datExprs0,thresh=iac_sd_thrs, showplots=TRUE)
 dev.off()
 
-cat(" finished basic QC plots of post bkCor on eset_raw. Saved to: ",bkCor_qc_plots_pdf,"\r","\n")
+cat(" finished basic QC plots of post bkcor on eset_raw. Saved to: ",qc_plots_pdf,"\r","\n")
 
 rm("datExprs0","tmp_iac","pca_raw")
 gc()
@@ -555,13 +553,13 @@ gc()
 ## Check IAC after 1st round of iac qc ##
 #########################################
 
-cat(" Checking IAC after bkCor ","\n","\n")
+cat(" Checking IAC after bkcor ","\n","\n")
 
 rm("iac_outlierSamples")
 
-datExprs0 <- exprs(eset_bkCor) 
+datExprs0 <- exprs(eset_bkcor) 
 
-pdf(file=paste(out_dir,"/",project_name,".eset_bkCor.iac_outliers.pdf",sep=""), width=8,height=6 )
+pdf(file=paste(out_dir,"/",project_name,".eset_bkcor.iac_outliers.pdf",sep=""), width=8,height=6 )
 
 iac_outlierSamples <-  outlierSamples(datExprs0,thresh=iac_sd_thrs, showplots=T) ## optional :- but worth one round of outlier detection
 
@@ -569,11 +567,11 @@ plot(iac_outlierSamples$samplemeanIAC)
 
 dev.off()
 
-postbkCorIAC <- iac_outlierSamples$meanIAC
+postbkcorIAC <- iac_outlierSamples$meanIAC
 
 cat(" meanIAC pre  IAC QC: ", preIAC, "\r","\n") 
 cat(" meanIAC post IAC QC: ", postIAC,"\r","\n")
-cat(" meanIAC post bkCor: ",  postbkCorIAC,"\r","\n")
+cat(" meanIAC post bkcor: ",  postbkcorIAC,"\r","\n")
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 ##################################
@@ -583,10 +581,10 @@ cat(" meanIAC post bkCor: ",  postbkCorIAC,"\r","\n")
 cat(" Checking Gender based on XIST gene expression","\r","\n")
 
 ##load(paste(out_dir,"/",project_name,".eset_raw_postIAC.RData",sep=""))
-##load(paste(out_dir,"/",project_name,".eset_bkCor.RData",sep=""))
+##load(paste(out_dir,"/",project_name,".eset_bkcor.RData",sep=""))
 
-## get neg control data from eset_bkCor
-negativeControl <- getControlData(eset_bkCor)
+## get neg control data from eset_bkcor
+negativeControl <- getControlData(eset_bkcor)
 negativeControl <- subset(negativeControl, negativeControl$controlType=="NEGATIVE")
 negativeControl <- negativeControl[,c(3:dim(negativeControl)[2])]
 
@@ -599,19 +597,19 @@ neg_2sd <- neg_mean + 2*neg_sd
 ## get XIST gene postion
 xist_raw <- fData(eset_raw_iac)$ILMN_GENE=="XIST";
 
-xist_bkCor <- fData(eset_bkCor)$ILMN_GENE=="XIST";
+xist_bkcor <- fData(eset_bkcor)$ILMN_GENE=="XIST";
 
 ## get XIST gene expression signal
 xist_gx_raw  <- exprs(eset_raw_iac[xist_raw, ]  ) 
 xist_gx_raw <- as.data.frame( t(xist_gx_raw)); 
 
-xist_gx_bkCor <- exprs(eset_bkCor[xist_bkCor , ]  ) 
-xist_gx_bkCor <- as.data.frame( t(xist_gx_bkCor)); 
+xist_gx_bkcor <- exprs(eset_bkcor[xist_bkcor , ]  ) 
+xist_gx_bkcor <- as.data.frame( t(xist_gx_bkcor)); 
 
 ## cobine raw and bkCro gx data
-xist_gx <- cbind(xist_gx_raw,xist_gx_bkCor)
+xist_gx <- cbind(xist_gx_raw,xist_gx_bkcor)
 
-colnames(xist_gx) <- c("raw_XIST","bkCor_XIST")
+colnames(xist_gx) <- c("raw_XIST","bkcor_XIST")
 
 xist_gx$neg_2sd <- neg_2sd
 
@@ -622,25 +620,25 @@ xist_gx$neg_mean <- neg_mean
 xist_gx$neg_sd <- neg_sd
 
 ## gender based on XIST expression 1=female , 0 = male
-xist_gx$XIST_Gender_max <- ifelse(xist_gx$bkCor_XIST > xist_gx$neg_max,1,0)
+xist_gx$XIST_Gender_max <- ifelse(xist_gx$bkcor_XIST > xist_gx$neg_max,1,0)
 
-xist_gx$XIST_Gender_2sd <- ifelse(xist_gx$bkCor_XIST > xist_gx$neg_2sd,1,0)  ### THIS WORKS!! IF GENE IS > 2SD_NEG_BEAD THEN ITS EXPRESSED/DETECTED!
+xist_gx$XIST_Gender_2sd <- ifelse(xist_gx$bkcor_XIST > xist_gx$neg_2sd,1,0)  ### THIS WORKS!! IF GENE IS > 2SD_NEG_BEAD THEN ITS EXPRESSED/DETECTED!
 
-xist_gx$XIST_z <-  ( xist_gx$bkCor_XIST - xist_gx$neg_mean ) / xist_gx$neg_sd
+xist_gx$XIST_z <-  ( xist_gx$bkcor_XIST - xist_gx$neg_mean ) / xist_gx$neg_sd
 
 xist_gx$Sample.ID <- rownames(xist_gx)
 
 head(xist_gx)
 
-xist_gx$xist_gender <- ifelse(xist_gx$bkCor_XIST > xist_gx$neg_2sd,"Female","Male")
+xist_gx$xist_gender <- ifelse(xist_gx$bkcor_XIST > xist_gx$neg_2sd,"Female","Male")
 
 head(xist_gx)
 
 pdf(file=paste(out_dir,"/",project_name,".bgCor_lumiBatch.XIST.pdf",sep=""),height=8,width-11)
-plot(xist_gx$bkCor_XIST, type="p", col=2+xist_gx$XIST_Gender_2sd, pch=19 , cex=0.6);points(xist_gx$neg_2sd,col="blue", type="l")
+plot(xist_gx$bkcor_XIST, type="p", col=2+xist_gx$XIST_Gender_2sd, pch=19 , cex=0.6);points(xist_gx$neg_2sd,col="blue", type="l")
 dev.off()
 
-pData(eset_bkCor)$xist_gender <- xist_gx$xist_gender 
+pData(eset_bkcor)$xist_gender <- xist_gx$xist_gender 
 
 save(xist_gx, file=paste(out_dir,"/",project_name,".bgCor_lumiBatch.XIST.RData",sep=""))
 
@@ -648,11 +646,11 @@ write.table(xist_gx, file=paste(out_dir,"/",project_name,".bgCor_lumiBatch.XIST.
 
 ## check sex 
 
-pData(eset_bkCor)$gender_missmatch <- ifelse( pData(eset_bkCor)$xist_gender == pData(eset_bkCor)$SEX, "PASS","GENDER_MISSMATCH" ) 
+pData(eset_bkcor)$gender_missmatch <- ifelse( pData(eset_bkcor)$xist_gender == pData(eset_bkcor)$SEX, "PASS","GENDER_MISSMATCH" ) 
 
-save(eset_bkCor, file=paste(out_dir,"/",project_name,".eset_bkCor.RData",sep=""))
+save(eset_bkcor, file=paste(out_dir,"/",project_name,".eset_bkcor.RData",sep=""))
 
-n_gender_fails <- sum( pData(eset_bkCor)$gender_missmatch=="GENDER_MISSMATCH" )
+n_gender_fails <- sum( pData(eset_bkcor)$gender_missmatch=="GENDER_MISSMATCH" )
 
 if ( n_gender_fails > 0 ) {
     cat(" WARNING: Youn have GENDER_MISSMATCH samples!!!!!!! N=[",n_gender_fails,"]","\r","\n")
@@ -669,7 +667,7 @@ if ( n_gender_fails > 0 ) {
 cat(" Calculating Probde Detection rates. \n Probe is seen as Detected if it has signal intensity >= 2SD of the mean intensity of the negative control beads","\r","\n")
 
 ## get expression matrix
-gx <- exprs(eset_bkCor)
+gx <- exprs(eset_bkcor)
 
 ## get negative bead ranges mean or max or >2SD mean  of neg beads
 
@@ -689,40 +687,40 @@ probes_not_detected_in_any_sample <- probe_detection==0
 probes_detected_in_80_sample <- probe_detection>=n_samples*0.80
 probes_detected_in_all_sample <- probe_detection==n_samples 
 
-probe_annotations_0_detected <- fData(eset_bkCor[probes_not_detected_in_any_sample,])
-probe_annotations_80_detected  <- fData(eset_bkCor[probes_detected_in_80_sample ,])
-probe_annotations_100_detected  <- fData(eset_bkCor[probes_detected_in_all_sample,])
+probe_annotations_0_detected <- fData(eset_bkcor[probes_not_detected_in_any_sample,])
+probe_annotations_80_detected  <- fData(eset_bkcor[probes_detected_in_80_sample ,])
+probe_annotations_100_detected  <- fData(eset_bkcor[probes_detected_in_all_sample,])
 
-fData(eset_bkCor)$n_detected <- probe_detection 
-fData(eset_bkCor)$n_detected_call_rate <- round( probe_detection/n_samples ,3)
+fData(eset_bkcor)$n_detected <- probe_detection 
+fData(eset_bkcor)$n_detected_call_rate <- round( probe_detection/n_samples ,3)
 
 
 ## sample_detection counts
-n_probes <- dim(eset_bkCor)[1]
+n_probes <- dim(eset_bkcor)[1]
 
 sample_detection <- colSums(det)
 
-pData(eset_bkCor)$n_probes_detected <- sample_detection
+pData(eset_bkcor)$n_probes_detected <- sample_detection
 
-pData(eset_bkCor)$n_probes_detected_call_rate <- round( sample_detection/n_probes ,3)
+pData(eset_bkcor)$n_probes_detected_call_rate <- round( sample_detection/n_probes ,3)
 
-plot(pData(eset_bkCor)$n_probes_detected_call_rate)
+plot(pData(eset_bkcor)$n_probes_detected_call_rate)
 
-plot(pData(eset_bkCor)$n_probes_detected ,pData(eset_bkCor)$Detected.Genes..0.01.)
+plot(pData(eset_bkcor)$n_probes_detected ,pData(eset_bkcor)$Detected.Genes..0.01.)
 
-save(eset_bkCor, file=paste(out_dir,"/",project_name,".eset_bkCor.RData",sep=""))
+save(eset_bkcor, file=paste(out_dir,"/",project_name,".eset_bkcor.RData",sep=""))
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------#
 ## get group information from pData() slot 
 
-group_names <- unique(pData(eset_bkCor)$GROUPS);
+group_names <- unique(pData(eset_bkcor)$GROUPS);
 
-groups  <- pData(eset_bkCor)$GROUPS
+groups  <- pData(eset_bkcor)$GROUPS
 
 n_groups <- length(group_names)
 
 ##
-gx <- exprs(eset_bkCor)
+gx <- exprs(eset_bkcor)
 
 ## loop through each group and id probes > 2SD mean neg beads in X% of samples/group 
 
@@ -732,7 +730,7 @@ cat(" Finding probes in ",probe_det," of sample group [",n,"] with signal intens
 
 group_label <- paste(n)
 
-sel_samples <- pData(eset_bkCor)$GROUPS==n;
+sel_samples <- pData(eset_bkcor)$GROUPS==n;
 
 n_samples_in_group <- dim(gx[,sel_samples])[2];
 
@@ -760,9 +758,9 @@ write.table( det_probes ,file=paste(out_dir,"/",project_name,".GROUP.",group_lab
 
 cat(" Y Chromosome probe detection based on XIST males","\r","\n")
 
-xist_males <- pData(eset_bkCor)$xist_gender=="Male"
+xist_males <- pData(eset_bkcor)$xist_gender=="Male"
 
-gx_y <- exprs(eset_bkCor[fData(eset_bkCor)$CHR=="Y",])
+gx_y <- exprs(eset_bkcor[fData(eset_bkcor)$CHR=="Y",])
 
 detection_matrix_y <- sweep( gx_y[,xist_males],1, neg_2sd[xist_males ],">=")
 
@@ -791,13 +789,13 @@ n_good_probes <- length(good_probes)
 
 cat(" Total number of good probes = ",n_good_probes,"\n","\r" )
 
-good_probes_annotation <- fData(eset_bkCor[good_probes,])
+good_probes_annotation <- fData(eset_bkcor[good_probes,])
 
-good_probes_annotation$raw_mean <- apply( exprs(eset_bkCor[good_probes,]), 1,mean) 
-good_probes_annotation$raw_sd <- apply( exprs(eset_bkCor[good_probes,]), 1,sd) 
-good_probes_annotation$raw_var <- apply( exprs(eset_bkCor[good_probes,]), 1,var) 
-good_probes_annotation$raw_min <- apply( exprs(eset_bkCor[good_probes,]), 1,min) 
-good_probes_annotation$raw_max <- apply( exprs(eset_bkCor[good_probes,]), 1,max) 
+good_probes_annotation$raw_mean <- apply( exprs(eset_bkcor[good_probes,]), 1,mean) 
+good_probes_annotation$raw_sd <- apply( exprs(eset_bkcor[good_probes,]), 1,sd) 
+good_probes_annotation$raw_var <- apply( exprs(eset_bkcor[good_probes,]), 1,var) 
+good_probes_annotation$raw_min <- apply( exprs(eset_bkcor[good_probes,]), 1,min) 
+good_probes_annotation$raw_max <- apply( exprs(eset_bkcor[good_probes,]), 1,max) 
 
 head(good_probes_annotation)
 
@@ -816,11 +814,11 @@ write.table(good_probes_annotation, file=paste(out_dir,"/",project_name,".detect
 cat(" TRANSFORM DATA. Method =",transform_method,"\r","\n")
 
 if(transform_method=="vst") {
-  eset <- eset_bkCor
+  eset <- eset_bkcor
   eset_lumiT  <- lumiT(eset, ifPlot = FALSE, method="vst" )
 }
 if(transform_method=="log2") {
-  eset <-  eset_bkCor
+  eset <-  eset_bkcor
   eset_lumiT  <- lumiT(eset, ifPlot = FALSE, method="log2" )
 }
 
@@ -842,7 +840,7 @@ plot(eset_lumiT, what='cv',main=paste(project_name," eset_raw density plot of co
 scatterplot3d(pca_raw[,"PC1"],pca_raw[,"PC2"],pca_raw[,"PC3"], main="3D Scatterplot coloured by chip ",color=chip_col)
 tmp_iac <- outlierSamples(datExprs0,thresh=iac_sd_thrs, showplots=TRUE)
 dev.off()
-cat(" finished basic QC plots of eset_lumiT Saved to: ",raw_qc_plots_pdf,"\r","\n")
+cat(" finished basic QC plots of eset_lumiT Saved to: ",qc_plots_pdf,"\r","\n")
 rm("datExprs0","tmp_iac","pca_raw");
 gc()
 ## iac
@@ -892,7 +890,7 @@ plot(eset_lumiN, what='cv',main=paste(project_name," eset_raw density plot of co
 scatterplot3d(pca_raw[,"PC1"],pca_raw[,"PC2"],pca_raw[,"PC3"], main="3D Scatterplot coloured by chip ",color=chip_col)
 tmp_iac <- outlierSamples(datExprs0,thresh=iac_sd_thrs, showplots=TRUE)
 dev.off()
-cat(" finished basic QC plots of eset_lumiN Saved to: ",raw_qc_plots_pdf,"\r","\n")
+cat(" finished basic QC plots of eset_lumiN Saved to: ",qc_plots_pdf,"\r","\n")
 rm("datExprs0","tmp_iac","pca_raw");
 gc()
 ## iac
