@@ -1,5 +1,7 @@
 #!/share/bin/Rscript
 
+system.time(
+
 rm(list=ls())
 
 ################################################################################################################################################################
@@ -54,8 +56,6 @@ source("./pre_process_gx.R")
 source("./SampleNetwork_1.0.r")
 source("./ModuleSampleNetwork_0.5.r")
 
-sessionInfo()
-
 cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
@@ -74,10 +74,11 @@ options(stringsAsFactors = FALSE)
 ##  args <- commandArgs(trailingOnly=TRUE);
 ##  config_file <- args[1];
 
-config_file <- "project.config"
+config_file <- "GAP.project.config"
 
 project_settings <- read.table(config_file, head=T,sep="\t",as.is=T,fill=TRUE)
 
+t(project_settings)
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
@@ -135,6 +136,14 @@ system( paste(" mkdir ./",out_dir,sep="") )
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
+####################
+## summary matrix ##
+####################
+eset_summary <- matrix(ncol=4,nrow=7, dimnames=list(c("eset_raw","eset_raw_iac","eset_bkcor","eset_lumiT","eset_lumiN","eset_final","eset_final_batch_corrected"),c("eset_step","n_samples","n_probes","IAC")) )
+eset_summary[,1] <- rownames(eset_summary )
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+
 ########################
 ### Read sample table ##
 ########################
@@ -146,6 +155,8 @@ raw_sample_data <- read.table(gs_sample ,skip=8,as.is=T,fill=T,head=T,sep="\t")
 rownames(raw_sample_data) <- raw_sample_data$Sample.ID
 
 raw_n_samples <- dim(raw_sample_data)[1]
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 ###########################################################
 ## if phenotype file is provided add this to sample data ##
@@ -188,8 +199,6 @@ eset_raw <- lumiR(gs_report, lib.mapping="lumiHumanIDMapping",
 annotationColumn = c('PROBE_ID','CHROMOSOME','SYMBOL','DEFINITION','ACCESSION','ENTREZ_GENE_ID','PROBE_TYPE','PROBE_START','PROBE_SEQUENCE','PROBE_CHR_ORIENTATION','PROBE_COORDINATES',
 'CHROMOSOME','TRANSCRIPT','ILMN_GENE','REFSEQ_ID','UNIGENE_ID','SYMBOL','PROTEIN_PRODUCT'))
 
-## 9-12.4GB RAM!!!!
-
 cat( print(eset_raw) )
 
 cat(" Getting Chip Info ","\r","\n")
@@ -204,6 +213,8 @@ cat(" chip inputProbeNumber: ", chip$inputProbeNumber, "\r","\n")
 cat(" chip matchedProbeNumber: ", chip$matchedProbeNumber, "\r","\n")
 cat(" Number of samples = ",raw_n_samples,"\r","\n")
 
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+
 ##########################################
 ## adding Sample Report to pData() slot ##
 ##########################################
@@ -211,6 +222,8 @@ cat(" Number of samples = ",raw_n_samples,"\r","\n")
 cat(" adding Sample Report to pData() slot","\r","\n")
 
 pData(eset_raw) <- raw_sample_data;
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 ################################################
 ## getting probe annotaions from fData() slot ##
@@ -250,6 +263,8 @@ save(probe_annotations,file=paste(out_dir,"/",project_name,".eset_raw.probe_anno
 
 write.table(probe_annotations,file=paste(out_dir,"/",project_name,".eset_raw.probe_annotations.txt",sep=""),sep="\t",quote=F,row.names=F )
 
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+
 ##########################
 ## Save eset_raw #########
 ##########################
@@ -258,10 +273,37 @@ cat(" Saving eset_raw as ", paste(out_dir,"/",project_name,".eset_raw.RData",sep
 
 save(eset_raw , file=paste(out_dir,"/",project_name,".eset_raw.RData",sep="") )## This is raw data pre-qc
 
+########################################
+## beadNum, detection, exprs, se.exprs #
+########################################
+cat(" Writing eset_raw [beadNum, detection, exprs, se.exprs] data to file ", paste(out_dir,"/",project_name,".eset_raw.[beadNum, detection, exprs, se.exprs].txt",sep=""), "\r","\n")
+
+gx <- exprs(eset_raw)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset_raw),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(out_dir,"/",project_name,".eset_raw.exprs.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+gx <- se.exprs(eset_raw)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset_raw),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(out_dir,"/",project_name,".eset_raw.se.exprs.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+gx <- detection(eset_raw)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset_raw),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(out_dir,"/",project_name,".eset_raw.detection.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+gx <- beadNum(eset_raw)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset_raw),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(out_dir,"/",project_name,".eset_raw.beadNum.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
-
-
-## ADD TECH INFO OPTION OF PROCESSING DATES, RIN AND YEILDS. If true do pca col be these factors - 10,20,30,40,50...percentiles for quant data
 
 ####################
 ## PLOTS RAW DATA ##
@@ -318,23 +360,39 @@ plot(iac_outlierSamples$samplemeanIAC)
 
 dev.off()
 
+nsamp <- dim(exprs(eset_raw))[2]
+nprobe <- dim(exprs(eset_raw))[1]
+IAC <- round(iac_outlierSamples$meanIAC, 4)
+
+eset_summary["eset_raw",2:4] <- c(nsamp,nprobe,IAC)
+
+#############################################################
 ## meanIAC 
+#############################################################
 cat(" meanIAC: ", iac_outlierSamples$meanIAC , "\r","\n")
 
+#############################################################
 ## add iac sd to pData
+#############################################################
 cat(" addingd IAC sd to pData() slot of eset_raw ", "\r","\n")
 
 pData(eset_raw)$iac_sd <- iac_outlierSamples$numbersd
 
+#############################################################
 ## iac outliers
+#############################################################
 iac_outliers <- iac_outlierSamples$samples_to_remove
 
+#############################################################
 ## n iac out 
+#############################################################
 n_iac_outliers <- length(iac_outlierSamples$samples_to_remove)
 
 cat(" number of iac outliers: ", n_iac_outliers , "\r","\n")
 
+#############################################################
 ## iac sample information
+#############################################################
 poorChips <- iac_outlierSamples$samples_to_remove
 
 poorChips <- data.frame(Sample.ID=names(iac_outliers),iac_sd=poorChips,samplemeanIAC=iac_outlierSamples$samplemeanIAC[names(iac_outliers)],QC=rep("iac_outliers", n_iac_outliers)  )
@@ -358,7 +416,9 @@ eset_raw_iac <- eset_raw[,sel_samp]
 
 cat(" update Control Probe data slot..subsetting to remaining samples ", "\r","\n")
 
-## update control data slot
+#############################
+## update control data slot #
+#############################
 update_controlData <- getControlData(eset_raw_iac)
 
 update_controlData  <- update_controlData[,c("controlType","ProbeID",sel_samp_names)]
@@ -367,7 +427,39 @@ eset_raw_iac <- addControlData2lumi(update_controlData , eset_raw_iac)
 
 cat(" saving updated eset_raw post IAC to: ",paste(out_dir,"/",project_name,".eset_raw_postIAC.RData",sep=""), "\r","\n" )
 
+##################################
+## SAVE IAC DATA 
+##################################
 save(eset_raw_iac , file=paste(out_dir,"/",project_name,".eset_raw_postIAC.RData",sep="") )
+
+########################################
+## beadNum, detection, exprs, se.exprs #
+########################################
+cat(" Writing eset_raw_iac [beadNum, detection, exprs, se.exprs] data to file ", paste(out_dir,"/",project_name,".eset_raw_iac.[beadNum, detection, exprs, se.exprs].txt",sep=""), "\r","\n")
+
+gx <- exprs(eset_raw_iac)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset_raw_iac),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(out_dir,"/",project_name,".eset_raw_iac.exprs.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+gx <- se.exprs(eset_raw_iac)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset_raw_iac),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(out_dir,"/",project_name,".eset_raw_iac.se.exprs.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+gx <- detection(eset_raw_iac)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset_raw_iac),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(out_dir,"/",project_name,".eset_raw_iac.detection.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+gx <- beadNum(eset_raw_iac)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset_raw_iac),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(out_dir,"/",project_name,".eset_raw_iac.beadNum.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
 
 cat(" Number of samples after iac outlier removal: ", length(sampleNames(eset_raw_iac)), "\r","\n" )
 
@@ -376,6 +468,8 @@ cat(" Number of samples after iac outlier removal: ", length(sampleNames(eset_ra
 cat(" Skipping inter-array correlation quality control step ","\n","\r")
 
 }
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 #############################
 ## PLOTS POST IAC RAW DATA ##
@@ -433,7 +527,12 @@ postIAC <- iac_outlierSamples$meanIAC
 cat(" meanIAC pre  IAC QC: ", preIAC, "\r","\n") 
 cat(" meanIAC post IAC QC: ", postIAC,"\r","\n")
 
-rm("datExprs0")
+nsamp <- dim(exprs(eset_raw_iac))[2]
+nprobe <- dim(exprs(eset_raw_iac))[1]
+IAC <- round(iac_outlierSamples$meanIAC, 4)
+eset_summary["eset_raw_iac",2:4] <- c(nsamp,nprobe,IAC)
+
+rm("datExprs0","iac_outlierSamples")
 gc()
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
@@ -447,75 +546,135 @@ cat(" Start background correction ", "\r","\n")
 sig <- paste(out_dir,"/",project_name,".eset_raw_exprsSignal.txt",sep="")
 neg <- paste(out_dir,"/",project_name,".eset_raw_negative.control.txt",sep="")
 
+#############################################################
 ## get negative control bead data
+#############################################################
 cat(" get negative control bead data","\r","\n")
 
 negativeControl <- getControlData(eset_raw_iac)
 negativeControl <- subset(negativeControl, negativeControl$controlType=="NEGATIVE")
 negativeControl_orig <- negativeControl[,c(3:dim(negativeControl)[2])]
 
+#############################################################
 ## removing outlier neg beads and replace with mean
+#############################################################
 negativeControl <- apply(negativeControl_orig ,2, negBeadOutlierRepMean)
 
 neg_max <- apply(negativeControl,2,max)
 neg_sd <- apply(negativeControl,2,sd)
 neg_mean <- apply(negativeControl,2,mean)
 
-
+#############################################################
 ## save negativeControl bead expression data
+#############################################################
 write.table(negativeControl, file=neg, sep="\t");
 
+#############################################################
 ## get expression data
+#############################################################
 cat(" get expression bead data ","\r","\n")
 
 expressionSignal <- exprs(eset_raw_iac)
 
+#############################################################
 ## save expression data
+#############################################################
 write.table(expressionSignal, file=sig, sep="\t");
 
+#############################################################
 ## set data for mbcb
+#############################################################
 cat(" set data for mbcb ","\r","\n")
 
 data <- mbcb.parseFile(sig, neg);
 
 signal <- data$sig;
 negCon <- data$con;
-     
+
+#############################################################     
 ## run mbcb
+#############################################################
 cat(" run background correct using mbcb  ","\r","\n")
 
 gx_mbcb <- mbcb.correct(signal,negCon,npBool=TRUE,mleBool=TRUE, isRawBead=FALSE)
 
+###############
+## save mbcb ##
+###############
 cat(" saveing raw mbcb data to ",paste(out_dir,"/",project_name,".eset_raw.mbcb.RData",sep=""), "\r","\n")
 
 save(gx_mbcb , file=paste(out_dir,"/",project_name,".eset_raw.mbcb.correct.RData",sep=""))
+
+cat(" mbcb complete ","\r","\n")
+
+################################
+## select mbcb method results ##
+################################
+cat(" Selected mbcb method to save: ",mbcb_method,"\r","\n")
 
 if(mbcb_method=="NP") { gx_mbcb <- gx_mbcb$NP }
 
 if(mbcb_method=="MLE") { gx_mbcb <- gx_mbcb$MLE }
 
-cat(" mbcb complete ","\r","\n")
 
-## replace names with original as R adds "X" to numbers
+#############################################################
+## replace names with original as R adds "X" to numbers #####
+#############################################################
 
-cat(" replace names with original sampleNames(eset_raw) as R adds X to numbers ","\r","\n")
+cat(" replace names with original sampleNames(eset_raw), as R adds X to numbers ","\r","\n")
 
 colnames(gx_mbcb) <- sampleNames(eset_raw_iac)
 
+#############################################################
 ## make new eset for bk corrected data
+#############################################################
 
-cat(" Creating Background Corrected Data set: bgCor_lumiBatch ","\r","\n")
+cat(" Creating Background Corrected Data set: eset_bkcor  ","\r","\n")
 
 eset_bkcor <- eset_raw_iac
 
+#############################################################
 ## replace old exprs data with new mbcb bk corrected data
+#############################################################
 cat(" replace old exprs data with new mbcb Background corrected data ","\r","\n")
 
 exprs(eset_bkcor) <- as.matrix(gx_mbcb)
 
 cat(" Saveing Background Corrected Data set: ",paste(out_dir,"/",project_name,".eset_bkcor.RData",sep=""),"\r","\n")
 
+####################################
+## SAVE BACKGROUND CORRECTED DATA ##
+####################################
 save(eset_bkcor, file=paste(out_dir,"/",project_name,".eset_bkcor.RData",sep="")  , compress=T)
+
+########################################
+## beadNum, detection, exprs, se.exprs #
+########################################
+cat(" Writing eset_bkcor [beadNum, detection, exprs, se.exprs] data to file ", paste(out_dir,"/",project_name,".eset_bkcor.[beadNum, detection, exprs, se.exprs].txt",sep=""), "\r","\n")
+
+gx <- exprs(eset_bkcor)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset_bkcor),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(out_dir,"/",project_name,".eset_bkcor.exprs.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+gx <- se.exprs(eset_bkcor)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset_bkcor),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(out_dir,"/",project_name,".eset_bkcor.se.exprs.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+gx <- detection(eset_bkcor)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset_bkcor),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(out_dir,"/",project_name,".eset_bkcor.detection.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+gx <- beadNum(eset_bkcor)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset_bkcor),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(out_dir,"/",project_name,".eset_bkcor.beadNum.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
 
 #############################
 ## PLOTS POST bkcor        ##
@@ -573,40 +732,53 @@ cat(" meanIAC pre  IAC QC: ", preIAC, "\r","\n")
 cat(" meanIAC post IAC QC: ", postIAC,"\r","\n")
 cat(" meanIAC post bkcor: ",  postbkcorIAC,"\r","\n")
 
+nsamp <- dim(exprs(eset_bkcor))[2]
+nprobe <- dim(exprs(eset_bkcor))[1]
+IAC <- round(iac_outlierSamples$meanIAC, 4)
+
+eset_summary["eset_bkcor",2:4] <- c(nsamp,nprobe,IAC)
+
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+
 ##################################
 ## Sex Check based on XIST GENE ##
 ##################################
-
 cat(" Checking Gender based on XIST gene expression","\r","\n")
 
-##load(paste(out_dir,"/",project_name,".eset_raw_postIAC.RData",sep=""))
-##load(paste(out_dir,"/",project_name,".eset_bkcor.RData",sep=""))
-
+#####################################################
 ## get neg control data from eset_bkcor
+#####################################################
 negativeControl <- getControlData(eset_bkcor)
 negativeControl <- subset(negativeControl, negativeControl$controlType=="NEGATIVE")
 negativeControl <- negativeControl[,c(3:dim(negativeControl)[2])]
 
+#####################################################
 ## get neg control info mean,sd,max etc
+#####################################################
 neg_max <- apply(negativeControl,2,max)
 neg_sd <- apply(negativeControl,2,sd)
 neg_mean <- apply(negativeControl,2,mean)
 neg_2sd <- neg_mean + 2*neg_sd
 
+#####################################################
 ## get XIST gene postion
+#####################################################
 xist_raw <- fData(eset_raw_iac)$ILMN_GENE=="XIST";
 
 xist_bkcor <- fData(eset_bkcor)$ILMN_GENE=="XIST";
 
+#####################################################
 ## get XIST gene expression signal
+#####################################################
 xist_gx_raw  <- exprs(eset_raw_iac[xist_raw, ]  ) 
 xist_gx_raw <- as.data.frame( t(xist_gx_raw)); 
 
 xist_gx_bkcor <- exprs(eset_bkcor[xist_bkcor , ]  ) 
 xist_gx_bkcor <- as.data.frame( t(xist_gx_bkcor)); 
 
+#####################################################
 ## cobine raw and bkCro gx data
+#####################################################
 xist_gx <- cbind(xist_gx_raw,xist_gx_bkcor)
 
 colnames(xist_gx) <- c("raw_XIST","bkcor_XIST")
@@ -619,7 +791,9 @@ xist_gx$neg_mean <- neg_mean
 
 xist_gx$neg_sd <- neg_sd
 
+#####################################################
 ## gender based on XIST expression 1=female , 0 = male
+#####################################################
 xist_gx$XIST_Gender_max <- ifelse(xist_gx$bkcor_XIST > xist_gx$neg_max,1,0)
 
 xist_gx$XIST_Gender_2sd <- ifelse(xist_gx$bkcor_XIST > xist_gx$neg_2sd,1,0)  ### THIS WORKS!! IF GENE IS > 2SD_NEG_BEAD THEN ITS EXPRESSED/DETECTED!
@@ -634,7 +808,7 @@ xist_gx$xist_gender <- ifelse(xist_gx$bkcor_XIST > xist_gx$neg_2sd,"Female","Mal
 
 head(xist_gx)
 
-pdf(file=paste(out_dir,"/",project_name,".bgCor_lumiBatch.XIST.pdf",sep=""),height=8,width-11)
+pdf(file=paste(out_dir,"/",project_name,".bgCor_lumiBatch.XIST.pdf",sep=""),height=8,width=11)
 plot(xist_gx$bkcor_XIST, type="p", col=2+xist_gx$XIST_Gender_2sd, pch=19 , cex=0.6);points(xist_gx$neg_2sd,col="blue", type="l")
 dev.off()
 
@@ -642,9 +816,12 @@ pData(eset_bkcor)$xist_gender <- xist_gx$xist_gender
 
 save(xist_gx, file=paste(out_dir,"/",project_name,".bgCor_lumiBatch.XIST.RData",sep=""))
 
-write.table(xist_gx, file=paste(out_dir,"/",project_name,".bgCor_lumiBatch.XIST.csv",sep=""),sep=",",row.names=F)
+write.table(xist_gx, file=paste(out_dir,"/",project_name,".bgCor_lumiBatch.XIST.txt",sep=""),sep="\t",row.names=F)
 
+#####################################################
 ## check sex 
+#####################################################
+###pData(eset_bkcor)$SEX <- pData(eset_bkcor)$xist_gender
 
 pData(eset_bkcor)$gender_missmatch <- ifelse( pData(eset_bkcor)$xist_gender == pData(eset_bkcor)$SEX, "PASS","GENDER_MISSMATCH" ) 
 
@@ -658,44 +835,79 @@ if ( n_gender_fails > 0 ) {
   cat(" Congratulations! \n All your Males are Male and Females are Female. \n You have NO GENDER_MISSMATCH samples!!!", "\r","\n")
 }
 
-
 #--------------------------------------------------------------------------------------------------------------------------------------------------------#
-############################
-## PROBE ABOVE BACKGROUND ##
-############################
 
-cat(" Calculating Probde Detection rates. \n Probe is seen as Detected if it has signal intensity >= 2SD of the mean intensity of the negative control beads","\r","\n")
+##############################################
+## PROBE DETECTED 2SD ABOVE MEAN BACKGROUND ##
+##############################################
 
+cat(" Calculating Probe Detection rates. \n Probe is seen as Detected if it has background corrected signal intensity >= 2SD of the mean intensity of the negative control beads","\r","\n")
+
+#####################################################
 ## get expression matrix
+#####################################################
 gx <- exprs(eset_bkcor)
 
+#####################################################
 ## get negative bead ranges mean or max or >2SD mean  of neg beads
-
+#####################################################
 neg_2sd <- neg_mean + 2*neg_sd
 
-## sweep through gx matrix to id probes > 2SD Mean of 
+#######################################################################
+## sweep through gx matrix to id probes > 2SD Mean of negative beads  
+#######################################################################
 det <- sweep(gx, 1, neg_2sd,">=")
 
+##########################################
+## Writing Probe Detection Calls to file #
+##########################################
+det_tmp  <- as.data.frame(det)
+
+det_tmp$nuID <- rownames(det_tmp)
+
+probe_detected <- merge(fData(eset_bkcor), det_tmp , by.x="nuID",by.y="nuID",sort=FALSE)
+
+cat(" Writing Probe Detection Calls to",paste(out_dir,"/",project_name,".eset_bkcor.probe_detected.txt",sep="") ,"\r","\n")
+
+write.table(probe_detected , file=paste(out_dir,"/",project_name,".eset_bkcor.probe_detected.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+rm("det_tmp")
+
+#####################################################
 ## probe_detection counts
+#####################################################
 probe_detection <- rowSums(det)
 
-## probes_not_detected_in_any_sample
+##########################################
+## n samples
+##########################################
 n_samples <- dim(gx)[2]
 
+#####################################################
 ## probe annotations 
+#####################################################
+
 probes_not_detected_in_any_sample <- probe_detection==0
+
 probes_detected_in_80_sample <- probe_detection>=n_samples*0.80
+
 probes_detected_in_all_sample <- probe_detection==n_samples 
 
 probe_annotations_0_detected <- fData(eset_bkcor[probes_not_detected_in_any_sample,])
+
 probe_annotations_80_detected  <- fData(eset_bkcor[probes_detected_in_80_sample ,])
+
 probe_annotations_100_detected  <- fData(eset_bkcor[probes_detected_in_all_sample,])
 
+cat(" Adding detetion call rate for all probes and samples to fData() slot for eset_bkcor","\r","\n")
+
 fData(eset_bkcor)$n_detected <- probe_detection 
+
 fData(eset_bkcor)$n_detected_call_rate <- round( probe_detection/n_samples ,3)
 
-
+#####################################################
 ## sample_detection counts
+#####################################################
 n_probes <- dim(eset_bkcor)[1]
 
 sample_detection <- colSums(det)
@@ -704,26 +916,32 @@ pData(eset_bkcor)$n_probes_detected <- sample_detection
 
 pData(eset_bkcor)$n_probes_detected_call_rate <- round( sample_detection/n_probes ,3)
 
-plot(pData(eset_bkcor)$n_probes_detected_call_rate)
-
-plot(pData(eset_bkcor)$n_probes_detected ,pData(eset_bkcor)$Detected.Genes..0.01.)
+##plot(pData(eset_bkcor)$n_probes_detected_call_rate)
+##plot(pData(eset_bkcor)$n_probes_detected ,pData(eset_bkcor)$Detected.Genes..0.01.)
 
 save(eset_bkcor, file=paste(out_dir,"/",project_name,".eset_bkcor.RData",sep=""))
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------#
-## get group information from pData() slot 
 
+#####################################################
+## get group information from pData() slot 
+#####################################################
 group_names <- unique(pData(eset_bkcor)$GROUPS);
 
 groups  <- pData(eset_bkcor)$GROUPS
 
 n_groups <- length(group_names)
 
-##
+###########################
+## get expression matrix ##
+###########################
 gx <- exprs(eset_bkcor)
 
-## loop through each group and id probes > 2SD mean neg beads in X% of samples/group 
+neg_2sd <- as.numeric(neg_2sd)
 
+##########################################################################################
+## loop through each group and id probes > 2SD mean neg beads in X% of samples/group 
+##########################################################################################
 for(n in group_names ) {
 
 cat(" Finding probes in ",probe_det," of sample group [",n,"] with signal intensity >= 2SD mean intensity of the negative control beads ","\r","\n")
@@ -753,9 +971,12 @@ colnames(det_probes) <- c("nuID")
 write.table( det_probes ,file=paste(out_dir,"/",project_name,".GROUP.",group_label,".detected_probes_nuID.txt",sep=""),row.names=FALSE,quote=FALSE,col.names=FALSE)
 
 }
-#--------------------------------------------------------------------------------------------------------------------------------------------------------#
-## Y CHROM EXPRESSION IN XIST MALES
 
+#--------------------------------------------------------------------------------------------------------------------------------------------------------#
+
+#####################################################
+## Y CHROM EXPRESSION IN XIST MALES
+#####################################################
 cat(" Y Chromosome probe detection based on XIST males","\r","\n")
 
 xist_males <- pData(eset_bkcor)$xist_gender=="Male"
@@ -775,7 +996,10 @@ colnames(y_det_probes) <- c("nuID")
 write.table( y_det_probes ,file=paste(out_dir,"/",project_name,".GROUP.Y.detected_probes_nuID.txt",sep=""),row.names=FALSE,quote=FALSE,col.names=FALSE)
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------#
-#######################
+
+#####################################################
+## writing final good probe list 
+######################################################
 
 cat(" writing final good probe list to ",paste(out_dir,"/",project_name,".detected_probes_nuID_final.txt",sep=""),"\r","\n")
 
@@ -803,12 +1027,12 @@ cat(" saving good probe annotations to ",paste(out_dir,"/",project_name,".detect
 
 save(good_probes_annotation, file=paste(out_dir,"/",project_name,".detected_probes_nuID_final.RData",sep="") )
 
-write.table(good_probes_annotation, file=paste(out_dir,"/",project_name,".detected_probes_nuID_final.tsv",sep=""),quote=F,sep="\t",row.names=F )
+write.table(good_probes_annotation, file=paste(out_dir,"/",project_name,".detected_probes_nuID_final.txt",sep=""),quote=F,sep="\t",row.names=F )
+
 #--------------------------------------------------------------------------------------------------------------------------------------------------------#
 
-
 ####################################################################
-# 8. vst transform 
+# Transform 
 ####################################################################
 
 cat(" TRANSFORM DATA. Method =",transform_method,"\r","\n")
@@ -822,10 +1046,43 @@ if(transform_method=="log2") {
   eset_lumiT  <- lumiT(eset, ifPlot = FALSE, method="log2" )
 }
 
-## SAVE
+################################
+## SAVE transform 
+################################
 save(eset_lumiT , file=paste(out_dir,"/",project_name,".eset_lumiT.RData",sep="") )
 
-## PLOTS ##
+########################################
+## beadNum, detection, exprs, se.exprs #
+########################################
+cat(" Writing eset_lumiT [beadNum, detection, exprs, se.exprs] data to file ", paste(out_dir,"/",project_name,".eset_lumiT.[beadNum, detection, exprs, se.exprs].txt",sep=""), "\r","\n")
+
+gx <- exprs(eset_lumiT)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset_lumiT),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(out_dir,"/",project_name,".eset_lumiT.exprs.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+gx <- se.exprs(eset_lumiT)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset_lumiT),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(out_dir,"/",project_name,".eset_lumiT.se.exprs.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+gx <- detection(eset_lumiT)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset_lumiT),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(out_dir,"/",project_name,".eset_lumiT.detection.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+gx <- beadNum(eset_lumiT)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset_lumiT),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(out_dir,"/",project_name,".eset_lumiT.beadNum.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+###############################
+## PLOTS OF TRANSFORMED DATA ##
+###############################
 qc_plots_pdf <- paste(out_dir,"/",project_name,".eset_lumiT.qc.plots.pdf",sep="")
 chip_col <- labels2colors( as.character(pData(eset_lumiT  )$Sentrix.Barcode))
 cat(" Start basic QC plots of eset_lumiT. Saved to: ",qc_plots_pdf,"\r","\n")
@@ -843,7 +1100,9 @@ dev.off()
 cat(" finished basic QC plots of eset_lumiT Saved to: ",qc_plots_pdf,"\r","\n")
 rm("datExprs0","tmp_iac","pca_raw");
 gc()
-## iac
+###############################
+## IAC OF TRANSFORMED DATA ##
+###############################
 cat(" Checking IAC after eset_lumiT ","\n","\n")
 rm("iac_outlierSamples")
 datExprs0 <- exprs(eset_lumiT) 
@@ -853,9 +1112,10 @@ plot(iac_outlierSamples$samplemeanIAC)
 dev.off()
 eset_lumiT_IAC <- iac_outlierSamples$meanIAC
 cat(" meanIAC post VST: ",  eset_lumiT_IAC,"\r","\n")
-
-
-
+nsamp <- dim(exprs(eset_lumiT))[2]
+nprobe <- dim(exprs(eset_lumiT))[1]
+IAC <- round(iac_outlierSamples$meanIAC, 4)
+eset_summary["eset_lumiT",2:4] <- c(nsamp,nprobe,IAC)
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------#
 
@@ -872,10 +1132,44 @@ if(norm_method=="rsn") {
 if(norm_method=="quantile") {
   eset_lumiN  <- lumiN(eset_lumiT, ifPlot = FALSE, method="quantile" )
 }
-## SAVE
+
+########################################
+## SAVE normalise
+########################################
 save(eset_lumiN , file=paste(out_dir,"/",project_name,".eset_lumiN.RData",sep="") )
 
-## PLOTS ##
+########################################
+## beadNum, detection, exprs, se.exprs #
+########################################
+cat(" Writing eset_lumiT [beadNum, detection, exprs, se.exprs] data to file ", paste(out_dir,"/",project_name,".eset_lumiT.[beadNum, detection, exprs, se.exprs].txt",sep=""), "\r","\n")
+
+gx <- exprs(eset_lumiN)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset_lumiN),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(out_dir,"/",project_name,".eset_lumiN.exprs.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+gx <- se.exprs(eset_lumiN)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset_lumiN),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(out_dir,"/",project_name,".eset_lumiN.se.exprs.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+gx <- detection(eset_lumiN)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset_lumiN),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(out_dir,"/",project_name,".eset_lumiN.detection.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+gx <- beadNum(eset_lumiN)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset_lumiN),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(out_dir,"/",project_name,".eset_lumiN.beadNum.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+###############################
+## PLOTS OF normalised DATA ##
+###############################
 qc_plots_pdf <- paste(out_dir,"/",project_name,".eset_lumiN.qc.plots.pdf",sep="")
 chip_col <- labels2colors( as.character(pData(eset_lumiN  )$Sentrix.Barcode))
 cat(" Start basic QC plots of eset_lumiN. Saved to: ",qc_plots_pdf,"\r","\n")
@@ -893,7 +1187,9 @@ dev.off()
 cat(" finished basic QC plots of eset_lumiN Saved to: ",qc_plots_pdf,"\r","\n")
 rm("datExprs0","tmp_iac","pca_raw");
 gc()
-## iac
+###############################
+## IAC OF normalised DATA ##
+###############################
 cat(" Checking IAC after eset_lumiN ","\n","\n")
 rm("iac_outlierSamples")
 datExprs0 <- exprs(eset_lumiN) 
@@ -903,29 +1199,249 @@ plot(iac_outlierSamples$samplemeanIAC)
 dev.off()
 eset_lumiN_IAC <- iac_outlierSamples$meanIAC
 cat(" meanIAC post normalise: ",  eset_lumiN_IAC,"\r","\n")
+nsamp <- dim(exprs(eset_lumiN))[2]
+nprobe <- dim(exprs(eset_lumiN))[1]
+IAC <- round(iac_outlierSamples$meanIAC, 4)
+eset_summary["eset_lumiN",2:4] <- c(nsamp,nprobe,IAC)
+eset_summary
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------#
 
-## IAC on eset_lumiN
+################################################
+## make final data set : remove bad probes 
+################################################
 
 eset_final <- eset_lumiN[good_probes,]
 
+#####################
+## SAVE FINAL DATA ##
+#####################
 save(eset_final , file=paste(out_dir,"/",project_name,".eset_final.RData",sep="") )
 
+########################################
+## beadNum, detection, exprs, se.exprs #
+########################################
+cat(" Writing eset_final [beadNum, detection, exprs, se.exprs] data to file ", paste(out_dir,"/",project_name,".eset_final.[beadNum, detection, exprs, se.exprs].txt",sep=""), "\r","\n")
 
+gx <- exprs(eset_final)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset_final),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(out_dir,"/",project_name,".eset_final.exprs.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+gx <- se.exprs(eset_final)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset_final),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(out_dir,"/",project_name,".eset_final.se.exprs.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+gx <- detection(eset_final)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset_final),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(out_dir,"/",project_name,".eset_final.detection.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+gx <- beadNum(eset_final)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset_final),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(out_dir,"/",project_name,".eset_final.beadNum.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+###############################
+## PLOTS OF FINAL DATA ##
+###############################
+qc_plots_pdf <- paste(out_dir,"/",project_name,".eset_final.qc.plots.pdf",sep="")
+chip_col <- labels2colors( as.character(pData(eset_final  )$Sentrix.Barcode))
+cat(" Start basic QC plots of eset_lumiN. Saved to: ",qc_plots_pdf,"\r","\n")
+datExprs0 <- exprs(eset_final) 
+cat(" calculate pca for plots ")
+pca_raw <- prcomp(t(datExprs0))$x
+cat(" plotting... ","\r","\n")
+pdf(qc_plots_pdf, width=16.5,height=11.7) ## A3 
+plot(eset_final, what='boxplot', main=paste(project_name," eset_final Boxplot",sep=""), col=chip_col )
+plot(eset_final, what='density', main=paste(project_name," eset_final Density",sep="") )
+plot(eset_final, what='cv',main=paste(project_name," eset_raw density plot of coefficient of varience",sep="")  )
+scatterplot3d(pca_raw[,"PC1"],pca_raw[,"PC2"],pca_raw[,"PC3"], main="3D Scatterplot coloured by chip ",color=chip_col)
+tmp_iac <- outlierSamples(datExprs0,thresh=iac_sd_thrs, showplots=TRUE)
+dev.off()
+cat(" finished basic QC plots of eset_final Saved to: ",qc_plots_pdf,"\r","\n")
+rm("datExprs0","tmp_iac","pca_raw");
+gc()
+###############################
+## IAC OF FINAL DATA ##
+###############################
+cat(" Checking IAC after eset_lumiN ","\n","\n")
+rm("iac_outlierSamples")
+datExprs0 <- exprs(eset_final) 
+pdf(file=paste(out_dir,"/",project_name,".eset_final.iac_outliers.pdf",sep=""), width=8,height=6 )
+iac_outlierSamples <-  outlierSamples(datExprs0,thresh=iac_sd_thrs, showplots=T) ## optional :- but worth one round of outlier detection
+plot(iac_outlierSamples$samplemeanIAC)
+dev.off()
+eset_final_IAC <- iac_outlierSamples$meanIAC
+cat(" meanIAC post normalise and removal of bad probes: ",  eset_final_IAC,"\r","\n")
+nsamp <- dim(exprs(eset_final))[2]
+nprobe <- dim(exprs(eset_final))[1]
+IAC <- round(iac_outlierSamples$meanIAC, 4)
+eset_summary["eset_final",2:4] <- c(nsamp,nprobe,IAC)
+eset_summary
+
+
+iac_outlierSamples$samples_to_remove
+summary(iac_outlierSamples$samples_to_remove)
+
+[1] "dataClean"         "IAC"               "meanIAC"          
+[4] "meanIACdiag"       "samplemeanIAC"     "numbersd"         
+[7] "clust"             "samples_to_remove"
+
+#--------------------------------------------------------------------------------------------------------------------------------------------------------#
+
+######################
+## BATCH CORRECTION ##
+######################
+tech_pheno_file <- "sample_tech_info.txt"
+
+if(batch_correct=="1") {
+
+cat(" Starting batch correction","\n","\r")
+
+gx <- exprs(eset_lumiN)
+
+gx <- t(gx)
+
+cat(" Reading in technical information on eg [Sample.ID, RIN, RNA_YIELD, BATCH, CHIP, DATE_CHIP_RUN, DATE_RNA_EXTRACTED] ",tech_pheno_file ,"\n","\r")
+
+tech_pheno <- read.table(tech_pheno_file,head=TRUE,sep="\t") ## Sample.ID,RIN,RNA_YIELD,BATCH,CHIP, DATE_CHIP_RUN,DATE_RNA_EXTRACTED
+
+pdata <- pData(eset_lumiN)
+
+pdata <- as.data.frame(pdata[,c("Sample.ID","Index")])
+
+colnames(pdata) <- c("Sample.ID","Index")
+
+tech_pheno <- merge( pdata, tech_pheno, by.x="Sample.ID", by.y="Sample.ID", sort=FALSE, all.x=TRUE)
+
+tech_batch <- tech_pheno[,3:dim(tech_pheno)[2]]
+
+head(tech_batch)
+
+######################
+## get names of var ##
+######################
+batch_var <- names(tech_batch)
+
+##########################
+## which ones are dates ##
+##########################
+date_vars <- grep("Date",batch_var)
+
+#############
+## Run PCA ##
+#############
+cat(" Running PCA on t(exprs(eset)) ","\n","\r")
+
+pca_gx <- prcomp(gx)$x
+
+pca_gx <- pca_gx[,"PC1"]
+
+
+#################################################
+## Test for association of batch vars with PC1 ##
+#################################################
+cat(" Testing for batch N association with PC1","\n","\r"
+
+if(lm_methos=="multivariate") {
+
+lm_batch <- lm(PC1 ~ tech_batch ,data=tech_pheno)
+
+anova_lm_batch <- anova(lm_batch)
+
+summary_lm_batch <- summary(lm_batch)$coef
+
+varexp <-
+
+most_sig_tech_batch <- 
+
+other_sig_tech_batches <- 
+
+} else{
+
+
+
+}
+
+##############################################################
+## Start corrections based on most sig associated batch var ##
+##############################################################
+
+if(correct_method=="combat") {}
+
+if(correct_method=="regression") {}
+
+#####################
+## Correct for all ##
+#####################
+if(correct_method=="combat_and_regression") { do combat then regress out other sig batches from data} 
+  
+} else{
+
+cat(" Skipping batch correction!","\n","\r")
+
+}
+
+
+#--------------------------------------------------------------------------------------------------------------------------------------------------------#
+
+######################
+## SAVE ESET_SUMMARY #
+######################
+
+cat(" Writing summary information on pre-processing steps to ",paste(out_dir,"/",project_name,".eset_summary.txt",sep=""),"\r","\n")
+
+save(eset_summary, file=paste(out_dir,"/",project_name,".eset_summary.RData",sep=""))
+
+write.table(eset_summary, file=paste(out_dir,"/",project_name,".eset_summary.txt",sep=""),quote=FALSE,sep="\t",row.names=FALSE)
+
+eset_summary <- as.data.frame(eset_summary)
+
+print(eset_summary)
+
+#--------------------------------------------------------------------------------------------------------------------------------------------------------#
+
+#########################
+## END PRE_PROCESSING! ##
+#########################
 
 cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
 cat(" END PRE_PROCESSING!" ,"\r","\n")
 cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
-##
+
+#--------------------------------------------------------------------------------------------------------------------------------------------------------#
+
+###########
+## CHMOD ##
+###########
 system( paste(" chmod 776 ",out_dir,"/",project_name,"***",sep=""))
 
+#--------------------------------------------------------------------------------------------------------------------------------------------------------#
+
+########################
+## PRINT SESSION INFO ##
+########################
 sessionInfo()
 
+#--------------------------------------------------------------------------------------------------------------------------------------------------------#
+
+#######################
+## CLEAN UP AND QUIT ##
+#######################
 rm(list=ls())
+gc()
+q()
+n
 
+#--------------------------------------------------------------------------------------------------------------------------------------------------------#
 
-
+)
 
 
 
