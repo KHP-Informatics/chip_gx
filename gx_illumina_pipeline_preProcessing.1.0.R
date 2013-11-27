@@ -52,6 +52,7 @@ library(limma)
 library(MBCB)
 library(lumiHumanIDMapping)
 library(scatterplot3d)
+library(relaimpo)
 source("./pre_process_gx.R")
 source("./SampleNetwork_1.0.r")
 source("./ModuleSampleNetwork_0.5.r")
@@ -109,6 +110,13 @@ iac_sd_thrs <- project_settings$iac_sd_thrs ## 2 #
 norm_method <- project_settings$norm_method ## "rsn" # quantile, rsn, or both
 transform_method <- project_settings$transform_method ## "vst" # log2, vst or both
 mbcb_method <- project_settings$mbcb_method ## NP or MLE
+
+## TO ADD ##
+lm_method <- "multivariate"
+batch_correct <- 1
+batch_correct_method <- "combat" ## 
+##
+
 
 cat(" Data Dir ",project_dir,"\r","\n")
 cat(" Set Working Dir to ", project_dir,"\r","\n")
@@ -1283,15 +1291,12 @@ nsamp <- dim(exprs(eset_final))[2]
 nprobe <- dim(exprs(eset_final))[1]
 IAC <- round(iac_outlierSamples$meanIAC, 4)
 eset_summary["eset_final",2:4] <- c(nsamp,nprobe,IAC)
-eset_summary
-
-
-iac_outlierSamples$samples_to_remove
-summary(iac_outlierSamples$samples_to_remove)
-
-[1] "dataClean"         "IAC"               "meanIAC"          
-[4] "meanIACdiag"       "samplemeanIAC"     "numbersd"         
-[7] "clust"             "samples_to_remove"
+##eset_summary
+##iac_outlierSamples$samples_to_remove
+##summary(iac_outlierSamples$samples_to_remove)
+##[1] "dataClean"         "IAC"               "meanIAC"          
+##[4] "meanIACdiag"       "samplemeanIAC"     "numbersd"         
+##[7] "clust"             "samples_to_remove"
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------#
 
@@ -1312,6 +1317,8 @@ cat(" Reading in technical information on eg [Sample.ID, RIN, RNA_YIELD, BATCH, 
 
 tech_pheno <- read.table(tech_pheno_file,head=TRUE,sep="\t") ## Sample.ID,RIN,RNA_YIELD,BATCH,CHIP, DATE_CHIP_RUN,DATE_RNA_EXTRACTED
 
+tech_pheno$Sentrix.Barcode <- as.factor(tech_pheno$Sentrix.Barcode)
+
 pdata <- pData(eset_lumiN)
 
 pdata <- as.data.frame(pdata[,c("Sample.ID","Index")])
@@ -1322,12 +1329,12 @@ tech_pheno <- merge( pdata, tech_pheno, by.x="Sample.ID", by.y="Sample.ID", sort
 
 tech_batch <- tech_pheno[,3:dim(tech_pheno)[2]]
 
-head(tech_batch)
+##head(tech_batch)
 
 ######################
 ## get names of var ##
 ######################
-batch_var <- names(tech_batch)
+batch_var_names <- names(tech_batch)
 
 ##########################
 ## which ones are dates ##
@@ -1343,29 +1350,193 @@ pca_gx <- prcomp(gx)$x
 
 pca_gx <- pca_gx[,"PC1"]
 
+PC1 <- as.numeric(pca_gx)
 
 #################################################
 ## Test for association of batch vars with PC1 ##
 #################################################
-cat(" Testing for batch N association with PC1","\n","\r"
+cat(" Testing for batch association with PC1","\n","\r"
 
-if(lm_methos=="multivariate") {
+if(lm_method=="multivariate") {
 
-lm_batch <- lm(PC1 ~ tech_batch ,data=tech_pheno)
+cat(" running full multivariate model ","\r","\n")
 
-anova_lm_batch <- anova(lm_batch)
+#############################
+## multivariate full model ##
+############################# 
+multivariate_model_terms <- paste(batch_var_names ,collapse="+")
 
+multivariate_model <- paste("PC1~",multivariate_model_terms,sep="")
+
+multivariate_model <- as.formula(multivariate_model)
+
+######################
+## multivariate lm  ##
+######################
+lm_batch <- lm(multivariate_model, data=tech_batch)
+
+###############
+## summary lm #
+###############
 summary_lm_batch <- summary(lm_batch)$coef
 
-varexp <-
+summary_lm_batch <- as.data.frame(summary_lm_batch)
 
-most_sig_tech_batch <- 
+summary_lm_batch$terms <- rownames(summary_lm_batch)
 
-other_sig_tech_batches <- 
+##########################
+## save summary lm #######
+##########################
+write.table(summary_lm_batch , file=paste(out_dir,"/",project_name,".eset_final.multivariate_model_batch_variables.csv",sep=""),row.names=FALSE,quote=FALSE, sep=",")
 
-} else{
+#########################
+## RSQUARED summary lm ##
+#########################
+lm_r2 <- round( summary(lm_batch)$adj.r.squared, 3)
+
+###########################
+## multivariate anova lm ##
+###########################
+anova_lm_batch <- anova(lm_batch)
+
+anova_lm_data <- as.data.frame(anova_lm_batch)
+
+anova_lm_data$terms <- rownames(anova_lm_data)
+
+anova_lm_data <- subset(anova_lm_data, anova_lm_data$terms!="Residuals")
+
+##################
+## plot ANOVA P ##
+##################
+pdf(file=paste(out_dir,"/",project_name,".eset_final.ANOVA_multivariate_model_batch_variables.pdf",sep=""), width=8,height=6 )
+par(mar=c(10,5,4,2))
+barplot(-log10(anova_lm_data $"Pr(>F)"), las=3, names=c(anova_lm_data$terms) , ylab="ANOVA -log10(P)", main=paste("multivariate_model. R2=",lm_r2,sep=""),cex.names=0.8,cex.main=0.8,cex.lab=1)
+abline(h=-log10(0.05),col="blue")
+abline(h=-log10(0.01),col="red")
+dev.off()
+
+###############
+## save anova #
+###############
+write.table(anova_lm_data , file=paste(out_dir,"/",project_name,".eset_final.ANOVA_multivariate_model_batch_variables.csv",sep=""),row.names=FALSE,quote=FALSE, sep=",")
 
 
+########################################################
+## most sig anova terms ################################
+########################################################
+sig_anova_lm_data <- subset(anova_lm_data, anova_lm_data$"Pr(>F)"<=0.05)
+
+sig_terms <- sig_anova_lm_data$terms 
+
+sig_terms <- paste(sig_terms ,collapse="+")
+
+sig_model <- paste("PC1~",sig_terms,sep="")
+
+sig_model <- as.formula(sig_model)
+
+new_lm <- lm( sig_model, data=tech_batch)
+
+summary_new_lm <- summary(new_lm)
+
+new_lm_r2 <- round( summary_new_lm$adj.r.squared, 3)
+
+anova_new_lm <- anova(new_lm)
+
+##################################################
+## STEP find best terms ##########################
+##################################################
+step_lm_batch <- step(lm_batch)
+
+#####################
+## summary step lm ##
+#####################
+summary_step_lm_batch <- summary(step_lm_batch)$coef
+
+summary_step_lm_batch  <- as.data.frame(summary_step_lm_batch)
+
+summary_step_lm_batch$terms <- rownames(summary_step_lm_batch)
+
+###########################
+## save summary step lm ###
+###########################
+write.table(summary_step_lm_batch, file=paste(out_dir,"/",project_name,".eset_final.step_multivariate_model_batch_variables.csv",sep=""),row.names=FALSE,quote=FALSE, sep=",")
+
+
+###############
+## anova step #
+###############
+anova_step_lm_batch <- anova(step_lm_batch)
+
+anova_data <- as.data.frame(anova_step_lm_batch)
+
+anova_data$terms <- rownames(anova_data)
+
+anova_data <- subset(anova_data, anova_data$terms!="Residuals")
+
+###################
+## RSQ anova step #
+###################
+anova_step_r2 <- round( summary(step_lm_batch)$adj.r.squared, 3)
+
+######################
+## plot ANOVA step P #
+###################### 
+pdf(file=paste(out_dir,"/",project_name,".eset_final.stepANOVA_multivariate_model_batch_variables.pdf",sep=""), width=8,height=6 )
+par(mar=c(10,5,4,2))
+barplot(-log10(anova_data$"Pr(>F)"), las=3, names=c(anova_data$terms) , ylab="ANOVA -log10(P)", main=paste(step_lm_batch$call[2]," R2=",anova_step_r2 ,sep=""),cex.names=0.8,cex.main=0.8,cex.lab=1)
+abline(h=-log10(0.05),col="blue")
+abline(h=-log10(0.01),col="red")
+dev.off()
+
+## save stepANOVA
+write.table(anova_data , file=paste(out_dir,"/",project_name,".eset_final.stepANOVA_multivariate_model_batch_variables.csv",sep=""),row.names=FALSE,quote=FALSE, sep=",")
+
+
+## new model
+new_model_terms <- anova_data$terms 
+
+new_model_terms  <- paste(new_model_terms ,collapse="+")
+
+new_model <- paste("PC1~",new_model_terms,sep="")
+
+new_model <- as.formula(new_model)
+
+
+## get terms for combat 
+batch_covars <- tech_batch[,anova_data$terms]
+
+batch_factor <- is.character(batch_covars )
+numeric_covar <- 
+ 
+       ## Obtain phenotypic data
+       pheno   <- batch_covars
+       model <- paste(names(batch_covars) ,collapse="+")
+       edata   <- exprs(eset_lumiN)
+       batch   <- as.factor(pheno$Date_out)
+       mod     <- model.matrix( ~ as.factor(batch) ,data=pheno)
+       
+       ## Correct for batch using ComBat
+       combat_edata <- ComBat(dat=edata, batch=batch, mod=mod, par.prior=TRUE, prior.plots=FALSE)
+
+
+
+} else {
+
+cat(" running full univariate model ","\r","\n")
+
+	for(pheno in batch_var_names) {
+
+	pheno_name <- paste(pheno,sep="")
+
+	model <- as.formula( paste("PC1~",pheno) )
+
+	univar_lm <- lm( model, data=tech_batch)
+
+	summary_univar_lm <- summary(univar_lm)
+
+	anova_univar_lm <- anova(univar_lm)
+
+	}
 
 }
 
@@ -1373,14 +1544,24 @@ other_sig_tech_batches <-
 ## Start corrections based on most sig associated batch var ##
 ##############################################################
 
-if(correct_method=="combat") {}
+library(sva)
 
-if(correct_method=="regression") {}
+if(batch_correct_method=="combat") {
+
+sig_batch <- 
+
+
+}
+
+if(batch_correct_method=="regression") {
+
+
+}
 
 #####################
 ## Correct for all ##
 #####################
-if(correct_method=="combat_and_regression") { do combat then regress out other sig batches from data} 
+if(batch_correct_method=="combat_and_regression") { do combat then regress out other sig batches from data} 
   
 } else{
 
