@@ -1,6 +1,5 @@
 #!/share/bin/Rscript
 
-system.time(
 
 rm(list=ls())
 
@@ -70,16 +69,17 @@ negBeadOutlierRepMean <- function(x) {
 }
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
-options(stringsAsFactors = FALSE)
+##options(stringsAsFactors = FALSE)
 
-##  args <- commandArgs(trailingOnly=TRUE);
-##  config_file <- args[1];
+args <- commandArgs(trailingOnly=TRUE);
 
-config_file <- "GAP.project.config"
+config_file <- args[1];
+
+###config_file <- "GAP.project.config"
 
 project_settings <- read.table(config_file, head=T,sep="\t",as.is=T,fill=TRUE)
 
-t(project_settings)
+##t(project_settings)
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
@@ -98,25 +98,24 @@ gs_report <- project_settings$gs_report ## "Sample_and_Control_Probe_Profile_Fin
 gs_probe <- project_settings$gs_probe ## "Group_Probe_Profile_Final_Report.txt" # genomestudio report
 gs_sample <- project_settings$gs_sample ## "sample_table_Final_Report.txt" # genomestudio report
 gs_control <- project_settings$gs_control ## "control_probe_profile_Final_Report.txt" # genomestudio report
+
 anno_table <- project_settings$anno_table ## annotation table for project
 pheno_file <- project_settings$pheno_file ## FILE NAME must contain : Sample.ID,SEX,GROUPS,TISSUE,PHENOTYPE,Study_ID
 project_name <- project_settings$project_name ## "GAP" # GAP
 out_dir <- paste(project_name,"_lumi_processing" ,sep="") # output dir for lumi process and plots
+
 probe_det <- project_settings$probe_det ## 80 # 50, 80, 90,100
 sample_det <- project_settings$sample_det ## 80 # 50,80,90,100
+
 sex_check <- project_settings$sex_check ## 1 # 1 or 0
 iac_check <- project_settings$iac_check ## 1 # 1 or 0
 iac_sd_thrs <- project_settings$iac_sd_thrs ## 2 #
+
 norm_method <- project_settings$norm_method ## "rsn" # quantile, rsn, or both
 transform_method <- project_settings$transform_method ## "vst" # log2, vst or both
 mbcb_method <- project_settings$mbcb_method ## NP or MLE
 
-## TO ADD ##
-lm_method <- "multivariate"
-batch_correct <- 1
-batch_correct_method <- "combat" ## 
-##
-
+tech_pheno_file <- project_settings$tech_pheno_file ## "sample_tech_info.txt"
 
 cat(" Data Dir ",project_dir,"\r","\n")
 cat(" Set Working Dir to ", project_dir,"\r","\n")
@@ -130,6 +129,7 @@ cat(" Sample Table Final Report:- ", gs_sample ,"\r","\n")
 cat(" Control Probe Final Report:- ", gs_control ,"\r","\n")
 cat(" Probe Annotations Final Report:- ", anno_table ,"\r","\n")
 cat(" Phenotype File:- ", pheno_file ,"\r","\n")
+cat(" Batch & Technical Phenotype File:- ", tech_pheno_file ,"\r","\n")
 cat(" Probe Detection Call Rate:- ", probe_det ,"\r","\n")
 cat(" Sample Detection Call Rate:- ", sample_det ,"\r","\n")
 cat(" Sex Check:- ",sex_check,"\n","\r")
@@ -138,7 +138,7 @@ cat(" IAC Check SD Threshold:- ",iac_sd_thrs,"\n","\r")
 cat(" Transformation Method:- ",transform_method,"\r","\n")
 cat(" Normalisation Method:- ",norm_method,"\r","\n")
 
-cat(" Making processing directory. mkdir ./",out_dir,"\r","\n")
+cat(" Making processing directory:- ",paste(" mkdir ./",out_dir,sep=""),"\r","\n")
 
 system( paste(" mkdir ./",out_dir,sep="") )
 
@@ -1300,14 +1300,20 @@ eset_summary["eset_final",2:4] <- c(nsamp,nprobe,IAC)
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------#
 
-######################
-## BATCH CORRECTION ##
-######################
-tech_pheno_file <- "sample_tech_info.txt"
+########################
+## BATCH REGRESSIONS ##
+#######################
 
-if(batch_correct=="1") {
+## making this a requirement if [tech_pheno_file] then do this
+## test for assoc of PHENO with PC1 and batches, test for association of PC1 with batches 
 
-cat(" Starting batch correction","\n","\r")
+## tech_pheno_file <- "sample_tech_info.txt"
+
+if( !is.na(tech_pheno_file)==TRUE ) {
+
+cat(" Starting batch versus PC1 and PHENOTYPE Rregressions ","\n","\r")
+
+cat(" Getting Gene expression matrix ","\n","\r")
 
 gx <- exprs(eset_lumiN)
 
@@ -1350,30 +1356,43 @@ pca_gx <- prcomp(gx)$x
 
 pca_gx <- pca_gx[,"PC1"]
 
+################################
+## PHENOTYPES FOR REGRESSIONS ##
+################################
+
 PC1 <- as.numeric(pca_gx)
+
+PHENOTYPE <- as.numeric(as.factor(pData(eset_lumiN)$PHENOTYPE))
+
+GROUPS <-    as.numeric(as.factor(pData(eset_lumiN)$GROUPS))
 
 #################################################
 ## Test for association of batch vars with PC1 ##
 #################################################
-cat(" Testing for batch association with PC1","\n","\r"
-
-if(lm_method=="multivariate") {
-
-cat(" running full multivariate model ","\r","\n")
 
 #############################
 ## multivariate full model ##
 ############################# 
+
 multivariate_model_terms <- paste(batch_var_names ,collapse="+")
 
-multivariate_model <- paste("PC1~",multivariate_model_terms,sep="")
+for(pheno in c("PC1","PHENOTYPE","GROUPS") ) {
+
+multivariate_model <- paste(pheno,"~",multivariate_model_terms,sep="")
 
 multivariate_model <- as.formula(multivariate_model)
+
+cat(" running full multivariate models ",pheno," ~ multivariate_model ", "\r","\n")
 
 ######################
 ## multivariate lm  ##
 ######################
 lm_batch <- lm(multivariate_model, data=tech_batch)
+
+#########################
+## RSQUARED summary lm ##
+#########################
+lm_r2 <- round( summary(lm_batch)$adj.r.squared, 3)
 
 ###############
 ## summary lm #
@@ -1384,18 +1403,17 @@ summary_lm_batch <- as.data.frame(summary_lm_batch)
 
 summary_lm_batch$terms <- rownames(summary_lm_batch)
 
+summary_lm_batch$significant <- ifelse(summary_lm_batch$"Pr(>|t|)"<=0.05,1,0)
+
+summary_lm_batch$model_rsq <- lm_r2 
+
 ##########################
 ## save summary lm #######
 ##########################
-write.table(summary_lm_batch , file=paste(out_dir,"/",project_name,".eset_final.multivariate_model_batch_variables.csv",sep=""),row.names=FALSE,quote=FALSE, sep=",")
-
-#########################
-## RSQUARED summary lm ##
-#########################
-lm_r2 <- round( summary(lm_batch)$adj.r.squared, 3)
+write.table(summary_lm_batch , file=paste(out_dir,"/",project_name,".eset_final.",pheno,".multivariate_model_batch_variables.csv",sep=""),row.names=FALSE,quote=FALSE, sep=",")
 
 ###########################
-## multivariate anova lm ##
+## multivariate ANOVA    ##
 ###########################
 anova_lm_batch <- anova(lm_batch)
 
@@ -1408,7 +1426,7 @@ anova_lm_data <- subset(anova_lm_data, anova_lm_data$terms!="Residuals")
 ##################
 ## plot ANOVA P ##
 ##################
-pdf(file=paste(out_dir,"/",project_name,".eset_final.ANOVA_multivariate_model_batch_variables.pdf",sep=""), width=8,height=6 )
+pdf(file=paste(out_dir,"/",project_name,".eset_final.",pheno,".ANOVA_multivariate_model_batch_variables.pdf",sep=""), width=8,height=6 )
 par(mar=c(10,5,4,2))
 barplot(-log10(anova_lm_data $"Pr(>F)"), las=3, names=c(anova_lm_data$terms) , ylab="ANOVA -log10(P)", main=paste("multivariate_model. R2=",lm_r2,sep=""),cex.names=0.8,cex.main=0.8,cex.lab=1)
 abline(h=-log10(0.05),col="blue")
@@ -1416,36 +1434,32 @@ abline(h=-log10(0.01),col="red")
 dev.off()
 
 ###############
-## save anova #
+## save ANOVA #
 ###############
-write.table(anova_lm_data , file=paste(out_dir,"/",project_name,".eset_final.ANOVA_multivariate_model_batch_variables.csv",sep=""),row.names=FALSE,quote=FALSE, sep=",")
+write.table(anova_lm_data , file=paste(out_dir,"/",project_name,".eset_final.",pheno,".ANOVA_multivariate_model_batch_variables.csv",sep=""),row.names=FALSE,quote=FALSE, sep=",")
 
+############################################################
+## test for sig ANOVA terms ################################
+############################################################
 
-########################################################
-## most sig anova terms ################################
-########################################################
-sig_anova_lm_data <- subset(anova_lm_data, anova_lm_data$"Pr(>F)"<=0.05)
+min_anova_p <- min(anova_lm_data$"Pr(>F)")
 
+if(min_anova_p <= 0.05) { 
+
+sig_anova_lm_data <- subset(anova_lm_data, anova_lm_data$"Pr(>F)"<=0.05) 
+most_sig_term <- sig_anova_lm_data$terms[sig_anova_lm_data$"Pr(>F)"==min_anova_p]
 sig_terms <- sig_anova_lm_data$terms 
+sig_terms <- paste(sig_terms ,collapse=" + ")
 
-sig_terms <- paste(sig_terms ,collapse="+")
-
-sig_model <- paste("PC1~",sig_terms,sep="")
-
-sig_model <- as.formula(sig_model)
-
-new_lm <- lm( sig_model, data=tech_batch)
-
-summary_new_lm <- summary(new_lm)
-
-new_lm_r2 <- round( summary_new_lm$adj.r.squared, 3)
-
-anova_new_lm <- anova(new_lm)
+cat(" WARNING!: SIGNIFICANT ASSOCIATION BETWEEN [ ",pheno," ] ~ [",sig_terms," ]. R2=",lm_r2 ," [",most_sig_term,"] MIN_P=",min_anova_p,". YOU MAY WANT TO CORRECT FOR THIS BEFORE THE FINAL ANLYSIS ","\r","\n")   
 
 ##################################################
 ## STEP find best terms ##########################
 ##################################################
-step_lm_batch <- step(lm_batch)
+
+cat(" Finding a best model by AIC in a Stepwise Algorithm ","\r","\n" )
+
+step_lm_batch <- stepAIC(lm_batch,direction = "both")
 
 #####################
 ## summary step lm ##
@@ -1456,11 +1470,10 @@ summary_step_lm_batch  <- as.data.frame(summary_step_lm_batch)
 
 summary_step_lm_batch$terms <- rownames(summary_step_lm_batch)
 
-######################
-## save summary lm ###
-######################
-write.table(summary_step_lm_batch, file=paste(out_dir,"/",project_name,".eset_final.step_multivariate_model_batch_variables.csv",sep=""),row.names=FALSE,quote=FALSE, sep=",")
-
+###########################
+## save summary step lm ###
+###########################
+write.table(summary_step_lm_batch, file=paste(out_dir,"/",project_name,".eset_final.stepAIC_multivariate_model_batch_variables.csv",sep=""),row.names=FALSE,quote=FALSE, sep=",")
 
 ###############
 ## anova step #
@@ -1473,6 +1486,10 @@ anova_data$terms <- rownames(anova_data)
 
 anova_data <- subset(anova_data, anova_data$terms!="Residuals")
 
+best_model <- paste(anova_data$terms, collapse=" + ")
+
+##best_model <- as.formula( paste(pheno,"~",best_model,sep="") )
+
 ###################
 ## RSQ anova step #
 ###################
@@ -1481,7 +1498,7 @@ anova_step_r2 <- round( summary(step_lm_batch)$adj.r.squared, 3)
 ######################
 ## plot ANOVA step P #
 ###################### 
-pdf(file=paste(out_dir,"/",project_name,".eset_final.stepANOVA_multivariate_model_batch_variables.pdf",sep=""), width=8,height=6 )
+pdf(file=paste(out_dir,"/",project_name,".eset_final.",pheno,".stepANOVA_multivariate_model_batch_variables.pdf",sep=""), width=8,height=6 )
 par(mar=c(10,5,4,2))
 barplot(-log10(anova_data$"Pr(>F)"), las=3, names=c(anova_data$terms) , ylab="ANOVA -log10(P)", main=paste(step_lm_batch$call[2]," R2=",anova_step_r2 ,sep=""),cex.names=0.8,cex.main=0.8,cex.lab=1)
 abline(h=-log10(0.05),col="blue")
@@ -1489,86 +1506,67 @@ abline(h=-log10(0.01),col="red")
 dev.off()
 
 ## save stepANOVA
-write.table(anova_data , file=paste(out_dir,"/",project_name,".eset_final.stepANOVA_multivariate_model_batch_variables.csv",sep=""),row.names=FALSE,quote=FALSE, sep=",")
+write.table(anova_data , file=paste(out_dir,"/",project_name,".eset_final.",pheno,".stepANOVA_multivariate_model_batch_variables.csv",sep=""),row.names=FALSE,quote=FALSE, sep=",")
 
-
-## new model
-new_model_terms <- anova_data$terms 
-
-new_model_terms  <- paste(new_model_terms ,collapse="+")
-
-new_model <- paste("PC1~",new_model_terms,sep="")
-
-new_model <- as.formula(new_model)
-
-
-## get terms for combat 
-batch_covars <- tech_batch[,anova_data$terms]
-
-batch_factor <- is.character(batch_covars )
-numeric_covar <- 
- 
-       ## Obtain phenotypic data
-       pheno   <- batch_covars
-       model <- paste(names(batch_covars) ,collapse="+")
-       edata   <- exprs(eset_lumiN)
-       batch   <- as.factor(pheno$Date_out)
-       mod     <- model.matrix( ~ as.factor(batch) ,data=pheno)
-       
-       ## Correct for batch using ComBat
-       combat_edata <- ComBat(dat=edata, batch=batch, mod=mod, par.prior=TRUE, prior.plots=FALSE)
-
-
+cat(" BEST MODEL BASED ON stepAIC [",pheno,"] ~ [",best_model,"] ","\r","\n")
 
 } else {
 
-cat(" running full univariate model ","\r","\n")
+cat(" NICE!: NO SIGNIFICANT ASSOCIATION BETWEEN [ ",pheno," ] ~ [ BATCH PHENOTYPES ]","\r","\n")   
 
-	for(pheno in batch_var_names) {
+}
 
-	pheno_name <- paste(pheno,sep="")
+#######################
+## univariate models ##
+#######################
+cat(" running full univariate models ","\r","\n")
 
-	model <- as.formula( paste("PC1~",pheno) )
+for(pheno in c("PC1","GROUPS","PHENOTYPE") ) {
 
-	univar_lm <- lm( model, data=tech_batch)
+univar_results <- data.frame()
 
-	summary_univar_lm <- summary(univar_lm)
+	for(covar in batch_var_names) {
 
-	anova_univar_lm <- anova(univar_lm)
+###cat(" Starting regression [",pheno,"] ~ [ BATCH ] ","\r","\n" )
 
+		pheno_name <- paste(pheno,sep="")
+
+		model <- as.formula( paste(pheno,"~",covar) )
+
+		univar_lm <- lm( model, data=tech_batch)
+
+		summary_univar_lm <- summary(univar_lm)
+
+		rsq <- summary_univar_lm$adj.r.squared
+
+		anova_univar_lm <- anova(univar_lm)
+
+		phenotype <- pheno_name
+		covariate <- paste(covar,sep="")
+		
+		summary_univar_lm_data <- as.data.frame(coef(summary_univar_lm))
+		summary_univar_lm_data$adj.r.squared  <- rsq
+		summary_univar_lm_data$anova_F  <- anova_univar_lm$F[1]
+		summary_univar_lm_data$anova_p <- anova_univar_lm$"Pr(>F)"[1]
+		summary_univar_lm_data$terms <- rownames(summary_univar_lm_data)
+		summary_univar_lm_data$phenotype <- pheno_name
+		summary_univar_lm_data$covariate <- covariate
+		
+		univar_results <- rbind(univar_results , summary_univar_lm_data )
+		
+		if( !is.na(anova_univar_lm$"Pr(>F)"[1]) & anova_univar_lm$"Pr(>F)"[1]<=0.05) { cat(" WARNING!: [",pheno,"] ~ [", covar,"] ARE ASSOCIATED ","\r","\n" ) }	
+	
 	}
 
-}
-
-##############################################################
-## Start corrections based on most sig associated batch var ##
-##############################################################
-
-library(sva)
-
-if(batch_correct_method=="combat") {
-
-sig_batch <- 
-
+write.table(univar_results, file=paste(out_dir,"/",project_name,".eset_final.",pheno,".univariate_model_batch_variables.csv",sep="")  ,sep=",",row.names=FALSE,quote=FALSE)
 
 }
 
-if(batch_correct_method=="regression") {
+} else {
 
-
-}
-
-#####################
-## Correct for all ##
-#####################
-if(batch_correct_method=="combat_and_regression") { do combat then regress out other sig batches from data} 
-  
-} else{
-
-cat(" Skipping batch correction!","\n","\r")
+cat(" WARNING!: SKIPPING BATCH ASSOCIATION TESTING. NOT REALLY RECOMMENDED!","\r","\n")
 
 }
-
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------#
 
@@ -1622,7 +1620,6 @@ n
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------#
 
-)
 
 
 
