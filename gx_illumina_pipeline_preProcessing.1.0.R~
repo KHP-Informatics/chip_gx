@@ -36,8 +36,8 @@ cat("## Source:   Genomestudio","\r","\n")
 cat("## Usage:    $ Rscrpit gx_illumina_pipeline_preProcessing.1.0.R <project.config>","\r","\n")
 cat("########################################################################################","\r","\n")
 cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
-
 cat(" Loading Libraries ","\r","\n")
+cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
 
 library(lumi)
 library(annotate)
@@ -56,6 +56,9 @@ source("./pre_process_gx.R")
 source("./SampleNetwork_1.0.r")
 source("./ModuleSampleNetwork_0.5.r")
 
+cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
+cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
+cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
 cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
@@ -77,7 +80,7 @@ config_file <- args[1];
 
 ###config_file <- "GAP.project.config"
 
-project_settings <- read.table(config_file, head=T,sep="\t",as.is=T,fill=TRUE)
+project_settings <- read.table(config_file, head=TRUE, sep="\t", as.is=T, fill=TRUE)
 
 ##t(project_settings)
 
@@ -118,29 +121,36 @@ mbcb_method <- project_settings$mbcb_method ## NP or MLE
 tech_pheno_file <- project_settings$tech_pheno_file ## "sample_tech_info.txt"
 
 cat(" Data Dir ",project_dir,"\r","\n")
-cat(" Set Working Dir to ", project_dir,"\r","\n")
+cat(" Set Working Dir to [", project_dir,"]""\r","\n")
 
 setwd(project_dir)
 
-cat(" Project Name:- ", project_name ,"\r","\n")
-cat(" Merged Final Report:- ", gs_report ,"\r","\n")
-cat(" Probe Final Report:- ", gs_probe ,"\r","\n")
-cat(" Sample Table Final Report:- ", gs_sample ,"\r","\n")
-cat(" Control Probe Final Report:- ", gs_control ,"\r","\n")
-cat(" Probe Annotations Final Report:- ", anno_table ,"\r","\n")
-cat(" Phenotype File:- ", pheno_file ,"\r","\n")
-cat(" Batch & Technical Phenotype File:- ", tech_pheno_file ,"\r","\n")
-cat(" Probe Detection Call Rate:- ", probe_det ,"\r","\n")
-cat(" Sample Detection Call Rate:- ", sample_det ,"\r","\n")
-cat(" Sex Check:- ",sex_check,"\n","\r")
-cat(" IAC Check:- ",iac_check,"\n","\r")
-cat(" IAC Check SD Threshold:- ",iac_sd_thrs,"\n","\r")
-cat(" Transformation Method:- ",transform_method,"\r","\n")
-cat(" Normalisation Method:- ",norm_method,"\r","\n")
+cat(" Project Name:- [", project_name,"]" ,"\r","\n")
+cat(" Merged Final Report:- [", gs_report,"]" ,"\r","\n")
+cat(" Probe Final Report:- [", gs_probe,"]" ,"\r","\n")
+cat(" Sample Table Final Report:- [", gs_sample,"]" ,"\r","\n")
+cat(" Control Probe Final Report:- [", gs_control,"]" ,"\r","\n")
+cat(" Probe Annotations Final Report:- [", anno_table,"]" ,"\r","\n")
+cat(" Phenotype File:- [", pheno_file,"]" ,"\r","\n")
+cat(" Batch & Technical Phenotype File:- [", tech_pheno_file,"]" ,"\r","\n")
+cat(" Probe Detection Call Rate:- [", probe_det,"]" ,"\r","\n")
+cat(" Sample Detection Call Rate:- [", sample_det,"]" ,"\r","\n")
+cat(" Sex Check:- [",sex_check,"]","\n","\r")
+cat(" IAC Check:- [",iac_check,"]","\n","\r")
+cat(" IAC Check SD Threshold:- [",iac_sd_thrs,"]","\n","\r")
+cat(" Transformation Method:- [",transform_method,"]","\r","\n")
+cat(" Normalisation Method:- [",norm_method,"]","\r","\n")
 
 cat(" Making processing directory:- ",paste(" mkdir ./",out_dir,sep=""),"\r","\n")
 
+
+make_dir_command <- paste(" if [ [ ! -e ./",out_dir," ] ]; then mkdir ./",out_dir,"; fi",sep="")
+
 system( paste(" mkdir ./",out_dir,sep="") )
+
+##system( paste(" mkdir ./",out_dir,"/lumi_raw",sep="") )
+##system( paste(" mkdir ./",out_dir,"/lumi_T",sep="") )
+##system( paste(" mkdir ./",out_dir,"/lumi_N",sep="") )
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
@@ -156,7 +166,7 @@ eset_summary[,1] <- rownames(eset_summary )
 ### Read sample table ##
 ########################
 
-cat(" Reading Sample Table Final Report generated in Genomestudio ", gs_sample ,"\r","\n")
+cat(" Reading Sample Table Final Report generated in Genomestudio [", gs_sample ,"]","\r","\n")
 
 raw_sample_data <- read.table(gs_sample ,skip=8,as.is=T,fill=T,head=T,sep="\t")
 
@@ -170,7 +180,7 @@ raw_n_samples <- dim(raw_sample_data)[1]
 ## if phenotype file is provided add this to sample data ##
 ###########################################################
 
-cat(" Phenotype Data Provided. Mergeing with Sample Table Final Report generated in Genomestudio ", gs_sample ,"\r","\n")
+cat(" Phenotype Data Provided. Mergeing with Sample Table Final Report generated in Genomestudio [", gs_sample,"]" ,"\r","\n")
 
 pheno_dat <- read.table(pheno_file, as.is=T,fill=T,head=T,sep="\t")
 
@@ -186,7 +196,7 @@ rownames(raw_sample_data) <- raw_sample_data$Sample.ID
 
 write.table(raw_sample_data,file=paste(out_dir,"/",project_name,".sample.pheno.txt",sep=""),sep="\t",quote=F,row.names=F )
 
-cat(" Number of samples = ",raw_n_samples,"\r","\n")
+cat(" Number of samples = [",raw_n_samples,"]","\r","\n","\n")
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
@@ -200,26 +210,25 @@ cat(" Number of samples = ",raw_n_samples,"\r","\n")
 
  ## load(paste(out_dir,"/",project_name,".eset_raw.probe_annotations.RData",sep=""))
 
-cat(" Reading Genomestudio Final Report file :",gs_report,"\r","\n")
-cat(" Calling lumiR() on ", gs_report,"\r","\n")
+cat(" Reading Genomestudio Final Report file :[",gs_report,"]","\r","\n")
+cat(" Calling lumiR() on [", gs_report,"]","\r","\n")
+cat(" Saved as object [ eset_raw ] ,"\r","\n")
 
 eset_raw <- lumiR(gs_report, lib.mapping="lumiHumanIDMapping",
 annotationColumn = c('PROBE_ID','CHROMOSOME','SYMBOL','DEFINITION','ACCESSION','ENTREZ_GENE_ID','PROBE_TYPE','PROBE_START','PROBE_SEQUENCE','PROBE_CHR_ORIENTATION','PROBE_COORDINATES',
 'CHROMOSOME','TRANSCRIPT','ILMN_GENE','REFSEQ_ID','UNIGENE_ID','SYMBOL','PROTEIN_PRODUCT'))
 
-cat( print(eset_raw) )
-
-cat(" Getting Chip Info ","\r","\n")
+cat(" Getting Chip Info ","\r","\n","\n")
 
 chip <- getChipInfo(eset_raw)
 
-cat(" chip version: ", chip$chipVersion, "\r","\n")
-cat(" chip species: ", chip$species, "\r","\n")
-cat(" chip IDType: ", chip$IDType, "\r","\n")
-cat(" chip chipProbeNumber: ", chip$chipProbeNumber, "\r","\n")
-cat(" chip inputProbeNumber: ", chip$inputProbeNumber, "\r","\n")
-cat(" chip matchedProbeNumber: ", chip$matchedProbeNumber, "\r","\n")
-cat(" Number of samples = ",raw_n_samples,"\r","\n")
+cat(" chip version: [", chip$chipVersion,"]", "\r","\n")
+cat(" chip species: [", chip$species,"]", "\r","\n")
+cat(" chip IDType: [", chip$IDType,"]", "\r","\n")
+cat(" chip chipProbeNumber: [", chip$chipProbeNumber,"]", "\r","\n")
+cat(" chip inputProbeNumber: [", chip$inputProbeNumber,"]", "\r","\n")
+cat(" chip matchedProbeNumber: [", chip$matchedProbeNumber,"]", "\r","\n")
+cat(" Number of samples: [",raw_n_samples,"]","\r","\n")
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
@@ -227,7 +236,7 @@ cat(" Number of samples = ",raw_n_samples,"\r","\n")
 ## adding Sample Report to pData() slot ##
 ##########################################
 
-cat(" adding Sample Report to pData() slot","\r","\n")
+cat(" adding Sample Report to pData() slot of [eset_raw]","\r","\n")
 
 pData(eset_raw) <- raw_sample_data;
 
@@ -281,9 +290,9 @@ cat(" Saving eset_raw as ", paste(out_dir,"/",project_name,".eset_raw.RData",sep
 
 save(eset_raw , file=paste(out_dir,"/",project_name,".eset_raw.RData",sep="") )## This is raw data pre-qc
 
-########################################
-## beadNum, detection, exprs, se.exprs #
-########################################
+#########################################
+## beadNum, detection, exprs, se.exprs ##
+#########################################
 cat(" Writing eset_raw [beadNum, detection, exprs, se.exprs] data to file ", paste(out_dir,"/",project_name,".eset_raw.[beadNum, detection, exprs, se.exprs].txt",sep=""), "\r","\n")
 
 gx <- exprs(eset_raw)

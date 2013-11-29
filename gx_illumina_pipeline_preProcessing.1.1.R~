@@ -38,7 +38,6 @@ cat("###########################################################################
 cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
 cat(" Loading Libraries ","\r","\n")
 cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
-
 library(lumi)
 library(annotate)
 library(lumiHumanAll.db)
@@ -55,14 +54,19 @@ library(relaimpo)
 source("./pre_process_gx.R")
 source("./SampleNetwork_1.0.r")
 source("./ModuleSampleNetwork_0.5.r")
-
 cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
 cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
 cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
 cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
 
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
-## some functins
+##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+
+###################
+## some functins ##
+###################
+
+## negBeadOutlierRepMean 
+
 negBeadOutlierRepMean <- function(x) { 
 		z_out_samp <- abs(  as.numeric( scale(x) )  ) > 2
 		mean_pop <- mean(x[z_out_samp==FALSE])
@@ -70,7 +74,101 @@ negBeadOutlierRepMean <- function(x) {
 		new_x <- ifelse( abs(  as.numeric( scale(x) )  ) > 2, mean_pop, x ) 
 		return(new_x)
 }
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+
+##############
+## qc_plots ##
+##############
+
+gx_qc_plots_lumi <- function(eset, outfile ,do_pca=TRUE ) {
+
+eset <- eset_raw;
+pheno <- pData(eset)
+outpdf <- outfile;
+chip_col <- labels2colors( as.character(pData(eset)$Sentrix.Barcode))
+group_col <- labels2colors( as.character(pData(eset)$GROUPS))
+pheno_col <- labels2colors( as.character(pData(eset)$PHENOTYPE))
+gender_col <- labels2colors( as.character(pData(eset)$SEX))
+
+sel_tech <- grep("tech",names(pheno))
+
+batch_pheno <- pheno[,sel_tech]
+
+sel_batch <- sapply(batch_pheno ,class) %in% c("character","factor")
+
+batch_var_names <- names(batch_pheno[,sel_batch])
+
+batch_col <- apply(batch_pheno[,sel_batch],2,labels2colors) ## colours
+
+gx <- t(exprs(eset));
+
+sampleTree <- flashClust(dist(gx), method = "average");
+
+if(do_pca==TRUE) { 
+ 
+pca_raw <- prcomp(gx)$x; 
+
+
+pdf(outpdf, width=16.5,height=11.7)  
+	plot(eset, what='boxplot', col=chip_col )
+	plot(eset, what='density' )
+	plot(eset, what='cv'  )
+	scatterplot3d(pca_raw[,"PC1"],pca_raw[,"PC2"],pca_raw[,"PC3"], main="3D Scatterplot coloured by chip ",color=chip_col)
+	scatterplot3d(pca_raw[,"PC1"],pca_raw[,"PC2"],pca_raw[,"PC3"], main="3D Scatterplot coloured by Group ",color=group_col)
+	scatterplot3d(pca_raw[,"PC1"],pca_raw[,"PC2"],pca_raw[,"PC3"], main="3D Scatterplot coloured by Phenotype ",color=pheno_col)
+	scatterplot3d(pca_raw[,"PC1"],pca_raw[,"PC2"],pca_raw[,"PC3"], main="3D Scatterplot coloured by Gender ",color=gender_col)
+	for(tech_var in batch_var_names) {
+		tech_var_name <- paste(tech_var,sep="")
+		tech_var_col <- labels2colors( as.character(batch_pheno[,tech_var_name]) )
+		scatterplot3d(pca_raw[,"PC1"],pca_raw[,"PC2"],pca_raw[,"PC3"], main=paste("3D Scatterplot coloured by ",tech_var_name,sep=""),color=tech_var_col)
+		}
+	tmp_iac <- outlierSamples(datExprs0,thresh=iac_sd_thrs, showplots=TRUE)
+
+	
+dev.off()
+} else {
+pdf(outpdf, width=16.5,height=11.7)  
+	plot(eset, what='boxplot', col=chip_col )
+	plot(eset, what='density' )
+	plot(eset, what='cv'  )
+	tmp_iac <- outlierSamples(datExprs0,thresh=iac_sd_thrs, showplots=TRUE)
+dev.off()
+  }
+}
+
+############################
+## write_expression_files ##
+############################
+
+write_expression_files <- function(eset, outfile) {
+
+gx <- exprs(eset)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(outfile,".exprs_matrix.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+gx <- se.exprs(eset)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(outfile,".se.exprs_matrix.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+gx <- detection(eset)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(outfile,".detection_matrix.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+gx <- beadNum(eset)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(outfile,".beadNum_matrix.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+}
+
+
+##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 ##options(stringsAsFactors = FALSE)
 
@@ -78,7 +176,7 @@ args <- commandArgs(trailingOnly=TRUE);
 
 config_file <- args[1];
 
-###config_file <- "GAP.project.config"
+config_file <- "GAP.project.config"
 
 project_settings <- read.table(config_file, head=TRUE, sep="\t", as.is=T, fill=TRUE)
 
@@ -143,16 +241,13 @@ cat(" Normalisation Method:- [",norm_method,"]","\r","\n")
 
 cat(" Making processing directory:- ",paste(" mkdir ./",out_dir,sep=""),"\r","\n")
 
-
 make_dir_command <- paste(" if [ [ ! -e ./",out_dir," ] ]; then mkdir ./",out_dir,"; fi",sep="")
 
-system( paste(" mkdir ./",out_dir,sep="") )
+system( make_dir_command )
 
-##system( paste(" mkdir ./",out_dir,"/lumi_raw",sep="") )
-##system( paste(" mkdir ./",out_dir,"/lumi_T",sep="") )
-##system( paste(" mkdir ./",out_dir,"/lumi_N",sep="") )
+cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
 
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 ####################
 ## summary matrix ##
@@ -160,7 +255,7 @@ system( paste(" mkdir ./",out_dir,sep="") )
 eset_summary <- matrix(ncol=4,nrow=7, dimnames=list(c("eset_raw","eset_raw_iac","eset_bkcor","eset_lumiT","eset_lumiN","eset_final","eset_final_batch_corrected"),c("eset_step","n_samples","n_probes","IAC")) )
 eset_summary[,1] <- rownames(eset_summary )
 
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 ########################
 ### Read sample table ##
@@ -168,27 +263,29 @@ eset_summary[,1] <- rownames(eset_summary )
 
 cat(" Reading Sample Table Final Report generated in Genomestudio [", gs_sample ,"]","\r","\n")
 
-raw_sample_data <- read.table(gs_sample ,skip=8,as.is=T,fill=T,head=T,sep="\t")
+raw_sample_data <- read.table(paste(gs_sample) ,skip=8,as.is=T,fill=T,head=T,sep="\t")
 
 rownames(raw_sample_data) <- raw_sample_data$Sample.ID
 
 raw_n_samples <- dim(raw_sample_data)[1]
 
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 ###########################################################
 ## if phenotype file is provided add this to sample data ##
 ###########################################################
 
-cat(" Phenotype Data Provided. Mergeing with Sample Table Final Report generated in Genomestudio [", gs_sample,"]" ,"\r","\n")
+if(is.na(pheno_file))  stop(" WARNING!: YOU HAVENT PROVIDED ANY PHENOTYPE INFORMATION!!!" )
 
-pheno_dat <- read.table(pheno_file, as.is=T,fill=T,head=T,sep="\t")
+cat(" Phenotype Data Provided.[",pheno_file,"] Mergeing with Sample Table Final Report generated in Genomestudio [", gs_sample,"]" ,"\r","\n")
+
+pheno_dat <- read.table(paste(pheno_file), as.is=T,fill=T,head=T,sep="\t")
 
 has_pheno_cols <- c("Sample.ID","SEX","GROUPS","TISSUE","PHENOTYPE","Study_ID") %in% names(pheno_dat);
 
 missing_pheno_cols <- "FALSE" %in% has_pheno_cols 
 
-if(missing_pheno_cols == "TRUE") stop(" YOU ARE MISSING ESSENTIAL SAMPLE INFORMATION! MAKE SURE YOUR PHENO_FILE HAS:- Sample.ID,SEX,GROUPS,TISSUE,PHENOTYPE,Study_ID !!!")
+if(missing_pheno_cols == "TRUE") stop(" WARNING!: YOU ARE MISSING ESSENTIAL SAMPLE INFORMATION! MAKE SURE YOUR PHENO_FILE HAS:- Sample.ID,SEX,GROUPS,TISSUE,PHENOTYPE,Study_ID !!!")
 
 raw_sample_data <- merge(raw_sample_data , pheno_dat , by.x="Sample.ID",by.y="Sample.ID",sort=FALSE,all.x=TRUE)  
 
@@ -198,25 +295,38 @@ write.table(raw_sample_data,file=paste(out_dir,"/",project_name,".sample.pheno.t
 
 cat(" Number of samples = [",raw_n_samples,"]","\r","\n","\n")
 
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+###########################################################
+## if tech Batch file is provided add this to sample data ##
+###########################################################
 
-############################################################
-## Create Raw LumiBatch object                            ##
-############################################################
+if(is.na(tech_pheno_file))  stop(" WARNING!: YOU HAVENT PROVIDED ANY BATCH INFORMATION!!!" )
+
+cat(" Technical/Batch Data Provided.[",tech_pheno_file,"] Mergeing with Sample Table Final Report generated in Genomestudio [", gs_sample,"]" ,"\r","\n")
+
+tech_pheno <- read.table(paste(tech_pheno_file),head=T,sep="\t")
+
+tech_pheno$Sentrix.Barcode <- as.character(tech_pheno$Sentrix.Barcode)
+
+colnames(tech_pheno) <- paste("tech.",names(tech_pheno),sep="")
+
+raw_sample_data <- merge(raw_sample_data , tech_pheno , by.x="Sample.ID",by.y="tech.Sample.ID",sort=FALSE,all.x=TRUE)  
+
+rownames(raw_sample_data) <- raw_sample_data$Sample.ID
+
+write.table(raw_sample_data,file=paste(out_dir,"/",project_name,".eset_raw.sample.pheno.txt",sep=""),sep="\t",quote=F,row.names=F )
+
+##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 ###############################################################
 ## Readging Genomestudio Final Report file & Calling lumiR() ##
 ###############################################################
 
- ## load(paste(out_dir,"/",project_name,".eset_raw.probe_annotations.RData",sep=""))
-
+cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
 cat(" Reading Genomestudio Final Report file :[",gs_report,"]","\r","\n")
 cat(" Calling lumiR() on [", gs_report,"]","\r","\n")
-cat(" Saved as object [ eset_raw ] ,"\r","\n")
+cat(" Saved as object [ eset_raw ] ","\r","\n")
 
-eset_raw <- lumiR(gs_report, lib.mapping="lumiHumanIDMapping",
-annotationColumn = c('PROBE_ID','CHROMOSOME','SYMBOL','DEFINITION','ACCESSION','ENTREZ_GENE_ID','PROBE_TYPE','PROBE_START','PROBE_SEQUENCE','PROBE_CHR_ORIENTATION','PROBE_COORDINATES',
-'CHROMOSOME','TRANSCRIPT','ILMN_GENE','REFSEQ_ID','UNIGENE_ID','SYMBOL','PROTEIN_PRODUCT'))
+eset_raw <- lumiR(paste(gs_report), lib.mapping="lumiHumanIDMapping",annotationColumn = c('PROBE_ID','CHROMOSOME','SYMBOL','DEFINITION','ACCESSION','ENTREZ_GENE_ID','PROBE_TYPE','PROBE_START','PROBE_SEQUENCE','PROBE_CHR_ORIENTATION','PROBE_COORDINATES','CHROMOSOME','TRANSCRIPT','ILMN_GENE','REFSEQ_ID','UNIGENE_ID','SYMBOL','PROTEIN_PRODUCT'))
 
 cat(" Getting Chip Info ","\r","\n","\n")
 
@@ -230,7 +340,7 @@ cat(" chip inputProbeNumber: [", chip$inputProbeNumber,"]", "\r","\n")
 cat(" chip matchedProbeNumber: [", chip$matchedProbeNumber,"]", "\r","\n")
 cat(" Number of samples: [",raw_n_samples,"]","\r","\n")
 
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 ##########################################
 ## adding Sample Report to pData() slot ##
@@ -239,8 +349,6 @@ cat(" Number of samples: [",raw_n_samples,"]","\r","\n")
 cat(" adding Sample Report to pData() slot of [eset_raw]","\r","\n")
 
 pData(eset_raw) <- raw_sample_data;
-
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 ################################################
 ## getting probe annotaions from fData() slot ##
@@ -266,7 +374,7 @@ system(paste(" rm ",anno_table,".tmp",sep="") )
 
 } else { 
 
-cat(" getting probe annotations from fData() slot ","\r","\n")
+cat(" getting probe annotations from fData() slot of [ eset_raw ]","\r","\n")
 
 probe_annotations <- fData(eset_raw) 
 
@@ -274,19 +382,18 @@ probe_annotations$nuID <- rownames(probe_annotations)
 
 }
 
-cat(" saving probe annotaions as",paste(out_dir,"/",project_name,".eset_raw.probe_annotations.RData",sep=""),"\r","\n")
+cat(" saving probe annotaions as [",paste(out_dir,"/",project_name,".eset_raw.probe_annotations.RData",sep=""),"]","\r","\n")
 
 save(probe_annotations,file=paste(out_dir,"/",project_name,".eset_raw.probe_annotations.RData",sep="") )
 
 write.table(probe_annotations,file=paste(out_dir,"/",project_name,".eset_raw.probe_annotations.txt",sep=""),sep="\t",quote=F,row.names=F )
 
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 ##########################
 ## Save eset_raw #########
 ##########################
-
-cat(" Saving eset_raw as ", paste(out_dir,"/",project_name,".eset_raw.RData",sep=""), "\r","\n")
+cat(" Saving eset_raw as [", paste(out_dir,"/",project_name,".eset_raw.RData",sep=""),"]","\r","\n")
 
 save(eset_raw , file=paste(out_dir,"/",project_name,".eset_raw.RData",sep="") )## This is raw data pre-qc
 
@@ -295,76 +402,21 @@ save(eset_raw , file=paste(out_dir,"/",project_name,".eset_raw.RData",sep="") )#
 #########################################
 cat(" Writing eset_raw [beadNum, detection, exprs, se.exprs] data to file ", paste(out_dir,"/",project_name,".eset_raw.[beadNum, detection, exprs, se.exprs].txt",sep=""), "\r","\n")
 
-gx <- exprs(eset_raw)
-gx <- as.data.frame(gx)
-gx$nuID <- rownames(gx)
-gx <- merge(fData(eset_raw),gx,by.x="nuID",by.y="nuID",sort=FALSE)
-write.table(gx , file=paste(out_dir,"/",project_name,".eset_raw.exprs.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
-
-gx <- se.exprs(eset_raw)
-gx <- as.data.frame(gx)
-gx$nuID <- rownames(gx)
-gx <- merge(fData(eset_raw),gx,by.x="nuID",by.y="nuID",sort=FALSE)
-write.table(gx , file=paste(out_dir,"/",project_name,".eset_raw.se.exprs.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
-
-gx <- detection(eset_raw)
-gx <- as.data.frame(gx)
-gx$nuID <- rownames(gx)
-gx <- merge(fData(eset_raw),gx,by.x="nuID",by.y="nuID",sort=FALSE)
-write.table(gx , file=paste(out_dir,"/",project_name,".eset_raw.detection.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
-
-gx <- beadNum(eset_raw)
-gx <- as.data.frame(gx)
-gx$nuID <- rownames(gx)
-gx <- merge(fData(eset_raw),gx,by.x="nuID",by.y="nuID",sort=FALSE)
-write.table(gx , file=paste(out_dir,"/",project_name,".eset_raw.beadNum.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
-
-
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+write_expression_files(eset=eset_raw,outfile= paste(out_dir,"/",project_name,".eset_raw",sep="") )
 
 ####################
 ## PLOTS RAW DATA ##
 ####################
+gx_qc_plots_lumi(eset=eset_raw, outfile= paste(out_dir,"/",project_name,".eset_raw.qc.plots.pdf",sep="") ,do_pca=TRUE );
 
-eset <- eset_raw
-
-qc_plots_pdf <- paste(out_dir,"/",project_name,".eset_raw.qc.plots.pdf",sep="")
-
-chip_col <- labels2colors( as.character(pData(eset)$Sentrix.Barcode))
-
-cat(" Start basic QC plots of eset_raw. Saved to: ",qc_plots_pdf,"\r","\n")
-
-datExprs0 <- exprs(eset) 
-
-cat(" calculate pca for plots ")
-
-pca_raw <- prcomp(t(datExprs0))$x
-
-cat(" plotting... ","\r","\n")
-
-pdf(qc_plots_pdf, width=16.5,height=11.7) ## A3 
-	plot(eset, what='boxplot', main=paste(project_name," eset_raw Boxplot",sep=""), col=chip_col )
-	plot(eset, what='density', main=paste(project_name," eset_raw Density",sep="") )
-	plot(eset, what='cv',main=paste(project_name," eset_raw density plot of coefficient of varience",sep="")  )
-	scatterplot3d(pca_raw[,"PC1"],pca_raw[,"PC2"],pca_raw[,"PC3"], main="3D Scatterplot coloured by chip ",color=chip_col)
-	tmp_iac <- outlierSamples(datExprs0,thresh=iac_sd_thrs, showplots=TRUE)
-dev.off()
-
-cat(" finished basic QC plots of eset_raw. Saved to: ",qc_plots_pdf,"\r","\n")
-
-rm("datExprs0","tmp_iac","pca_raw");
-
-gc()
-
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 ######################################################################
 ## IAC QC                                                           ##
 ## ## optional :- but worth one round of outlier detection          ##
 ######################################################################
-
 if(iac_check==1) {
-
+cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
 cat(" Starting inter-array correlation quality control step ","\n","\r")
 
 datExprs0 <- exprs(eset_raw)
@@ -481,12 +533,12 @@ write.table(gx , file=paste(out_dir,"/",project_name,".eset_raw_iac.beadNum.txt"
 cat(" Number of samples after iac outlier removal: ", length(sampleNames(eset_raw_iac)), "\r","\n" )
 
 } else {
-
+cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
 cat(" Skipping inter-array correlation quality control step ","\n","\r")
 
 }
 
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 #############################
 ## PLOTS POST IAC RAW DATA ##
@@ -1330,7 +1382,7 @@ gx <- t(gx)
 
 cat(" Reading in technical information on eg [Sample.ID, RIN, RNA_YIELD, BATCH, CHIP, DATE_CHIP_RUN, DATE_RNA_EXTRACTED] ",tech_pheno_file ,"\n","\r")
 
-tech_pheno <- read.table(tech_pheno_file,head=TRUE,sep="\t") ## Sample.ID,RIN,RNA_YIELD,BATCH,CHIP, DATE_CHIP_RUN,DATE_RNA_EXTRACTED
+tech_pheno <- read.table(paste(tech_pheno_file),head=TRUE,sep="\t") ## Sample.ID,RIN,RNA_YIELD,BATCH,CHIP, DATE_CHIP_RUN,DATE_RNA_EXTRACTED
 
 tech_pheno$Sentrix.Barcode <- as.factor(tech_pheno$Sentrix.Barcode)
 
@@ -1535,9 +1587,7 @@ for(pheno in c("PC1","GROUPS","PHENOTYPE") ) {
 univar_results <- data.frame()
 
 	for(covar in batch_var_names) {
-
-###cat(" Starting regression [",pheno,"] ~ [ BATCH ] ","\r","\n" )
-
+	
 		pheno_name <- paste(pheno,sep="")
 
 		model <- as.formula( paste(pheno,"~",covar) )
