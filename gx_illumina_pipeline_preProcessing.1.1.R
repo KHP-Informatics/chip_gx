@@ -52,8 +52,8 @@ library(lumiHumanIDMapping)
 library(scatterplot3d)
 library(relaimpo)
 source("./pre_process_gx.R")
-source("./SampleNetwork_1.0.r")
-source("./ModuleSampleNetwork_0.5.r")
+##source("./SampleNetwork_1.0.r")
+##source("./ModuleSampleNetwork_0.5.r")
 cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
 cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
 cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
@@ -65,8 +65,9 @@ cat(" #-------------------------------------------------------------------------
 ## some functins ##
 ###################
 
+############################
 ## negBeadOutlierRepMean 
-
+#############################
 negBeadOutlierRepMean <- function(x) { 
 		z_out_samp <- abs(  as.numeric( scale(x) )  ) > 2
 		mean_pop <- mean(x[z_out_samp==FALSE])
@@ -76,11 +77,60 @@ negBeadOutlierRepMean <- function(x) {
 }
 
 ##############
+## quantfun ##
+##############
+quantfun <- function(x) {
+as.integer(cut(x, quantile(x, probs=c(seq(0,1,0.20)  ) ), include.lowest=TRUE)) 
+}
+
+##############
+## var_gene ##
+##############
+zero_var_probe <- function(gx_matrix) {
+gx <- gx_matrix
+var_gx <- apply(gx,1,var)
+zero_var <- var_gx==0
+return(zero_var)
+}
+
+mean_probe <- function(gx_matrix) {
+gx <- gx_matrix
+mean_gx <- apply(gx,1,mean)
+return(mean_gx)
+}
+
+sd_probe <- function(gx_matrix) {
+gx <- gx_matrix
+sd_gx <- apply(gx,1,sd)
+return(sd_gx)
+}
+
+var_probe <- function(gx_matrix) {
+gx <- gx_matrix
+var_gx <- apply(gx,1,var)
+return(var_gx)
+}
+
+#####################
+## CARET FUNCTIONS ##
+#####################
+
+## near zero variance ##
+## library("caret")
+## nzv_probe <- nearZeroVar(t(gx), saveMetrics = TRUE)
+## correlated probes
+## descrCor <- cor(t(gx),usep="p",method="p")
+## highCorr <- sum(abs(descrCor[upper.tri(descrCor)]) > 0.999)
+## summary(descrCor[upper.tri(descrCor)])
+## highlyCorDescr <- findCorrelation(descrCor, cutoff = 0.999)
+## filteredDescr <- filteredDescr[, -highlyCorDescr]
+## descrCor2 <- cor(filteredDescr)
+## summary(descrCor2[upper.tri(descrCor2)])
+
+##############
 ## qc_plots ##
 ##############
-
 gx_qc_plots_lumi <- function(eset, outfile ,do_pca=TRUE ) {
-
 eset <- eset_raw;
 pheno <- pData(eset)
 outpdf <- outfile;
@@ -88,26 +138,15 @@ chip_col <- labels2colors( as.character(pData(eset)$Sentrix.Barcode))
 group_col <- labels2colors( as.character(pData(eset)$GROUPS))
 pheno_col <- labels2colors( as.character(pData(eset)$PHENOTYPE))
 gender_col <- labels2colors( as.character(pData(eset)$SEX))
-
 sel_tech <- grep("tech",names(pheno))
-
 batch_pheno <- pheno[,sel_tech]
-
 sel_batch <- sapply(batch_pheno ,class) %in% c("character","factor")
-
 batch_var_names <- names(batch_pheno[,sel_batch])
-
 batch_col <- apply(batch_pheno[,sel_batch],2,labels2colors) ## colours
-
 gx <- t(exprs(eset));
-
-sampleTree <- flashClust(dist(gx), method = "average");
-
+## sampleTree <- flashClust(dist(t(gx)), method = "average");
 if(do_pca==TRUE) { 
- 
 pca_raw <- prcomp(gx)$x; 
-
-
 pdf(outpdf, width=16.5,height=11.7)  
 	plot(eset, what='boxplot', col=chip_col )
 	plot(eset, what='density' )
@@ -122,8 +161,8 @@ pdf(outpdf, width=16.5,height=11.7)
 		scatterplot3d(pca_raw[,"PC1"],pca_raw[,"PC2"],pca_raw[,"PC3"], main=paste("3D Scatterplot coloured by ",tech_var_name,sep=""),color=tech_var_col)
 		}
 	tmp_iac <- outlierSamples(datExprs0,thresh=iac_sd_thrs, showplots=TRUE)
-
-	
+	sampleTree <- flashClust(dist(t(gx)), method = "average");
+	plot(sampleTree)
 dev.off()
 } else {
 pdf(outpdf, width=16.5,height=11.7)  
@@ -165,8 +204,73 @@ gx$nuID <- rownames(gx)
 gx <- merge(fData(eset),gx,by.x="nuID",by.y="nuID",sort=FALSE)
 write.table(gx , file=paste(outfile,".beadNum_matrix.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
 
+gx <- exprs(eset)
+gx <- gx[zero_var_probe(gx)==FALSE,]
+pca_gx <- prcomp(t(gx))$x
+pca_gx <- pca_gx[,1:20]
+pca_gx <- cbind(rownames(pca_gx),pca_gx)
+grep_pc <- grep("PC",colnames(pca_gx))
+colnames(pca_gx) <-   c("Sample.ID",colnames(pca_gx)[grep_pc])
+write.table(pca_gx  , file=paste(outfile,".pca_matrix.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+pgx <- pData(eset)
+pgx <- merge(pgx, pca_gx, by.x="Sample.ID",by.y="Sample.ID",sort=FALSE,all.x=TRUE)
+write.table(pgx  , file=paste(outfile,".pData.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+fgx <- fData(eset)
+fgx$mean_probe <- mean_probe(exprs(eset))
+fgx$sd_probe <- sd_probe(exprs(eset))
+fgx$var_probe <- var_probe(exprs(eset))
+write.table(fgx  , file=paste(outfile,".fData.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+rm("gx","pca_gx","pgx","fgx")
+
 }
 
+###################
+## sampleNetwork ##
+###################
+
+basic_sampleNetwork <- function(eset) {
+
+eset <- eset_raw
+
+gx <- exprs(eset)
+sample_info <- pData(eset)
+groups <- sample_info$GROUPS
+pheno <- sample_info$PHENOTYPE
+gpcolors <- labels2colors(groups)
+
+## ALL
+
+IAC=cor(gx,method="p",use="p")
+diag(IAC)=0
+A.IAC=((1+IAC)/2)^2
+FNC=fundamentalNetworkConcepts(A.IAC) ## WGCNA
+K2=FNC$ScaledConnectivity
+Z.K=(K2-mean(K2))/sd(K2)
+Z.C=(FNC$ClusterCoef-mean(FNC$ClusterCoef))/sd(FNC$ClusterCoef)
+Z.MAR=(FNC$MAR-mean(FNC$MAR))/sd(FNC$MAR)
+ 
+ 
+plot(Z.K,main="Connectivity", ylab="Z.K",xaxt="n",xlab="Sample",cex.main=1.8,cex.lab=1.4)
+
+plot(Z.C,main="ClusterCoef", ylab="Z.C",xaxt="n",xlab="Sample",cex.main=1.8,cex.lab=1.4)
+
+plot(Z.K,Z.C,main="Connectivity vs ClusterCoef",xlab="Z.K",ylab="Z.C",col=gpcolors,cex.main=1.8,cex.lab=1.4)  
+
+abline(lm(Z.C~Z.K),col="black",lwd=2)
+
+mtext(paste("rho = ",signif(cor.test(Z.K,Z.C,method="s")$estimate,2)," p = ",signif(cor.test(Z.K,Z.C,method="s")$p.value,2),sep=""),cex=0.8,line=0.2)   
+
+## Initialize data frames for export:
+  Outliers=data.frame()
+  MetricsDF=data.frame(t(c(1:12)))
+  dimnames(MetricsDF)[[2]]=c("Group","Round","Samples","Mean_IAC","Mean_Connectivity","Mean_ScaledConnectivity","Mean_ClusterCoef","Mean_MAR","Density","Decentralization","Homogeneity","PC1_VE")
+  MetricsDF=MetricsDF[-1,]
+ 
+ }
+  
 
 ##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
@@ -219,7 +323,7 @@ mbcb_method <- project_settings$mbcb_method ## NP or MLE
 tech_pheno_file <- project_settings$tech_pheno_file ## "sample_tech_info.txt"
 
 cat(" Data Dir ",project_dir,"\r","\n")
-cat(" Set Working Dir to [", project_dir,"]""\r","\n")
+cat(" Set Working Dir to [", project_dir,"]","\r","\n")
 
 setwd(project_dir)
 
@@ -241,7 +345,7 @@ cat(" Normalisation Method:- [",norm_method,"]","\r","\n")
 
 cat(" Making processing directory:- ",paste(" mkdir ./",out_dir,sep=""),"\r","\n")
 
-make_dir_command <- paste(" if [ [ ! -e ./",out_dir," ] ]; then mkdir ./",out_dir,"; fi",sep="")
+make_dir_command <- paste(" if [ ! -e ./",out_dir," ]; then mkdir ./",out_dir,"; fi",sep="")
 
 system( make_dir_command )
 
@@ -252,7 +356,7 @@ cat(" #-------------------------------------------------------------------------
 ####################
 ## summary matrix ##
 ####################
-eset_summary <- matrix(ncol=4,nrow=7, dimnames=list(c("eset_raw","eset_raw_iac","eset_bkcor","eset_lumiT","eset_lumiN","eset_final","eset_final_batch_corrected"),c("eset_step","n_samples","n_probes","IAC")) )
+eset_summary <- matrix(ncol=4,nrow=6, dimnames=list(c("eset_raw","eset_raw_iac","eset_bkcor","eset_lumiT","eset_lumiN","eset_final"),c("eset_step","n_samples","n_probes","IAC")) )
 eset_summary[,1] <- rownames(eset_summary )
 
 ##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
