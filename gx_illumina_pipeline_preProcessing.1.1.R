@@ -18,9 +18,7 @@ rm(list=ls())
 ##
 ## 1) Final reports from Genomestudio: a) Sample, b) Group Probe, c) Control Probe, d) probe annotations 
 ## 2) Phenotype file:  must contain the following columns:- Sample.ID,SEX,GROUPS,TISSUE,PHENOTYPE,Study_ID 
-##
-## OPTIONAL BUT HIGHLY RECOMMENDED
-## 1) Technical information file with batch processing and lab realted data eg Sample.ID,RIN,RNA_YIELD,DATE_CHIP_RUN,DATE_RNA_EXTRACTED
+## 3) Technical information file with batch processing and lab realted data. must contain the following columns:- Sample.ID followed by any and all processing data information, RIN, RNA yeilds and concetrations 
 ##
 #################################################################################################################################################################
 
@@ -145,6 +143,7 @@ batch_var_names <- names(batch_pheno[,sel_batch])
 batch_col <- apply(batch_pheno[,sel_batch],2,labels2colors) ## colours
 gx <- t(exprs(eset));
 ## sampleTree <- flashClust(dist(t(gx)), method = "average");
+
 if(do_pca==TRUE) { 
 pca_raw <- prcomp(gx)$x; 
 pdf(outpdf, width=16.5,height=11.7)  
@@ -162,7 +161,7 @@ pdf(outpdf, width=16.5,height=11.7)
 		}
 	tmp_iac <- outlierSamples(datExprs0,thresh=iac_sd_thrs, showplots=TRUE)
 	sampleTree <- flashClust(dist(t(gx)), method = "average");
-	plot(sampleTree)
+##	plot(sampleTree)
 dev.off()
 } else {
 pdf(outpdf, width=16.5,height=11.7)  
@@ -180,30 +179,35 @@ dev.off()
 
 write_expression_files <- function(eset, outfile) {
 
+cat(" Writing probe exprs matrix [", paste(outfile,".exprs_matrix.txt",sep="")  ,"]","\r","\n")
 gx <- exprs(eset)
 gx <- as.data.frame(gx)
 gx$nuID <- rownames(gx)
 gx <- merge(fData(eset),gx,by.x="nuID",by.y="nuID",sort=FALSE)
 write.table(gx , file=paste(outfile,".exprs_matrix.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
 
+cat(" Writing probe se.exprs matrix [", paste(outfile,".se.exprs_matrix.txt",sep="")  ,"]","\r","\n")
 gx <- se.exprs(eset)
 gx <- as.data.frame(gx)
 gx$nuID <- rownames(gx)
 gx <- merge(fData(eset),gx,by.x="nuID",by.y="nuID",sort=FALSE)
 write.table(gx , file=paste(outfile,".se.exprs_matrix.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
 
+cat(" Writing probe detection matrix [", paste(outfile,".detection_matrix.txt",sep="")  ,"]","\r","\n")
 gx <- detection(eset)
 gx <- as.data.frame(gx)
 gx$nuID <- rownames(gx)
 gx <- merge(fData(eset),gx,by.x="nuID",by.y="nuID",sort=FALSE)
 write.table(gx , file=paste(outfile,".detection_matrix.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
 
+cat(" Writing probe beadNum matrix [", paste(outfile,".beadNum_matrix.txt",sep="")  ,"]","\r","\n")
 gx <- beadNum(eset)
 gx <- as.data.frame(gx)
 gx$nuID <- rownames(gx)
 gx <- merge(fData(eset),gx,by.x="nuID",by.y="nuID",sort=FALSE)
 write.table(gx , file=paste(outfile,".beadNum_matrix.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
 
+cat(" Writing probe PCA matrix [", paste(outfile,".pca_matrix.txt",sep="")  ,"]","\r","\n")
 gx <- exprs(eset)
 gx <- gx[zero_var_probe(gx)==FALSE,]
 pca_gx <- prcomp(t(gx))$x
@@ -213,10 +217,12 @@ grep_pc <- grep("PC",colnames(pca_gx))
 colnames(pca_gx) <-   c("Sample.ID",colnames(pca_gx)[grep_pc])
 write.table(pca_gx  , file=paste(outfile,".pca_matrix.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
 
+cat(" Writing pData slot of eset and adding PCA data to [", paste(outfile,".pData.txt",sep="")  ,"]","\r","\n")
 pgx <- pData(eset)
 pgx <- merge(pgx, pca_gx, by.x="Sample.ID",by.y="Sample.ID",sort=FALSE,all.x=TRUE)
 write.table(pgx  , file=paste(outfile,".pData.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
 
+cat(" Writing fData slot of eset [", paste(outfile,".fData.txt",sep="")  ,"]","\r","\n")
 fgx <- fData(eset)
 fgx$mean_probe <- mean_probe(exprs(eset))
 fgx$sd_probe <- sd_probe(exprs(eset))
@@ -230,48 +236,160 @@ rm("gx","pca_gx","pgx","fgx")
 ###################
 ## sampleNetwork ##
 ###################
-
-basic_sampleNetwork <- function(eset) {
-
-eset <- eset_raw
-
+## eset <- eset_raw  ## testing 
+## col_by_chip <- 1
+## 
+basic_sampleNetwork <- function(eset,col_by_chip,outfile,sd_thrs=2) {
 gx <- exprs(eset)
 sample_info <- pData(eset)
-groups <- sample_info$GROUPS
-pheno <- sample_info$PHENOTYPE
+samle_names <- sampleNames(eset)
+groups <- as.character(sample_info$GROUPS)
+pheno <- as.character(sample_info$PHENOTYPE)
 gpcolors <- labels2colors(groups)
-
-## ALL
-
+## IAC, ADJACENCY & fundamentalNetworkConcepts, Z.K, Z.C, Z.MAR
+cat(" Calculating fundamentalNetworkConcepts Metrics ","\r","\n")
 IAC=cor(gx,method="p",use="p")
 diag(IAC)=0
-A.IAC=((1+IAC)/2)^2
+A.IAC=((1+IAC)/2)^2  ## ADJACENCY MATRIX
 FNC=fundamentalNetworkConcepts(A.IAC) ## WGCNA
 K2=FNC$ScaledConnectivity
 Z.K=(K2-mean(K2))/sd(K2)
 Z.C=(FNC$ClusterCoef-mean(FNC$ClusterCoef))/sd(FNC$ClusterCoef)
 Z.MAR=(FNC$MAR-mean(FNC$MAR))/sd(FNC$MAR)
- 
- 
-plot(Z.K,main="Connectivity", ylab="Z.K",xaxt="n",xlab="Sample",cex.main=1.8,cex.lab=1.4)
-
-plot(Z.C,main="ClusterCoef", ylab="Z.C",xaxt="n",xlab="Sample",cex.main=1.8,cex.lab=1.4)
-
+## OUTLIERS 
+Z.K_outliers <- Z.K < -sd_thrs
+Z.K_outliers <- names(Z.K_outliers[Z.K_outliers==TRUE])
+n_outliers <- length(Z.K_outliers)
+mean_IAC <- mean(IAC[upper.tri(IAC)])
+min_Z.K <- min(Z.K)
+cat(" Number of Z.K outliers [", n_outliers,"]","\r","\n")
+cat(" mean_IAC [", mean_IAC,"]","\r","\n")
+## Data frame of .SampleNetwork_Stats.txt
+cat(" Making Data fram of fundamentalNetworkConcepts Metrics ","\r","\n")
+FNC_DF <- as.data.frame(FNC)
+FNC_DF$Z.K=(K2-mean(K2))/sd(K2)
+FNC_DF$Z.C=(FNC_DF$ClusterCoef-mean(FNC_DF$ClusterCoef))/sd(FNC_DF$ClusterCoef)
+FNC_DF$Z.MAR=(FNC_DF$MAR-mean(FNC_DF$MAR))/sd(FNC_DF$MAR)
+FNC_DF$mean_IAC <- mean(IAC[upper.tri(IAC)])
+FNC_DF$Mean_Connectivity <- mean(FNC$Connectivity)
+FNC_DF$Mean_ScaledConnectivity <- mean(FNC$ScaledConnectivity)
+FNC_DF$Mean_ClusterCoef <- mean(FNC$ClusterCoef)
+FNC_DF$Mean_MAR <- mean(FNC$MAR)
+FNC_DF$Decentralization <- 1-FNC_DF$Centralization
+FNC_DF$Homogeneity <- 1-FNC_DF$Heterogeneity
+FNC_DF <- cbind(rownames(FNC_DF),FNC_DF)
+colnames(FNC_DF) <- c("Sample.ID",names(FNC_DF[-1]))
+## write data
+cat(" Saving Data fram of fundamentalNetworkConcepts Metrics [",paste(outfile,".SampleNetwork_Stats.txt",sep=""),"[","\r","\n")
+write.table(FNC_DF,file=paste(outfile,".SampleNetwork_Stats.txt",sep=""),sep="\t",row.name=FALSE,quote=FALSE)
+## write data for IAC 
+cat(" Saving Data fram of fundamentalNetworkConcepts Z.K outliers [",paste(outfile,".SampleNetwork_Stats_Z.K_outliers.txt",sep=""),"[","\r","\n")
+write.table(FNC_DF[Z.K_outliers,],file=paste(outfile,".SampleNetwork_Stats_Z.K_outliers.txt",sep=""),sep="\t",row.name=FALSE,quote=FALSE)
+## set colours by chip of GROUPS
+if(col_by_chip == 1) {   colorvec <- labels2colors(as.character(pData(eset)$Sentrix.Barcode)) }
+if(col_by_chip == 0) {   colorvec <- gpcolors }
+## plots of fundamentalNetworkConcepts
+local({
+colLab <<- function(n,treeorder) {
+if(is.leaf(n)) {
+a <- attributes(n)
+i <<- i+1
+attr(n, "nodePar") <-   c(a$nodePar, list(lab.col = colorvec[treeorder][i], lab.font = i%%3))
+}
+n
+}
+i <- 0
+})
+## Cluster for pics
+cat(" Plotting SampleNetwork Metrics [",paste(outfile,".SampleNetwork.qc.pdf",sep=""),"]","\r","\n")
+meanIAC <- mean(IAC[upper.tri(IAC)],na.rm=T)
+cluster1 <- hclust(as.dist(1-A.IAC),method="average")
+cluster1order <- cluster1$order
+cluster2 <- as.dendrogram(cluster1,hang=0.1)
+cluster3 <- dendrapply(cluster2,colLab,cluster1order)
+## PLOTS 
+## cluster IAC
+pdf(file=paste(outfile,".SampleNetwork.qc.pdf",sep=""),width=11,height=8)
+par(mfrow=c(2,2))
+par(mar=c(5,6,4,2))
+plot(cluster3,nodePar=list(lab.cex=1,pch=NA),main=paste("Mean ISA = ",signif(mean(A.IAC[upper.tri(A.IAC)]),3),sep=""),xlab="",ylab="1 - ISA",sub="",cex.main=1.8,cex.lab=1.4)
+mtext(paste("distance: 1 - IAS ",sep=""),cex=0.8,line=0.2)
+## Connectivity
+par(mar=c(5,5,4,2))
+plot(Z.K,main="Connectivity", ylab="Z.K",xaxt="n",xlab="Sample",type="n",cex.main=1.8,cex.lab=1.4)
+text(Z.K,labels=samle_names,cex=0.8,col=colorvec)
+abline(h=-2)
+abline(h=-3)
+## ClusterCoef
+par(mar=c(5,5,4,2))
+plot(Z.C,main="ClusterCoef", ylab="Z.C",xaxt="n",xlab="Sample",cex.main=1.8,cex.lab=1.4,type="n")
+text(Z.C,labels=samle_names,cex=0.8,col=colorvec)
+abline(h=-2)
+abline(h=-3)
+## Connectivity vs ClusterCoef
+par(mar=c(5,5,4,2))
 plot(Z.K,Z.C,main="Connectivity vs ClusterCoef",xlab="Z.K",ylab="Z.C",col=gpcolors,cex.main=1.8,cex.lab=1.4)  
-
 abline(lm(Z.C~Z.K),col="black",lwd=2)
-
 mtext(paste("rho = ",signif(cor.test(Z.K,Z.C,method="s")$estimate,2)," p = ",signif(cor.test(Z.K,Z.C,method="s")$p.value,2),sep=""),cex=0.8,line=0.2)   
+abline(v=-2,lty=2,col="grey")
+abline(h=-2,lty=2,col="grey")
+dev.off()
 
-## Initialize data frames for export:
-  Outliers=data.frame()
-  MetricsDF=data.frame(t(c(1:12)))
-  dimnames(MetricsDF)[[2]]=c("Group","Round","Samples","Mean_IAC","Mean_Connectivity","Mean_ScaledConnectivity","Mean_ClusterCoef","Mean_MAR","Density","Decentralization","Homogeneity","PC1_VE")
-  MetricsDF=MetricsDF[-1,]
- 
- }
+##
+out <- list(mean_IAC=mean_IAC, n_outliers=n_outliers,min_Z.K=min_Z.K,Z.K_outliers=Z.K_outliers)
+return(out)
+}
+
+out <- basic_sampleNetwork(eset,col_by_chip=1,outfile=paste(out_dir,"/",project_name,".eset_raw",sep="") )
+out
+
+
+#################################
+##  basic_sampleNetworkIterate ##
+#################################
+
+basic_sampleNetworkIterate <- function(eset,col_by_chip,outfile, IACthresh=0.95, sd_thrs=2) {
+
+n_samp <-  length(sampleNames(eset))
+mean_IAC <- 0.50
+outlier_running_count <- 0;
+iteration <- 1;
+min_Z.K <- -100;
+iac_outlier_samples <- c();
+sd_thrs <- 2
+
+
+while(iteration >= 1 & (mean_IAC < IACthresh | min_Z.K < -sd_thrs) ) {
+
+out <- basic_sampleNetwork(eset,col_by_chip,outfile=paste(outfile,".round.",iteration,sep="" ))
+
+mean_IAC <- out$mean_IAC;
+min_Z.K <- out$min_Z.K;
+Z.K_outliers <- out$Z.K_outliers
+
+outlier_running_count <- outlier_running_count + length(out$Z.K_outliers );
+
+cat(" Number of outliers after round [",iteration,"] = [",outlier_running_count,"].  Percentage [",round(outlier_running_count/n_samp,3),"]",mean_IAC,min_Z.K,"\r","\n")
+
+iac_outlier_samples <- c(out$Z.K_outliers, iac_outlier_samples)
+
+iteration <- iteration + 1;
+
+eset <- eset[,(sampleNames(eset) %in% iac_outlier_samples)==FALSE]
+
+};
+
+iac_outlier_samples <- as.data.frame(iac_outlier_samples)
+colnames(iac_outlier_samples) <- c("Sample.ID")
+write.table(iac_outlier_samples,file=paste(outfile,".iac_outlier_samples.txt",sep=""),sep="\t",row.names=FALSE,quote=FALSE)
   
+}  
 
+
+out <- basic_sampleNetworkIterate(eset,col_by_chip=1,outfile=paste(out_dir,"/",project_name,".eset_raw",sep=""),IACthresh=0.95, sd_thrs=2,iterate=1 )
+out
+ 
+  
 ##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 ##options(stringsAsFactors = FALSE)
@@ -282,7 +400,7 @@ config_file <- args[1];
 
 config_file <- "GAP.project.config"
 
-project_settings <- read.table(config_file, head=TRUE, sep="\t", as.is=T, fill=TRUE)
+project_settings <- read.table(config_file, head=TRUE, sep="\t") ## as.is=T, fill=TRUE)
 
 ##t(project_settings)
 
@@ -513,6 +631,15 @@ write_expression_files(eset=eset_raw,outfile= paste(out_dir,"/",project_name,".e
 ####################
 gx_qc_plots_lumi(eset=eset_raw, outfile= paste(out_dir,"/",project_name,".eset_raw.qc.plots.pdf",sep="") ,do_pca=TRUE );
 
+#########################
+## basic_sampleNetwork ##
+#########################
+basic_sampleNetwork(eset=eset_raw,col_by_chip=1,outfile=paste(out_dir,"/",project_name,".eset_raw",sep="") )
+
+
+##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 ##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 ######################################################################
