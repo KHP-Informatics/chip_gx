@@ -22,6 +22,7 @@ rm(list=ls())
 ##
 #################################################################################################################################################################
 
+options(warn=-1)
 
 cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
 cat("########################################################################################","\r","\n")
@@ -50,8 +51,6 @@ library(lumiHumanIDMapping)
 library(scatterplot3d)
 library(relaimpo)
 source("./pre_process_gx.R")
-##source("./SampleNetwork_1.0.r")
-##source("./ModuleSampleNetwork_0.5.r")
 cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
 cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
 cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
@@ -64,7 +63,6 @@ cat(" #-------------------------------------------------------------------------
 ###################
 
 ## subset eset 
-
 removeSamples_eset_lumi <- function(eset, sampleRemove) {
 sample <- sampleNames(eset)
 samples_to_remove <- sampleRemove
@@ -92,69 +90,95 @@ return(data_var_shuffled)
 }
 
 #####################################################################################################
-data <- pData(eset)
 
-data_summary <- function(data,plotOut) {
+data_summary_plots <- function(data,plotOut) {
 library(car)
-def.par <- par(no.readonly = TRUE) # save default, for resetting...
+
+def.par <- par(no.readonly = TRUE) # save default, for resetting...c(5, 4, 4, 2) + 0.1 ## c(bottom, left, top, right)
 data_class <- sapply(data ,class) 
 class_list <- unique(data_class)
 cat(" The following data classes are observed [",unique(data_class),"]","\r","\n")
 
-pdf(file="x.pdf",width=11,height=8)
+pdf(file=plotOut,width=11,height=8)
 
 for( class_type in class_list ) { 
 
 cat(" doing ",class_type,"\r","\n")
 
 	      if(class_type =="character") {
-					    new_data <- data[,data_class==class_type]
+					new_data <- data[,data_class==class_type]
 					    for(var in names(new_data) ){ 
-					    var_table <- table(new_data[,var]) 
-					    barplot(var_table,las=2,main=paste(var))
+					    var_table <- sort(table(new_data[,var]),decreasing=FALSE)
+					    par(mar=c(5.1, 8, 4, 2.1))
+					    barplot(var_table,las=2,main=paste(var), horiz=TRUE)
 						    }
 	      } 
 	      else if(class_type=="factor") {
 					      new_data <- data[,data_class==class_type]
 					      for(var in names(new_data) ){ 
-					      var_table <- table(new_data[,var]) 
-					      barplot(var_table,las=2,main=paste(var))
+					      var_table <- sort(table(new_data[,var]),decreasing=FALSE)
+					      par(mar=c(5.1, 8, 4, 2.1))
+					      barplot(var_table,las=2,main=paste(var), horiz=TRUE)
 	      	            	      }
 	      } 
 	      else if(class_type=="numeric") {
-					      new_data <- data[,data_class==class_type]
+							  new_data <- data[,data_class==class_type]
 							  for(var in names(new_data) ){ 
 							  nf <- layout(mat = matrix(c(1,2),2,1, byrow=TRUE),  height = c(1,3))    
-							  par(mar=c(5.1, 4.1, 1.1, 2.1))		      
-							  boxplot(new_data[,var], horizontal=TRUE,  outline=TRUE)		      
-							  hist(new_data[,var],xlab=paste(var),main=paste(var))
+							  par(mar=c(4.1, 4.1, 1.1, 2.1))		      
+							  X <- as.numeric(new_data[,var])
+							  boxplot(X, horizontal=TRUE,  outline=TRUE,main=paste(var))      
+							  hist(X,xlab=paste(var),breaks=50,main="",prob=TRUE)
+							  lines(density(X),col="blue")
+							  meanvar <- signif(mean(X,na.rm=TRUE),3)
+							  sdvar <- signif(sd(X,na.rm=TRUE),3)
+							  normtest_sw <- signif(shapiro.test(X)$p.value,3)
+							  mtext(paste("Mean:[",meanvar,"] SD:[",sdvar,"] normP:[",normtest_sw,"]",sep=" "), side = 3, adj=1)
 							  par(def.par)
-							  qqPlot(new_data[,var],main=paste(var),pch=20,ylab=paste(var),col="blue")   
-							  }
+							  qqPlot(X,main=paste(var),pch=20,ylab=paste(var),col="blue")
+							  							  }
       	      } 
       	      else if(class_type=="integer") {
-					      new_data <- data[,data_class==class_type]
+							  new_data <- data[,data_class==class_type]
+							  new_data <- apply(new_data,2,as.numeric)
 							  for(var in names(new_data) ){ 
 							  nf <- layout(mat = matrix(c(1,2),2,1, byrow=TRUE),  height = c(1,3))    
-							  par(mar=c(5.1, 4.1, 1.1, 2.1))		      
-							  boxplot(new_data[,var], horizontal=TRUE,  outline=TRUE)		      
-							  hist(new_data[,var],xlab=paste(var),main=paste(var))
+							  par(mar=c(4.1, 4.1, 1.1, 2.1))		      
+							  X <- as.numeric(new_data[,var])
+							  boxplot(X, horizontal=TRUE,  outline=TRUE,main=paste(var))		      
+							  hist(X,xlab=paste(var),breaks=50,main="",prob=TRUE)
+							  lines(density(X),col="blue")
+							  meanvar <- signif(mean(X,na.rm=TRUE),3)
+							  sdvar <- signif(sd(X,na.rm=TRUE),3)
+							  normtest_sw <- signif(shapiro.test(X)$p.value,3)
+							  mtext(paste("Mean:[",meanvar,"] SD:[",sdvar,"] normP:[",normtest_sw,"]",sep=" "), side = 3, adj=1)
 							  par(def.par)
-							  qqPlot(new_data[,var],main=paste(var),pch=20,ylab=paste(var),col="blue")   
+							  qqPlot(X,main=paste(var),pch=20,ylab=paste(var),col="blue")
 							  }
 	      }
 	      else if(class_type=="logical") {
 					      new_data <- data[,data_class==class_type]
 					      for(var in names(new_data) ){ 
-					      var_table <- table(new_data[,var]) 
-					      barplot(var_table,las=2,main=paste(var))
+					      var_table <- sort(table(new_data[,var]),decreasing=FALSE)
+					      par(mar=c(5.1, 8, 4, 2.1))
+					      barplot(var_table,las=2,main=paste(var), horiz=TRUE)
+					      par(def.par)
 	      	      }
 	      }
 	  }
 	  dev.off()
+	  	  dev.off()
+	  	  	  dev.off()
+	  	  	  	  dev.off()
+	  	  	  	  dev.off()
 	  }
 
-	      	      
+data <- pData(eset)
+plotOut <- "xxx.pdf"
+
+data_summary_plots(data,plotOut)
+
+
 ###################################################################################################################################################################################################
 
 
@@ -336,8 +360,17 @@ rm("gx","pca_gx","pgx","fgx")
 ## eset <- eset_raw  ## testing 
 ## col_by_chip <- 1
 ## 
-basic_sampleNetwork <- function(eset,col_by_chip,outfile,sd_thrs=2) {
-gx <- exprs(eset)
+basic_sampleNetwork <- function(eset,col_by_chip=c("1","0"),groups=c("all","byGroup"),outfile,sd_thrs=2) {
+
+if(groups=="all") { 
+
+group <- "all"
+n_groups <- length(group)
+res_names <- c("Group","mean_IAC","n_outliers","min_Z.K","rho","rho_pvalue","Z.K_outliers")
+res <- matrix(ncol=length(res_names),nrow=n_groups, dimnames=list(group_list,res_names))
+
+cat(" doing group [",group,"]","\r","\n")
+gx <- exprs(eset) 
 sample_info <- pData(eset)
 samle_names <- sampleNames(eset)
 groups <- as.character(sample_info$GROUPS)
@@ -382,10 +415,10 @@ FNC_DF <- cbind(rownames(FNC_DF),FNC_DF)
 colnames(FNC_DF) <- c("Sample.ID",names(FNC_DF[-1]))
 ## write data
 cat(" Saving Data fram of fundamentalNetworkConcepts Metrics [",paste(outfile,".SampleNetwork_Stats.txt",sep=""),"]","\r","\n")
-write.table(FNC_DF,file=paste(outfile,".SampleNetwork_Stats.txt",sep=""),sep="\t",row.name=FALSE,quote=FALSE)
+write.table(FNC_DF,file=paste(outfile,".group.",group,".SampleNetwork_Stats.txt",sep=""),sep="\t",row.name=FALSE,quote=FALSE)
 ## write data for IAC 
 cat(" Saving Data fram of fundamentalNetworkConcepts Z.K outliers [",paste(outfile,".SampleNetwork_Stats_Z.K_outliers.txt",sep=""),"]","\r","\n")
-write.table(FNC_DF[Z.K_outliers,],file=paste(outfile,".SampleNetwork_Stats_Z.K_outliers.txt",sep=""),sep="\t",row.name=FALSE,quote=FALSE)
+write.table(FNC_DF[Z.K_outliers,],file=paste(outfile,".group.",group,".SampleNetwork_Stats_Z.K_outliers.txt",sep=""),sep="\t",row.name=FALSE,quote=FALSE)
 ## set colours by chip of GROUPS
 if(col_by_chip == 1) {   colorvec <- labels2colors(as.character(pData(eset)$Sentrix.Barcode)) }
 if(col_by_chip == 0) {   colorvec <- gpcolors }
@@ -402,7 +435,7 @@ n
 i <- 0
 })
 ## Cluster for pics
-cat(" Plotting SampleNetwork Metrics [",paste(outfile,".SampleNetwork.qc.pdf",sep=""),"]","\r","\n")
+cat(" Plotting SampleNetwork Metrics [",paste(outfile,".group.",group,".SampleNetwork.qc.pdf",sep=""),"]","\r","\n")
 meanIAC <- mean(IAC[upper.tri(IAC)],na.rm=T)
 cluster1 <- hclust(as.dist(1-A.IAC),method="average")
 cluster1order <- cluster1$order
@@ -410,7 +443,7 @@ cluster2 <- as.dendrogram(cluster1,hang=0.1)
 cluster3 <- dendrapply(cluster2,colLab,cluster1order)
 ## PLOTS 
 ## cluster IAC
-pdf(file=paste(outfile,".SampleNetwork.qc.pdf",sep=""),width=11,height=8)
+pdf(file=paste(outfile,".group.",group,".SampleNetwork.qc.pdf",sep=""),width=11,height=8)
 par(mfrow=c(2,2))
 par(mar=c(5,6,4,2))
 plot(cluster3,nodePar=list(lab.cex=1,pch=NA),main=paste("Mean ISA = ",signif(mean(A.IAC[upper.tri(A.IAC)]),3),sep=""),xlab="",ylab="1 - ISA",sub="",cex.main=1.8,cex.lab=1.4)
@@ -429,23 +462,152 @@ abline(h=-2)
 abline(h=-3)
 ## Connectivity vs ClusterCoef
 par(mar=c(5,5,4,2))
-plot(Z.K,Z.C,main="Connectivity vs ClusterCoef",xlab="Z.K",ylab="Z.C",col=gpcolors,cex.main=1.8,cex.lab=1.4)  
+plot(Z.K,Z.C,main="Connectivity vs ClusterCoef",xlab="Z.K",ylab="Z.C",col=colorvec,cex.main=1.8,cex.lab=1.4)  
 abline(lm(Z.C~Z.K),col="black",lwd=2)
 mtext(paste("rho = ",signif(cor.test(Z.K,Z.C,method="s")$estimate,2)," p = ",signif(cor.test(Z.K,Z.C,method="s")$p.value,2),sep=""),cex=0.8,line=0.2)   
 abline(v=-2,lty=2,col="grey")
 abline(h=-2,lty=2,col="grey")
 dev.off()
 ##
-out <- list(mean_IAC=mean_IAC, n_outliers=n_outliers,min_Z.K=min_Z.K,Z.K_outliers=Z.K_outliers,rho=rho, rho_pvalue=rho_pvalue )
-return(out)
+Z.K_outliers <- paste(Z.K_outliers,collapse=";")
+res[group,] <- c(group,mean_IAC,n_outliers,min_Z.K,rho,rho_pvalue,Z.K_outliers)
+res_out <- as.data.frame(res)
+return(res_out)
 }
+
+################# if byGroup ####################
+
+if(groups=="byGroup") {
+
+group_list <- unique(pData(eset)$GROUPS)
+n_groups <- length(group_list)
+res_names <- c("Group","mean_IAC","n_outliers","min_Z.K","rho","rho_pvalue","Z.K_outliers")
+res <- matrix(ncol=length(res_names),nrow=n_groups, dimnames=list(group_list,res_names))
+
+cat(" Groups [",group_list,"]","\r","\n")
+	
+	for(mgroup in group_list) {
+	cat(" doing group [",mgroup,"]","\r","\n")
+	gx <- exprs(eset[,pData(eset)$GROUPS==mgroup]) 
+	sample_info <- pData(eset[,pData(eset)$GROUPS==mgroup])
+	samle_names <- sampleNames(eset[,pData(eset)$GROUPS==mgroup])
+	groups <- as.character(sample_info$GROUPS)
+	pheno <- as.character(sample_info$PHENOTYPE)
+	gpcolors <- labels2colors(groups)
+	## IAC, ADJACENCY & fundamentalNetworkConcepts, Z.K, Z.C, Z.MAR
+	cat(" Calculating fundamentalNetworkConcepts Metrics ","\r","\n")
+	IAC=cor(gx,method="p",use="p")
+	diag(IAC)=0
+	A.IAC=((1+IAC)/2)^2  ## ADJACENCY MATRIX
+	FNC=fundamentalNetworkConcepts(A.IAC) ## WGCNA
+	K2=FNC$ScaledConnectivity
+	Z.K=(K2-mean(K2))/sd(K2)
+	Z.C=(FNC$ClusterCoef-mean(FNC$ClusterCoef))/sd(FNC$ClusterCoef)
+	Z.MAR=(FNC$MAR-mean(FNC$MAR))/sd(FNC$MAR)
+	rho <- signif(cor.test(Z.K,Z.C,method="s")$estimate,2)
+	rho_pvalue <- signif(cor.test(Z.K,Z.C,method="s")$p.value,2)
+	## OUTLIERS 
+	Z.K_outliers <- Z.K < -sd_thrs
+	Z.K_outliers <- names(Z.K_outliers[Z.K_outliers==TRUE])
+	n_outliers <- length(Z.K_outliers)
+	mean_IAC <- mean(IAC[upper.tri(IAC)])
+	min_Z.K <- min(Z.K)
+	cat(" Number of Z.K outliers [", n_outliers,"]","\r","\n")
+	cat(" mean_IAC [", mean_IAC,"]","\r","\n")
+	## Data frame of .SampleNetwork_Stats.txt
+	cat(" Making Data fram of fundamentalNetworkConcepts Metrics ","\r","\n")
+	FNC_DF <- as.data.frame(FNC)
+	FNC_DF$Z.K=(K2-mean(K2))/sd(K2)
+	FNC_DF$Z.C=(FNC_DF$ClusterCoef-mean(FNC_DF$ClusterCoef))/sd(FNC_DF$ClusterCoef)
+	FNC_DF$Z.MAR=(FNC_DF$MAR-mean(FNC_DF$MAR))/sd(FNC_DF$MAR)
+	FNC_DF$mean_IAC <- mean(IAC[upper.tri(IAC)])
+	FNC_DF$Mean_Connectivity <- mean(FNC$Connectivity)
+	FNC_DF$Mean_ScaledConnectivity <- mean(FNC$ScaledConnectivity)
+	FNC_DF$Mean_ClusterCoef <- mean(FNC$ClusterCoef)
+	FNC_DF$Mean_MAR <- mean(FNC$MAR)
+	FNC_DF$Decentralization <- 1-FNC_DF$Centralization
+	FNC_DF$Homogeneity <- 1-FNC_DF$Heterogeneity
+	FNC_DF$rho <- signif(cor.test(FNC_DF$Z.K,FNC_DF$Z.C,method="s")$estimate,2)
+	FNC_DF$rho_pvalue <- signif(cor.test(FNC_DF$Z.K,FNC_DF$Z.C,method="s")$p.value,2)
+	FNC_DF <- cbind(rownames(FNC_DF),FNC_DF)
+	colnames(FNC_DF) <- c("Sample.ID",names(FNC_DF[-1]))
+	## write data
+	cat(" Saving Data fram of fundamentalNetworkConcepts Metrics [",paste(outfile,".SampleNetwork_Stats.txt",sep=""),"]","\r","\n")
+	write.table(FNC_DF,file=paste(outfile,".group.",group,".SampleNetwork_Stats.txt",sep=""),sep="\t",row.name=FALSE,quote=FALSE)
+	## write data for IAC 
+	cat(" Saving Data fram of fundamentalNetworkConcepts Z.K outliers [",paste(outfile,".SampleNetwork_Stats_Z.K_outliers.txt",sep=""),"]","\r","\n")
+	write.table(FNC_DF[Z.K_outliers,],file=paste(outfile,".group.",group,".SampleNetwork_Stats_Z.K_outliers.txt",sep=""),sep="\t",row.name=FALSE,quote=FALSE)
+	## set colours by chip of GROUPS
+	if(col_by_chip == 1) {   colorvec <- labels2colors(as.character(pData(eset[,pData(eset)$GROUPS==group])$Sentrix.Barcode)) }
+	if(col_by_chip == 0) {   colorvec <- gpcolors }
+	## plots of fundamentalNetworkConcepts
+	local({
+	colLab <<- function(n,treeorder) {
+	if(is.leaf(n)) {
+	a <- attributes(n)
+	i <<- i+1
+	attr(n, "nodePar") <-   c(a$nodePar, list(lab.col = colorvec[treeorder][i], lab.font = i%%3))
+	}
+	n
+	}
+	i <- 0
+	})
+	## Cluster for pics
+	cat(" Plotting SampleNetwork Metrics [",paste(outfile,".group.",mgroup,".SampleNetwork.qc.pdf",sep=""),"]","\r","\n")
+	meanIAC <- mean(IAC[upper.tri(IAC)],na.rm=T)
+	cluster1 <- hclust(as.dist(1-A.IAC),method="average")
+	cluster1order <- cluster1$order
+	cluster2 <- as.dendrogram(cluster1,hang=0.1)
+	cluster3 <- dendrapply(cluster2,colLab,cluster1order)
+	## PLOTS
+	## cluster IAC
+	pdf(file=paste(outfile,".group.",mgroup,".SampleNetwork.qc.pdf",sep=""),width=11,height=8)
+	par(mfrow=c(2,2))
+	par(mar=c(5,6,4,2))
+	plot(cluster3,nodePar=list(lab.cex=1,pch=NA),main=paste("Mean ISA = ",signif(mean(A.IAC[upper.tri(A.IAC)]),3),sep=""),xlab="",ylab="1 - ISA",sub="",cex.main=1.8,cex.lab=1.4)
+	mtext(paste("distance: 1 - ISA ",sep=""),cex=0.8,line=0.2)
+	## Connectivity
+	par(mar=c(5,5,4,2))
+	plot(Z.K,main="Connectivity", ylab="Z.K",xaxt="n",xlab="Sample",type="n",cex.main=1.8,cex.lab=1.4)
+	text(Z.K,labels=samle_names,cex=0.8,col=colorvec)
+	abline(h=-2);	abline(h=-3)
+	## ClusterCoef
+	par(mar=c(5,5,4,2))
+	plot(Z.C,main="ClusterCoef", ylab="Z.C",xaxt="n",xlab="Sample",cex.main=1.8,cex.lab=1.4,type="n")
+	text(Z.C,labels=samle_names,cex=0.8,col=colorvec)
+	abline(h=-2);	abline(h=-3)
+	## Connectivity vs ClusterCoef
+	par(mar=c(5,5,4,2))
+	plot(Z.K,Z.C,main="Connectivity vs ClusterCoef",xlab="Z.K",ylab="Z.C",col=colorvec,cex.main=1.8,cex.lab=1.4)  
+	abline(lm(Z.C~Z.K),col="black",lwd=2)
+	mtext(paste("rho = ",signif(cor.test(Z.K,Z.C,method="s")$estimate,2)," p = ",signif(cor.test(Z.K,Z.C,method="s")$p.value,2),sep=""),cex=0.8,line=0.2)   
+	abline(v=-2,lty=2,col="grey");abline(h=-2,lty=2,col="grey")
+	dev.off()
+	
+	## RESULTS
+	Z.K_outliers <- paste(Z.K_outliers, collapse=";")
+		  res[mgroup,] <- c(mgroup,mean_IAC,n_outliers,min_Z.K,rho,rho_pvalue,Z.K_outliers)
+	      }
+	      ## FINAL RESULTS 
+	res_out <- as.data.frame(res)
+	save(res_out,fie=paste(outfile,".group.",mgroup,".SampleNetwork.qc.RData",sep=""))
+	return(res_out)
+	      }
+}
+
+## test 
+## debug( basic_sampleNetwork) 
+## test <- basic_sampleNetwork(eset=eset_raw,col_by_chip="0",groups="byGroup",outfile=paste(out_dir,"/",project_name,".XXXXeset_raw",sep=""),sd_thrs=2) 
+
+
+
 
 #################################
 ##  basic_sampleNetworkIterate ##
 #################################
-basic_sampleNetworkIterate <- function(eset,col_by_chip,outfile, IACthresh=0.95, sd_thrs=2) {
+basic_sampleNetworkIterate <- function(eset, col_by_chip=c("1","0"), groups=c("all","byGroup") , outfile, IACthresh=0.95, sd_thrs=2) {
 
-basic_sampleNetworkIterate_summary <- data.frame(row.names=c("nSamp","round","nOutlier","mean_IAC","min_Z.k","KvC_rho","KvC_rho_pvalue"))
+basic_sampleNetworkIterate_summary <- data.frame(row.names=c("Group","round","nSamp","nOutlier","mean_IAC","min_Z.k","KvC_rho","KvC_rho_pvalue","Z.K_outliers"))
 basic_sampleNetworkIterate_summary <- as.data.frame(t(basic_sampleNetworkIterate_summary))
 
 outlier_running_count <- 0;
@@ -454,25 +616,34 @@ sd_thrs <- sd_thrs
 iac_outlier_samples <- c();
 
 ## sampleNetwork round 1 
-out <- basic_sampleNetwork(eset,col_by_chip,outfile=paste(outfile,".round.",iteration,sep="" ))
+if(groups=="all") {}
+group <- "all"
+
+out <- basic_sampleNetwork(eset,col_by_chip,groups,outfile=paste(outfile,".group.",group,".round.",iteration,sep="" ))
 
 n_samp <-  length(sampleNames(eset))
+mgroup <- out$Group
 mean_IAC <- out$mean_IAC;
 min_Z.K <- out$min_Z.K;
 rho_pvalue <- out$rho_pvalue
 rho <- out$rho
-Z.K_outliers <- out$Z.K_outliers
-iac_outlier_samples <- c(out$Z.K_outliers, iac_outlier_samples)
-outlier_running_count <- outlier_running_count + length(out$Z.K_outliers );
 
-res <- list(nSamp=n_samp,round=iteration,nOutlier=length(out$Z.K_outliers),mean_IAC=mean_IAC,min_Z.K=min_Z.K,KvC_rho=rho,KvC_rho_pvalue=rho_pvalue)
+Z.K_outliers <- out$Z.K_outliers_list
+
+Z.K_outliers_list <- paste(out$Z.K_outliers)
+Z.K_outliers_list <- strsplit(Z.K_outliers_list,";")
+
+outlier_running_count <- outlier_running_count + length(Z.K_outliers_list);
+iac_outlier_samples <- c(Z.K_outliers_list, iac_outlier_samples)
+
+res <- list(Group=mgroup,round=iteration,nSamp=n_samp,nOutlier=length(out$Z.K_outliers),mean_IAC=mean_IAC,min_Z.K=min_Z.K,KvC_rho=rho,KvC_rho_pvalue=rho_pvalue,Z.K_outliers=Z.K_outliers)
 basic_sampleNetworkIterate_summary <- rbind(basic_sampleNetworkIterate_summary,res)
 
 iteration <- iteration + 1;
 
 ## if outlier samples then remove them 
 
-if(outlier_running_count == 0 ) stop(" No sample outliers! " ) 
+if(outlier_running_count == 0 ) { write.table(basic_sampleNetworkIterate_summary,file=paste(outfile,".basic_sampleNetworkIterate_summary.csv",sep=""),sep=",",row.names=FALSE,quote=FALSE) } stop(" No sample outliers! " ) 
 
 if(outlier_running_count >= 1) { eset <- removeSamples_eset_lumi(eset,iac_outlier_samples) } else { eset <- eset }
 
@@ -484,22 +655,26 @@ while(iteration >= 1 & (mean_IAC < IACthresh | min_Z.K < -sd_thrs) ) {
 
 n_samp_start <- length(sampleNames(eset))
 
-out <- basic_sampleNetwork(eset,col_by_chip,outfile=paste(outfile,".round.",iteration,sep="" ))
+out <- basic_sampleNetwork(eset,col_by_chip,groups,outfile=paste(outfile,".round.",iteration,sep="" ))
 
 mean_IAC <- out$mean_IAC;
 min_Z.K <- out$min_Z.K;
 Z.K_outliers <- out$Z.K_outliers
 rho_pvalue <- out$rho_pvalue
 rho <- out$rho
-outlier_running_count <- outlier_running_count + length(out$Z.K_outliers );
-iac_outlier_samples <- c(out$Z.K_outliers, iac_outlier_samples)
+
+Z.K_outliers_list <- paste(out$Z.K_outliers)
+Z.K_outliers_list <- strsplit(Z.K_outliers_list,";")
+
+outlier_running_count <- outlier_running_count + length(Z.K_outliers_list);
+iac_outlier_samples <- c(Z.K_outliers_list, iac_outlier_samples)
 
 iteration <- iteration + 1;
 
 eset <- removeSamples_eset_lumi(eset,iac_outlier_samples) 
 n_samp_left <- length(sampleNames(eset))
 
-res <- list(nSamp=n_samp_left,round=iteration,nOutlier=length(out$Z.K_outliers),mean_IAC=mean_IAC,min_Z.K=min_Z.K,KvC_rho=rho,KvC_rho_pvalue=rho_pvalue)
+res <- list(Group=mgroup,round=iteration,nSamp=n_samp,nOutlier=length(out$Z.K_outliers),mean_IAC=mean_IAC,min_Z.K=min_Z.K,KvC_rho=rho,KvC_rho_pvalue=rho_pvalue,Z.K_outliers=Z.K_outliers)
 basic_sampleNetworkIterate_summary <- rbind(basic_sampleNetworkIterate_summary,res)
 
 cat(" Number of outliers after round [",iteration,"] = [",outlier_running_count,"].  Percentage [",round(outlier_running_count/n_samp,3),"]. Mean IAC [",mean_IAC,"]. Min Z.K [" ,min_Z.K,"]. KvC [",rho,"] [",rho_pvalue ,"] N SAMPLE LEFT [",n_samp_left,"]","\r","\n")
@@ -514,12 +689,21 @@ write.table(basic_sampleNetworkIterate_summary,file=paste(outfile,".basic_sample
 res <- list(iac_outlier_samples=iac_outlier_samples)
 return(res)
 
+#################################################################
+
+if(groups=="byGroup") {}
+
+
 }
+
+
+
+
+
 ##################
 
-outs <- basic_sampleNetworkIterate(eset=eset_raw,col_by_chip=1,outfile=paste(out_dir,"/",project_name,".eset_raw",sep=""),IACthresh=0.95, sd_thrs=2 )
-
-lumi.N <- lumiExpresso(eset_raw, variance.stabilize=TRUE, normalize.param = list(method='rsn'), bg.correct=FALSE)
+##outs <- basic_sampleNetworkIterate(eset=eset_raw,col_by_chip=1,outfile=paste(out_dir,"/",project_name,".eset_raw",sep=""),IACthresh=0.95, sd_thrs=2 )
+##lumi.N <- lumiExpresso(eset_raw, variance.stabilize=TRUE, normalize.param = list(method='rsn'), bg.correct=FALSE)
 
 
 ##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
@@ -545,7 +729,7 @@ project_settings <- read.table(config_file, head=TRUE, sep="\t") ## as.is=T, fil
 
 ##t(project_settings)
 
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 cat("\n"," START PRE_PROCESSING!" ,"\r","\n")
 
