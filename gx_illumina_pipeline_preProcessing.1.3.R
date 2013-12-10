@@ -2138,7 +2138,7 @@ multivariate_model_terms <- paste(batch_var_names ,collapse="+")
 
 for(pheno in c("PC1","PHENOTYPE","GROUPS") ) {
 
-multivariate_model <- paste(pheno,"~",multivariate_model_terms,sep="")
+multivariate_model <- paste(pheno,"~",multivariate_model_terms,sep="") ## prot ~ c1+c2+c3...
 
 multivariate_model <- as.formula(multivariate_model)
 
@@ -2248,7 +2248,7 @@ anova_data <- subset(anova_data, anova_data$terms!="Residuals")
 
 best_model <- paste(anova_data$terms, collapse=" + ")
 
-##best_model <- as.formula( paste(pheno,"~",best_model,sep="") )
+best_model <- as.formula( paste(pheno,"~",best_model,sep="") )
 
 ###################
 ## RSQ anova step #
