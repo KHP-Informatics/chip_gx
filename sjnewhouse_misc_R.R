@@ -1,0 +1,368 @@
+#!/share/bin/Rscript
+############################
+## subset eset
+############################
+removeSamples_eset_lumi <- function(eset, sampleRemove) {
+sample <- sampleNames(eset)
+samples_to_remove <- sampleRemove
+samples_to_keep <- (sample %in% samples_to_remove)==FALSE
+sel_samp_names <- sampleNames(eset)[samples_to_keep]
+eset <- eset[,samples_to_keep]
+ControlData <- getControlData(eset)
+ControlData  <- ControlData[,c("controlType","ProbeID",sel_samp_names)]
+eset <- addControlData2lumi(ControlData , eset)
+return(eset)
+}
+############################
+## shuffle_cols
+############################
+shuffle_cols <- function(data) {
+data_var <- names(data)
+data_var_shuffled <- sample(data_var,size=length(data_var),replace=FALSE)
+return(data_var_shuffled)
+}
+############################
+## shuffle_rows
+############################
+shuffle_rows <- function(data) {
+data_var <- rownames(data)
+data_var_shuffled <- sample(data_var,size=length(data_var),replace=FALSE)
+return(data_var_shuffled)
+}
+
+############################
+## data_summary_plots
+############################
+data_summary_plots <- function(data,results_prefix) {
+##library(car)
+##library(psych)
+##library(mi)
+if(require("car")){
+    print("car is loaded correctly")
+} else {
+    print("trying to install car")
+    install.packages("car")
+    if(require(car)){
+        print("car installed and loaded")
+    } else {
+        stop("could not install car")
+    }
+}
+##
+if(require("psych")){
+    print("psych is loaded correctly")
+} else {
+    print("trying to install psych")
+    install.packages("psych")
+    if(require(psych)){
+        print("psych installed and loaded")
+    } else {
+        stop("could not install psych")
+    }
+}
+if(require("mi")){
+    print("mi is loaded correctly")
+} else {
+    print("trying to install mi")
+    install.packages("mi")
+    if(require(mi)){
+        print("mi installed and loaded")
+    } else {
+        stop("could not install mi")
+    }
+}
+### get data
+
+## res fil names ##
+plotfile <- paste(results_prefix,".data_summary_plots.pdf",sep="")
+resfile_num <- paste(results_prefix,".numerical_data_summary.csv",sep="")
+resfile_cat <- paste(results_prefix,".categorical_data_summary.csv",sep="")
+
+## save default, for resetting...c(5, 4, 4, 2) + 0.1 ## c(bottom, left, top, right)
+def.par <- par(no.readonly = TRUE)
+
+## missing.data.analysis
+cat(" missing.data.analysis ","\r","\n")
+missing_TF <- is.na(data)
+missing_counts <- rowSums(missing_TF)
+n_sample_with_missing_data <- sum(missing_counts>=1)
+n_sample_with_complete_data <- sum(missing_counts==0)
+data_with_missing_var <- data[missing_counts>=1,]
+data_with_complete_var <- data[missing_counts==0,]
+cat(" missing.data.plot ","\r","\n")
+cat(" missing.pattern.plot ","\r","\n")
+pdf(file=paste(results_prefix,".missing.pattern.plot.pdf",sep=""),width=11,height=8)
+par(mar=c(4.1, 12.1, 1.1, 2.1))
+missing.pattern.plot ( data, y.order = FALSE, x.order = FALSE,obs.col="white", mis.col="black" )
+par(def.par)
+dev.off()
+
+## data classes
+data_class <- sapply(data ,class)
+class_list <- unique(data_class)
+cat(" The following data classes are observed [",unique(data_class),"]","\r","\n")
+
+## get numerical data and summarize
+sel_numerical <- sapply(data ,class) %in% c("numeric","integer")
+num_data <- data[,sel_numerical]
+## write to csv
+sink(resfile_num)
+cat("VARNAME,N,NMISS,PROP_MISS,MEAN,SD,VAR,MEDIAN,IQR,MAD,MIN,MAX,SHAPIRO_WILKS_W,SHAPIRO_WILKS_P,SKEW,KURTOSIS","\n")
+for(myvar in names(num_data) ){
+X <- num_data[,myvar]
+name_var <- paste(myvar,sep="")
+mean_var <- signif(mean(X,na.rm=TRUE),3)
+sd_var <- signif(sd(X,na.rm=TRUE),3)
+Var_var <- signif(var(X,na.rm=TRUE),3)
+med_var <- median(X, na.rm = FALSE)
+iqr_var <- IQR(X, na.rm = FALSE, type = 7)
+mad_var <- mad(X, center = median(X), constant = 1.4826, na.rm = FALSE,low = FALSE, high = FALSE)
+range_var_min <- range(X, na.rm = FALSE)[1]
+range_var_max <- range(X, na.rm = FALSE)[2]
+normtest_sw_p <- signif(shapiro.test(X)$p.value,3)
+normtest_sw_w <- signif(shapiro.test(X)$statistic,3)
+skew_var <- skew(X, na.rm = TRUE)
+kurtosi_var <- kurtosi(X, na.rm = TRUE)
+nmiss <- sum(is.na(X))
+nsamp <- length(X)
+pecentage_missing <- round(nmiss/nsamp,3)
+res <- paste(name_var,nsamp,nmiss,pecentage_missing,mean_var,sd_var,Var_var,med_var,iqr_var,mad_var,range_var_min,range_var_max,normtest_sw_w,normtest_sw_p,skew_var,kurtosi_var,sep=",")
+cat(res,"\n")
+}
+sink()
+
+## get categorical data and make tables of counts
+sel_categorical <- sapply(data ,class) %in% c("character","factor")
+categorica_data <- as.data.frame(data[,sel_categorical])
+colnames(categorica_data) <- names(data)[sel_categorical]
+sink(resfile_cat)
+for(myvar in names(categorica_data) ){
+X <- categorica_data[,myvar]
+name_var <- paste(myvar,sep="")
+table_var <- table(X)
+nmiss <- sum(is.na(X))
+nsamp <- length(X)
+pecentage_missing <- round(nmiss/nsamp,3)
+observed_var <- paste(unique(X),collapse=",")
+min_count <- min(table_var)==1
+cat("VARNAME,",name_var,"\n",sep="")
+cat("N,",nsamp,"\n",sep="")
+cat("NMISS,",nmiss,"\n",sep="")
+cat("PROP_MISS,",pecentage_missing,"\n",sep="")
+cat("SINGLUARITY,",min_count,"\n",sep="")
+cat("OBSERVED_TERMS,",observed_var,"\n",sep="")
+cat("COUNTS,",paste(table_var,collapse=",",sep=""),"\n","\n",sep="")
+}
+sink()
+
+#################
+## Start plots ##
+#################
+pdf(file=plotfile,width=11,height=8)
+
+par(mar=c(4.1, 12.1, 1.1, 2.1))
+missing.pattern.plot(data, y.order = FALSE, x.order = FALSE,obs.col="white", mis.col="black" )
+par(def.par)
+
+for( class_type in class_list ) {
+
+cat(" doing ",class_type,"\r","\n")
+
+	      if(class_type =="character") {
+					new_data <- data[,data_class==class_type]
+					    for(myvar in names(new_data) ){
+					    var_table <- sort(table(new_data[,myvar]),decreasing=FALSE)
+					    par(mar=c(5.1, 8, 4, 2.1))
+					    bp <- barplot(var_table,las=2,main=paste(myvar), horiz=TRUE,col="light blue")
+					    text(0,bp,round(var_table, 1),cex=1,pos=4)
+						    }
+	      }
+	      else if(class_type=="factor") {
+					      new_data <- data[,data_class==class_type]
+					      for(myvar in names(new_data) ){
+					      var_table <- sort(table(new_data[,myvar]),decreasing=FALSE)
+					      par(mar=c(5.1, 8, 4, 2.1))
+					      bp <- barplot(var_table,las=2,main=paste(myvar), horiz=TRUE,col="light blue")
+					      text(0,bp,round(var_table, 1),cex=1,pos=4)
+	      	            	      }
+	      }
+	      else if(class_type=="numeric") {
+							  new_data <- data[,data_class==class_type]
+							  for(myvar in names(new_data) ){
+							  nf <- layout(mat = matrix(c(1,2),2,1, byrow=TRUE),  height = c(1,3))
+							  par(mar=c(4.1, 4.1, 1.1, 2.1))
+							  X <- as.numeric(new_data[,myvar])
+							  boxplot(X, horizontal=TRUE,  outline=TRUE,main=paste(myvar))
+							  hist(X,xlab=paste(myvar),breaks=50,main="",prob=TRUE)
+							  lines(density(X),col="blue")
+							  meanvar <- signif(mean(X,na.rm=TRUE),3)
+							  sdvar <- signif(sd(X,na.rm=TRUE),3)
+							  normtest_sw <- signif(shapiro.test(X)$p.value,3)
+							  nmiss <- sum(is.na(X))
+							  pecentage_missing <- round(nmiss/length(X),3)
+							  mtext(paste("\nMean:[",meanvar,"]\nSD:[",sdvar,"]\nnormP:[",normtest_sw,"]\n NSAMPLE:[",length(X),"]\nNMISS:[",nmiss,"]\n %Missing:[",pecentage_missing,"]",sep=" "), side = 3, adj=1, padj=1)
+							  par(def.par) # 1=bottom, 2=left, 3=top, 4=right
+							  qqPlot(X,main=paste(myvar),pch=20,ylab=paste(myvar),col="blue")
+							  							  }
+      	      }
+      	      else if(class_type=="integer") {
+							  new_data <- data[,data_class==class_type]
+							  new_data <- apply(new_data,2,as.numeric)
+							  for(myvar in names(new_data) ){
+							  nf <- layout(mat = matrix(c(1,2),2,1, byrow=TRUE),  height = c(1,3))
+							  par(mar=c(4.1, 4.1, 1.1, 2.1))
+							  X <- as.numeric(new_data[,myvar])
+							  boxplot(X, horizontal=TRUE,  outline=TRUE,main=paste(myvar))
+							  hist(X,xlab=paste(myvar),breaks=50,main="",prob=TRUE)
+							  lines(density(X),col="blue")
+							  meanvar <- signif(mean(X,na.rm=TRUE),3)
+							  sdvar <- signif(sd(X,na.rm=TRUE),3)
+							  normtest_sw <- signif(shapiro.test(X)$p.value,3)
+							   nmiss <- sum(is.na(X))
+							  pecentage_missing <- round(nmiss/length(X),3)
+							  mtext(paste("\nMean:[",meanvar,"]\nSD:[",sdvar,"]\nnormP:[",normtest_sw,"]\n NSAMPLE:[",length(X),"]\nNMISS:[",nmiss,"]\n %Missing:[",pecentage_missing,"]",sep=" "), side = 3, adj=1, padj=1)
+							  par(def.par)
+							  qqPlot(X,main=paste(myvar),pch=20,ylab=paste(myvar),col="blue")
+							  }
+	      }
+	      else if(class_type=="logical") {
+					      new_data <- data[,data_class==class_type]
+					      for(myvar in names(new_data) ){
+					      var_table <- sort(table(new_data[,myvar]),decreasing=FALSE)
+					      par(mar=c(5.1, 8, 4, 2.1))
+					      bp <-  barplot(var_table,las=2,main=paste(myvar), horiz=TRUE,col="light blue")
+					      text(0,bp,round(var_table, 1),cex=1,pos=4)
+					      par(def.par)
+	      	      }
+	      }
+	  }
+	  dev.off()
+	  	  dev.off()
+	  	  	  dev.off()
+	  	  	  	  dev.off()
+	  	  	  	  dev.off()
+	  }
+
+############################
+## negBeadOutlierRepMean
+#############################
+negBeadOutlierRepMean <- function(x) {
+		z_out_samp <- abs(  as.numeric( scale(x) )  ) > 2
+		mean_pop <- mean(x[z_out_samp==FALSE])
+		sd_pop <- sd(x[z_out_samp==FALSE])
+		new_x <- ifelse( abs(  as.numeric( scale(x) )  ) > 2, mean_pop, x )
+		return(new_x)
+}
+##############
+## quantfun ##
+##############
+quantfun <- function(x,probs=c(seq(0,1,0.20))) {
+as.integer(cut(x, quantile(x, probs ), include.lowest=TRUE))
+}
+##############
+## var_gene ##
+##############
+zero_var_probe <- function(gx_matrix) {
+gx <- gx_matrix
+var_gx <- apply(gx,1,var)
+zero_var <- var_gx==0
+return(zero_var)
+}
+mean_probe <- function(gx_matrix) {
+gx <- gx_matrix
+mean_gx <- apply(gx,1,mean)
+return(mean_gx)
+}
+sd_probe <- function(gx_matrix) {
+gx <- gx_matrix
+sd_gx <- apply(gx,1,sd)
+return(sd_gx)
+}
+var_probe <- function(gx_matrix) {
+gx <- gx_matrix
+var_gx <- apply(gx,1,var)
+return(var_gx)
+}
+max_probe <- function(gx_matrix) {
+gx <- gx_matrix
+max_gx <- apply(gx,1,max)
+return(max_gx)
+}
+min_probe <- function(gx_matrix) {
+gx <- gx_matrix
+min_gx <- apply(gx,1,min)
+return(min_gx)
+}
+has_var_probe <- function(gx_matrix) {
+gx <- gx_matrix
+var_gx <- apply(gx,1,var)
+has_var <- var_gx!=0
+return(has_var)
+}
+has_var_probe2 <- function(gx_matrix) {
+gx <- gx_matrix
+var_gx <- apply(gx,1,var)
+has_var <- var_gx >= quantile(var_gx, probs="0.1" );
+return(has_var)
+}
+############################
+## write_expression_files ##
+############################
+write_expression_files <- function(eset, outfile) {
+
+cat(" Writing probe exprs matrix [", paste(outfile,".exprs_matrix.txt",sep="")  ,"]","\r","\n")
+gx <- exprs(eset)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(outfile,".exprs_matrix.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+cat(" Writing probe se.exprs matrix [", paste(outfile,".se.exprs_matrix.txt",sep="")  ,"]","\r","\n")
+gx <- se.exprs(eset)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(outfile,".se.exprs_matrix.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+cat(" Writing probe detection matrix [", paste(outfile,".detection_matrix.txt",sep="")  ,"]","\r","\n")
+gx <- detection(eset)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(outfile,".detection_matrix.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+cat(" Writing probe beadNum matrix [", paste(outfile,".beadNum_matrix.txt",sep="")  ,"]","\r","\n")
+gx <- beadNum(eset)
+gx <- as.data.frame(gx)
+gx$nuID <- rownames(gx)
+gx <- merge(fData(eset),gx,by.x="nuID",by.y="nuID",sort=FALSE)
+write.table(gx , file=paste(outfile,".beadNum_matrix.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+cat(" Writing probe PCA matrix [", paste(outfile,".pca_matrix.txt",sep="")  ,"]","\r","\n")
+gx <- exprs(eset)
+gx <- gx[zero_var_probe(gx)==FALSE,]
+pca_gx <- prcomp(t(gx))$x
+pca_gx <- pca_gx[,1:20]
+pca_gx <- cbind(rownames(pca_gx),pca_gx)
+grep_pc <- grep("PC",colnames(pca_gx))
+colnames(pca_gx) <-   c("Sample.ID",colnames(pca_gx)[grep_pc])
+write.table(pca_gx  , file=paste(outfile,".pca_matrix.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+cat(" Writing pData slot of eset and adding PCA data to [", paste(outfile,".pData.txt",sep="")  ,"]","\r","\n")
+pgx <- pData(eset)
+pgx <- merge(pgx, pca_gx, by.x="Sample.ID",by.y="Sample.ID",sort=FALSE,all.x=TRUE)
+write.table(pgx  , file=paste(outfile,".pData.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+cat(" Writing fData slot of eset [", paste(outfile,".fData.txt",sep="")  ,"]","\r","\n")
+fgx <- fData(eset)
+sel_probe <- paste(fgx$nuID,sep="")
+gx <- exprs(eset)
+gx <- gx[sel_probe,]
+fgx$mean_probe <- mean_probe(gx);
+fgx$sd_probe <- sd_probe(gx);
+fgx$var_probe <- var_probe(gx);
+fgx$min_probe <- min_probe(gx);
+fgx$max_probe <- max_probe(gx);
+write.table(fgx  , file=paste(outfile,".fData.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+rm("gx","pca_gx","pgx","fgx")
+}

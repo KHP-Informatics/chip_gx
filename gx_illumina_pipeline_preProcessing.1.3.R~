@@ -1,8 +1,7 @@
 #!/share/bin/Rscript
-
-
 rm(list=ls())
-
+options(warn=-1)
+options(stringsAsFactors = FALSE)
 ################################################################################################################################################################
 ##
 ## Authors : Dr Stephen J Newhouse
@@ -21,10 +20,6 @@ rm(list=ls())
 ## 3) Technical information file with batch processing and lab realted data. must contain the following columns:- Sample.ID followed by any and all processing data information, RIN, RNA yeilds and concetrations
 ##
 #################################################################################################################################################################
-
-options(warn=-1)
-options(stringsAsFactors = FALSE)
-
 cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
 cat("########################################################################################","\r","\n")
 cat("## Authors : Dr Stephen J Newhouse","\r","\n")
@@ -61,8 +56,7 @@ cat(" #-------------------------------------------------------------------------
 
 ###################
 ## some functins ##
-###################
-
+##################
 ## subset eset
 removeSamples_eset_lumi <- function(eset, sampleRemove) {
 sample <- sampleNames(eset)
@@ -75,9 +69,7 @@ ControlData  <- ControlData[,c("controlType","ProbeID",sel_samp_names)]
 eset <- addControlData2lumi(ControlData , eset)
 return(eset)
 }
-
 ## shuffle_cols
-
 shuffle_cols <- function(data) {
 data_var <- names(data)
 data_var_shuffled <- sample(data_var,size=length(data_var),replace=FALSE)
@@ -89,95 +81,7 @@ data_var <- rownames(data)
 data_var_shuffled <- sample(data_var,size=length(data_var),replace=FALSE)
 return(data_var_shuffled)
 }
-
 #####################################################################################################
-
-data_summary_plots <- function(data,plotOut) {
-library(car)
-
-def.par <- par(no.readonly = TRUE) # save default, for resetting...c(5, 4, 4, 2) + 0.1 ## c(bottom, left, top, right)
-data_class <- sapply(data ,class)
-class_list <- unique(data_class)
-cat(" The following data classes are observed [",unique(data_class),"]","\r","\n")
-
-pdf(file=plotOut,width=11,height=8)
-
-for( class_type in class_list ) {
-
-cat(" doing ",class_type,"\r","\n")
-
-	      if(class_type =="character") {
-					new_data <- data[,data_class==class_type]
-					    for(var in names(new_data) ){
-					    var_table <- sort(table(new_data[,var]),decreasing=FALSE)
-					    par(mar=c(5.1, 8, 4, 2.1))
-					    barplot(var_table,las=2,main=paste(var), horiz=TRUE)
-						    }
-	      }
-	      else if(class_type=="factor") {
-					      new_data <- data[,data_class==class_type]
-					      for(var in names(new_data) ){
-					      var_table <- sort(table(new_data[,var]),decreasing=FALSE)
-					      par(mar=c(5.1, 8, 4, 2.1))
-					      barplot(var_table,las=2,main=paste(var), horiz=TRUE)
-	      	            	      }
-	      }
-	      else if(class_type=="numeric") {
-							  new_data <- data[,data_class==class_type]
-							  for(var in names(new_data) ){
-							  nf <- layout(mat = matrix(c(1,2),2,1, byrow=TRUE),  height = c(1,3))
-							  par(mar=c(4.1, 4.1, 1.1, 2.1))
-							  X <- as.numeric(new_data[,var])
-							  boxplot(X, horizontal=TRUE,  outline=TRUE,main=paste(var))
-							  hist(X,xlab=paste(var),breaks=50,main="",prob=TRUE)
-							  lines(density(X),col="blue")
-							  meanvar <- signif(mean(X,na.rm=TRUE),3)
-							  sdvar <- signif(sd(X,na.rm=TRUE),3)
-							  normtest_sw <- signif(shapiro.test(X)$p.value,3)
-							  mtext(paste("Mean:[",meanvar,"] SD:[",sdvar,"] normP:[",normtest_sw,"]",sep=" "), side = 3, adj=1)
-							  par(def.par)
-							  qqPlot(X,main=paste(var),pch=20,ylab=paste(var),col="blue")
-							  							  }
-      	      }
-      	      else if(class_type=="integer") {
-							  new_data <- data[,data_class==class_type]
-							  new_data <- apply(new_data,2,as.numeric)
-							  for(var in names(new_data) ){
-							  nf <- layout(mat = matrix(c(1,2),2,1, byrow=TRUE),  height = c(1,3))
-							  par(mar=c(4.1, 4.1, 1.1, 2.1))
-							  X <- as.numeric(new_data[,var])
-							  boxplot(X, horizontal=TRUE,  outline=TRUE,main=paste(var))
-							  hist(X,xlab=paste(var),breaks=50,main="",prob=TRUE)
-							  lines(density(X),col="blue")
-							  meanvar <- signif(mean(X,na.rm=TRUE),3)
-							  sdvar <- signif(sd(X,na.rm=TRUE),3)
-							  normtest_sw <- signif(shapiro.test(X)$p.value,3)
-							  mtext(paste("Mean:[",meanvar,"] SD:[",sdvar,"] normP:[",normtest_sw,"]",sep=" "), side = 3, adj=1)
-							  par(def.par)
-							  qqPlot(X,main=paste(var),pch=20,ylab=paste(var),col="blue")
-							  }
-	      }
-	      else if(class_type=="logical") {
-					      new_data <- data[,data_class==class_type]
-					      for(var in names(new_data) ){
-					      var_table <- sort(table(new_data[,var]),decreasing=FALSE)
-					      par(mar=c(5.1, 8, 4, 2.1))
-					      barplot(var_table,las=2,main=paste(var), horiz=TRUE)
-					      par(def.par)
-	      	      }
-	      }
-	  }
-	  dev.off()
-	  	  dev.off()
-	  	  	  dev.off()
-	  	  	  	  dev.off()
-	  	  	  	  dev.off()
-	  }
-
-
-###################################################################################################################################################################################################
-
-
 ############################
 ## negBeadOutlierRepMean
 #############################
@@ -228,8 +132,6 @@ gx <- gx_matrix
 min_gx <- apply(gx,1,min)
 return(min_gx)
 }
-
-
 has_var_probe <- function(gx_matrix) {
 gx <- gx_matrix
 var_gx <- apply(gx,1,var)
@@ -402,7 +304,7 @@ if(groups=="all") {
 mgroup <- "all"
 n_groups <- length(mgroup)
 res_names <- c("Group","mean_IAC","n_outliers","min_Z.K","rho","rho_pvalue","Z.K_outliers")
-res <- matrix(ncol=length(res_names),nrow=n_groups, dimnames=list(group_list,res_names))
+res <- matrix(ncol=length(res_names),nrow=n_groups, dimnames=list(mgroup,res_names))
 
 cat(" doing group [",mgroup,"]","\r","\n")
 gx <- exprs(eset)
