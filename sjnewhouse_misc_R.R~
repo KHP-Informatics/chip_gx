@@ -143,13 +143,16 @@ table_var <- table(X)
 nmiss <- sum(is.na(X))
 nsamp <- length(X)
 pecentage_missing <- round(nmiss/nsamp,3)
-observed_var <- paste(unique(X),collapse=",")
-min_count <- min(table_var)==1
+###observed_var <- paste(unique(X),collapse=",")
+observed_var <- paste(X,collapse=",")
+SINGLUARITY <- min(table_var)==1; ## any var seen only once??
+min_count <- min(table_var)
 cat("VARNAME,",name_var,"\n",sep="")
 cat("N,",nsamp,"\n",sep="")
 cat("NMISS,",nmiss,"\n",sep="")
 cat("PROP_MISS,",pecentage_missing,"\n",sep="")
-cat("SINGLUARITY,",min_count,"\n",sep="")
+cat("MIN_COUNT,",min_count,"\n",sep="")
+cat("SINGLUARITY,",SINGLUARITY,"\n",sep="")
 cat("OBSERVED_TERMS,",observed_var,"\n",sep="")
 cat("COUNTS,",paste(table_var,collapse=",",sep=""),"\n","\n",sep="")
 }
@@ -161,7 +164,7 @@ sink()
 pdf(file=plotfile,width=11,height=8)
 
 par(mar=c(4.1, 12.1, 1.1, 2.1))
-missing.pattern.plot(data, y.order = FALSE, x.order = FALSE,obs.col="white", mis.col="black" )
+###missing.pattern.plot(data, y.order = FALSE, x.order = FALSE,obs.col="white", mis.col="black" )
 par(def.par)
 
 for( class_type in class_list ) {
@@ -366,3 +369,7 @@ fgx$max_probe <- max_probe(gx);
 write.table(fgx  , file=paste(outfile,".fData.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
 rm("gx","pca_gx","pgx","fgx")
 }
+
+
+
+

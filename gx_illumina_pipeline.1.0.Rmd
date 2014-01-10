@@ -1,0 +1,110 @@
+Microarry pre-processing for Illumina BeadArray data.
+========================================================
+
+- Authors : Dr Stephen J Newhouse  
+- Email :   stephen.j.newhouse@gmail.com  
+- Verison:  1.00  
+- Source:   Genomestudio  
+
+# REQUIRED INPUT FILES
+
+1. Firnal reports from Genomestudio:  
+    * Sample  
+    * Group Probe   
+    * Control Probe   
+    * Probe annotations  
+    
+2. Phenotype file:  must contain the following columns:- Sample.ID,SEX,GROUPS,TISSUE,PHENOTYPE,Study_ID  
+
+3. Technical information file with batch processing and lab realted data.  This must contain the following columns:- Sample.ID followed by any and all processing data information, RIN, RNA yeilds and concetrations.
+
+4. Config File
+
+5. sjnewhouse_misc_R.R
+
+# PROJECT DIRECTORY
+This should conatin all required input files listed above
+
+```
+# move to project direcotory
+cd /media/D/expression/GAP_Expression;
+# start R
+R
+```
+
+### Load Libs
+```{r loadLibs}
+# Load Libs
+rm(list=ls())
+options(stringsAsFactors = FALSE)
+setwd("/media/D/expression/GAP_Expression")
+library(lumi)
+library(annotate)
+library(lumiHumanAll.db)
+library(affy)
+library(cluster)
+library(impute)
+library(WGCNA)
+library(gplots)
+library(limma)
+library(vsn)
+library(MBCB)
+library(lumiHumanIDMapping)
+library(scatterplot3d)
+library(relaimpo)
+source("sjnewhouse_misc_R.R")
+```
+
+Email Dr Stephen J Newhouse @ stephen.newhouse@kcl.ac.uk for source code **sjnewhouse\_misc\_R.R**.
+This contains a number of fucntion required for running the pipeline. It Will be on git soon.
+
+# CONFIG FILE
+User is to set this up in excel. Defines working directory, file names and pre-processing options.
+Make sure 
+
+```{r readConfig}
+# Read Config File
+config_file <- "GAP.project.config"
+project_settings <- read.table(config_file, head=TRUE, sep="\t") ## as.is=T, fill=TRUE)
+# check config file
+t(project_settings)
+```
+
+### Getting Project settings and file names
+```{r getSettingsFromConfig}
+# Getting Project settings and file names
+project_dir <- project_settings$project_dir ## /scratch/project/pipelines/DATA/expression/GAP_Expression
+gs_report <- project_settings$gs_report ## "Sample_and_Control_Probe_Profile_FinalReport.txt"
+gs_probe <- project_settings$gs_probe ## "Group_Probe_Profile_Final_Report.txt" # genomestudio report
+gs_sample <- project_settings$gs_sample ## "sample_table_Final_Report.txt" # genomestudio report
+gs_control <- project_settings$gs_control ## "control_probe_profile_Final_Report.txt" # genomestudio report
+anno_table <- project_settings$anno_table ## annotation table for project
+pheno_file <- project_settings$pheno_file ## FILE NAME must contain : Sample.ID,SEX,GROUPS,TISSUE,PHENOTYPE,Study_ID
+project_name <- project_settings$project_name ## "GAP" # GAP
+out_dir <- paste(project_name,"_lumi_processing" ,sep="") # output dir for lumi process and plots
+probe_det <- project_settings$probe_det ## 80 # 50, 80, 90,100
+sample_det <- project_settings$sample_det ## 80 # 50,80,90,100
+sex_check <- project_settings$sex_check ## 1 # 1 or 0
+iac_check <- project_settings$iac_check ## 1 # 1 or 0
+iac_sd_thrs <- project_settings$iac_sd_thrs ## 2 #
+norm_method <- project_settings$norm_method ## "rsn" # quantile, rsn, or both
+transform_method <- project_settings$transform_method ## "vst" # log2, vst or both
+mbcb_method <- project_settings$mbcb_method ## NP or MLE
+tech_pheno_file <- project_settings$tech_pheno_file ## "sample_tech_info.txt"
+```
+
+### Set working directory
+```{r setProjectDir}
+# set working directory
+setwd(project_dir)
+cat(" Making processing directory:- ",paste(" mkdir ./",out_dir,sep=""),"\r","\n")
+make_dir_command <- paste(" if [ ! -e ./",out_dir," ]; then mkdir ./",out_dir,"; fi",sep="")
+system( make_dir_command )
+
+```
+
+
+# THE END
+
+
+

@@ -39,59 +39,6 @@ library(lumiHumanIDMapping)
 library(scatterplot3d)
 ########################################
 
-############################
-## negBeadOutlierRepMean 
-#############################
-negBeadOutlierRepMean <- function(x) { 
-		z_out_samp <- abs(  as.numeric( scale(x) )  ) > 2
-		mean_pop <- mean(x[z_out_samp==FALSE])
-		sd_pop <- sd(x[z_out_samp==FALSE])
-		new_x <- ifelse( abs(  as.numeric( scale(x) )  ) > 2, mean_pop, x ) 
-		return(new_x)
-}
-
-##############
-## quantfun ##
-##############
-quantfun <- function(x) {
-as.integer(cut(x, quantile(x, probs=c(seq(0,1,0.20)  ) ), include.lowest=TRUE)) 
-}
-
-##############
-## var_gene ##
-##############
-zero_var_probe <- function(gx_matrix) {
-gx <- gx_matrix
-var_gx <- apply(gx,1,var)
-zero_var <- var_gx==0
-return(zero_var)
-}
-
-mean_probe <- function(gx_matrix) {
-gx <- gx_matrix
-mean_gx <- apply(gx,1,mean)
-return(mean_gx)
-}
-
-sd_probe <- function(gx_matrix) {
-gx <- gx_matrix
-sd_gx <- apply(gx,1,sd)
-return(sd_gx)
-}
-
-var_probe <- function(gx_matrix) {
-gx <- gx_matrix
-var_gx <- apply(gx,1,var)
-return(var_gx)
-}
-
-
-
-
-
-
-
-
 ########################################
 
 # utility functions

@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+<title>Microarry pre-processing for Illumina BeadArray data</title>
+
+<style type="text/css">
+body, td {
+   font-family: sans-serif;
+   background-color: white;
+   font-size: 12px;
+   margin: 8px;
+}
+
+tt, code, pre {
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+}
+
+h1 { 
+   font-size:2.2em; 
+}
+
+h2 { 
+   font-size:1.8em; 
+}
+
+h3 { 
+   font-size:1.4em; 
+}
+
+h4 { 
+   font-size:1.0em; 
+}
+
+h5 { 
+   font-size:0.9em; 
+}
+
+h6 { 
+   font-size:0.8em; 
+}
+
+a:visited {
+   color: rgb(50%, 0%, 50%);
+}
+
+pre {	
+   margin-top: 0;
+   max-width: 95%;
+   border: 1px solid #ccc;
+   white-space: pre-wrap;
+}
+
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code.r, code.cpp {
+   background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: none;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+   border-top-style: dotted;
+   border-top-color: #999999;
+}
+
+@media print {
+   * { 
+      background: transparent !important; 
+      color: black !important; 
+      filter:none !important; 
+      -ms-filter: none !important; 
+   }
+
+   body { 
+      font-size:12pt; 
+      max-width:100%; 
+   }
+       
+   a, a:visited { 
+      text-decoration: underline; 
+   }
+
+   hr { 
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote { 
+      padding-right: 1em; 
+      page-break-inside: avoid; 
+   }
+
+   tr, img { 
+      page-break-inside: avoid; 
+   }
+
+   img { 
+      max-width: 100% !important; 
+   }
+
+   @page :left { 
+      margin: 15mm 20mm 15mm 10mm; 
+   }
+     
+   @page :right { 
+      margin: 15mm 10mm 15mm 20mm; 
+   }
+
+   p, h2, h3 { 
+      orphans: 3; widows: 3; 
+   }
+
+   h2, h3 { 
+      page-break-after: avoid; 
+   }
+}
+
+</style>
+
+<!-- Styles for R syntax highlighter -->
+<style type="text/css">
+   pre .operator,
+   pre .paren {
+     color: rgb(104, 118, 135)
+   }
+
+   pre .literal {
+     color: rgb(88, 72, 246)
+   }
+
+   pre .number {
+     color: rgb(0, 0, 205);
+   }
+
+   pre .comment {
+     color: rgb(76, 136, 107);
+   }
+
+   pre .keyword {
+     color: rgb(0, 0, 255);
+   }
+
+   pre .identifier {
+     color: rgb(0, 0, 0);
+   }
+
+   pre .string {
+     color: rgb(3, 106, 7);
+   }
+</style>
+
+<!-- R syntax highlighter -->
+<script type="text/javascript">
+var hljs=new function(){function m(p){return p.replace(/&/gm,"&amp;").replace(/</gm,"&lt;")}function f(r,q,p){return RegExp(q,"m"+(r.cI?"i":"")+(p?"g":""))}function b(r){for(var p=0;p<r.childNodes.length;p++){var q=r.childNodes[p];if(q.nodeName=="CODE"){return q}if(!(q.nodeType==3&&q.nodeValue.match(/\s+/))){break}}}function h(t,s){var p="";for(var r=0;r<t.childNodes.length;r++){if(t.childNodes[r].nodeType==3){var q=t.childNodes[r].nodeValue;if(s){q=q.replace(/\n/g,"")}p+=q}else{if(t.childNodes[r].nodeName=="BR"){p+="\n"}else{p+=h(t.childNodes[r])}}}if(/MSIE [678]/.test(navigator.userAgent)){p=p.replace(/\r/g,"\n")}return p}function a(s){var r=s.className.split(/\s+/);r=r.concat(s.parentNode.className.split(/\s+/));for(var q=0;q<r.length;q++){var p=r[q].replace(/^language-/,"");if(e[p]){return p}}}function c(q){var p=[];(function(s,t){for(var r=0;r<s.childNodes.length;r++){if(s.childNodes[r].nodeType==3){t+=s.childNodes[r].nodeValue.length}else{if(s.childNodes[r].nodeName=="BR"){t+=1}else{if(s.childNodes[r].nodeType==1){p.push({event:"start",offset:t,node:s.childNodes[r]});t=arguments.callee(s.childNodes[r],t);p.push({event:"stop",offset:t,node:s.childNodes[r]})}}}}return t})(q,0);return p}function k(y,w,x){var q=0;var z="";var s=[];function u(){if(y.length&&w.length){if(y[0].offset!=w[0].offset){return(y[0].offset<w[0].offset)?y:w}else{return w[0].event=="start"?y:w}}else{return y.length?y:w}}function t(D){var A="<"+D.nodeName.toLowerCase();for(var B=0;B<D.attributes.length;B++){var C=D.attributes[B];A+=" "+C.nodeName.toLowerCase();if(C.value!==undefined&&C.value!==false&&C.value!==null){A+='="'+m(C.value)+'"'}}return A+">"}while(y.length||w.length){var v=u().splice(0,1)[0];z+=m(x.substr(q,v.offset-q));q=v.offset;if(v.event=="start"){z+=t(v.node);s.push(v.node)}else{if(v.event=="stop"){var p,r=s.length;do{r--;p=s[r];z+=("</"+p.nodeName.toLowerCase()+">")}while(p!=v.node);s.splice(r,1);while(r<s.length){z+=t(s[r]);r++}}}}return z+m(x.substr(q))}function j(){function q(x,y,v){if(x.compiled){return}var u;var s=[];if(x.k){x.lR=f(y,x.l||hljs.IR,true);for(var w in x.k){if(!x.k.hasOwnProperty(w)){continue}if(x.k[w] instanceof Object){u=x.k[w]}else{u=x.k;w="keyword"}for(var r in u){if(!u.hasOwnProperty(r)){continue}x.k[r]=[w,u[r]];s.push(r)}}}if(!v){if(x.bWK){x.b="\\b("+s.join("|")+")\\s"}x.bR=f(y,x.b?x.b:"\\B|\\b");if(!x.e&&!x.eW){x.e="\\B|\\b"}if(x.e){x.eR=f(y,x.e)}}if(x.i){x.iR=f(y,x.i)}if(x.r===undefined){x.r=1}if(!x.c){x.c=[]}x.compiled=true;for(var t=0;t<x.c.length;t++){if(x.c[t]=="self"){x.c[t]=x}q(x.c[t],y,false)}if(x.starts){q(x.starts,y,false)}}for(var p in e){if(!e.hasOwnProperty(p)){continue}q(e[p].dM,e[p],true)}}function d(B,C){if(!j.called){j();j.called=true}function q(r,M){for(var L=0;L<M.c.length;L++){if((M.c[L].bR.exec(r)||[null])[0]==r){return M.c[L]}}}function v(L,r){if(D[L].e&&D[L].eR.test(r)){return 1}if(D[L].eW){var M=v(L-1,r);return M?M+1:0}return 0}function w(r,L){return L.i&&L.iR.test(r)}function K(N,O){var M=[];for(var L=0;L<N.c.length;L++){M.push(N.c[L].b)}var r=D.length-1;do{if(D[r].e){M.push(D[r].e)}r--}while(D[r+1].eW);if(N.i){M.push(N.i)}return f(O,M.join("|"),true)}function p(M,L){var N=D[D.length-1];if(!N.t){N.t=K(N,E)}N.t.lastIndex=L;var r=N.t.exec(M);return r?[M.substr(L,r.index-L),r[0],false]:[M.substr(L),"",true]}function z(N,r){var L=E.cI?r[0].toLowerCase():r[0];var M=N.k[L];if(M&&M instanceof Array){return M}return false}function F(L,P){L=m(L);if(!P.k){return L}var r="";var O=0;P.lR.lastIndex=0;var M=P.lR.exec(L);while(M){r+=L.substr(O,M.index-O);var N=z(P,M);if(N){x+=N[1];r+='<span class="'+N[0]+'">'+M[0]+"</span>"}else{r+=M[0]}O=P.lR.lastIndex;M=P.lR.exec(L)}return r+L.substr(O,L.length-O)}function J(L,M){if(M.sL&&e[M.sL]){var r=d(M.sL,L);x+=r.keyword_count;return r.value}else{return F(L,M)}}function I(M,r){var L=M.cN?'<span class="'+M.cN+'">':"";if(M.rB){y+=L;M.buffer=""}else{if(M.eB){y+=m(r)+L;M.buffer=""}else{y+=L;M.buffer=r}}D.push(M);A+=M.r}function G(N,M,Q){var R=D[D.length-1];if(Q){y+=J(R.buffer+N,R);return false}var P=q(M,R);if(P){y+=J(R.buffer+N,R);I(P,M);return P.rB}var L=v(D.length-1,M);if(L){var O=R.cN?"</span>":"";if(R.rE){y+=J(R.buffer+N,R)+O}else{if(R.eE){y+=J(R.buffer+N,R)+O+m(M)}else{y+=J(R.buffer+N+M,R)+O}}while(L>1){O=D[D.length-2].cN?"</span>":"";y+=O;L--;D.length--}var r=D[D.length-1];D.length--;D[D.length-1].buffer="";if(r.starts){I(r.starts,"")}return R.rE}if(w(M,R)){throw"Illegal"}}var E=e[B];var D=[E.dM];var A=0;var x=0;var y="";try{var s,u=0;E.dM.buffer="";do{s=p(C,u);var t=G(s[0],s[1],s[2]);u+=s[0].length;if(!t){u+=s[1].length}}while(!s[2]);if(D.length>1){throw"Illegal"}return{r:A,keyword_count:x,value:y}}catch(H){if(H=="Illegal"){return{r:0,keyword_count:0,value:m(C)}}else{throw H}}}function g(t){var p={keyword_count:0,r:0,value:m(t)};var r=p;for(var q in e){if(!e.hasOwnProperty(q)){continue}var s=d(q,t);s.language=q;if(s.keyword_count+s.r>r.keyword_count+r.r){r=s}if(s.keyword_count+s.r>p.keyword_count+p.r){r=p;p=s}}if(r.language){p.second_best=r}return p}function i(r,q,p){if(q){r=r.replace(/^((<[^>]+>|\t)+)/gm,function(t,w,v,u){return w.replace(/\t/g,q)})}if(p){r=r.replace(/\n/g,"<br>")}return r}function n(t,w,r){var x=h(t,r);var v=a(t);var y,s;if(v){y=d(v,x)}else{return}var q=c(t);if(q.length){s=document.createElement("pre");s.innerHTML=y.value;y.value=k(q,c(s),x)}y.value=i(y.value,w,r);var u=t.className;if(!u.match("(\\s|^)(language-)?"+v+"(\\s|$)")){u=u?(u+" "+v):v}if(/MSIE [678]/.test(navigator.userAgent)&&t.tagName=="CODE"&&t.parentNode.tagName=="PRE"){s=t.parentNode;var p=document.createElement("div");p.innerHTML="<pre><code>"+y.value+"</code></pre>";t=p.firstChild.firstChild;p.firstChild.cN=s.cN;s.parentNode.replaceChild(p.firstChild,s)}else{t.innerHTML=y.value}t.className=u;t.result={language:v,kw:y.keyword_count,re:y.r};if(y.second_best){t.second_best={language:y.second_best.language,kw:y.second_best.keyword_count,re:y.second_best.r}}}function o(){if(o.called){return}o.called=true;var r=document.getElementsByTagName("pre");for(var p=0;p<r.length;p++){var q=b(r[p]);if(q){n(q,hljs.tabReplace)}}}function l(){if(window.addEventListener){window.addEventListener("DOMContentLoaded",o,false);window.addEventListener("load",o,false)}else{if(window.attachEvent){window.attachEvent("onload",o)}else{window.onload=o}}}var e={};this.LANGUAGES=e;this.highlight=d;this.highlightAuto=g;this.fixMarkup=i;this.highlightBlock=n;this.initHighlighting=o;this.initHighlightingOnLoad=l;this.IR="[a-zA-Z][a-zA-Z0-9_]*";this.UIR="[a-zA-Z_][a-zA-Z0-9_]*";this.NR="\\b\\d+(\\.\\d+)?";this.CNR="\\b(0[xX][a-fA-F0-9]+|(\\d+(\\.\\d*)?|\\.\\d+)([eE][-+]?\\d+)?)";this.BNR="\\b(0b[01]+)";this.RSR="!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|\\.|-|-=|/|/=|:|;|<|<<|<<=|<=|=|==|===|>|>=|>>|>>=|>>>|>>>=|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~";this.ER="(?![\\s\\S])";this.BE={b:"\\\\.",r:0};this.ASM={cN:"string",b:"'",e:"'",i:"\\n",c:[this.BE],r:0};this.QSM={cN:"string",b:'"',e:'"',i:"\\n",c:[this.BE],r:0};this.CLCM={cN:"comment",b:"//",e:"$"};this.CBLCLM={cN:"comment",b:"/\\*",e:"\\*/"};this.HCM={cN:"comment",b:"#",e:"$"};this.NM={cN:"number",b:this.NR,r:0};this.CNM={cN:"number",b:this.CNR,r:0};this.BNM={cN:"number",b:this.BNR,r:0};this.inherit=function(r,s){var p={};for(var q in r){p[q]=r[q]}if(s){for(var q in s){p[q]=s[q]}}return p}}();hljs.LANGUAGES.cpp=function(){var a={keyword:{"false":1,"int":1,"float":1,"while":1,"private":1,"char":1,"catch":1,"export":1,virtual:1,operator:2,sizeof:2,dynamic_cast:2,typedef:2,const_cast:2,"const":1,struct:1,"for":1,static_cast:2,union:1,namespace:1,unsigned:1,"long":1,"throw":1,"volatile":2,"static":1,"protected":1,bool:1,template:1,mutable:1,"if":1,"public":1,friend:2,"do":1,"return":1,"goto":1,auto:1,"void":2,"enum":1,"else":1,"break":1,"new":1,extern:1,using:1,"true":1,"class":1,asm:1,"case":1,typeid:1,"short":1,reinterpret_cast:2,"default":1,"double":1,register:1,explicit:1,signed:1,typename:1,"try":1,"this":1,"switch":1,"continue":1,wchar_t:1,inline:1,"delete":1,alignof:1,char16_t:1,char32_t:1,constexpr:1,decltype:1,noexcept:1,nullptr:1,static_assert:1,thread_local:1,restrict:1,_Bool:1,complex:1},built_in:{std:1,string:1,cin:1,cout:1,cerr:1,clog:1,stringstream:1,istringstream:1,ostringstream:1,auto_ptr:1,deque:1,list:1,queue:1,stack:1,vector:1,map:1,set:1,bitset:1,multiset:1,multimap:1,unordered_set:1,unordered_map:1,unordered_multiset:1,unordered_multimap:1,array:1,shared_ptr:1}};return{dM:{k:a,i:"</",c:[hljs.CLCM,hljs.CBLCLM,hljs.QSM,{cN:"string",b:"'\\\\?.",e:"'",i:"."},{cN:"number",b:"\\b(\\d+(\\.\\d*)?|\\.\\d+)(u|U|l|L|ul|UL|f|F)"},hljs.CNM,{cN:"preprocessor",b:"#",e:"$"},{cN:"stl_container",b:"\\b(deque|list|queue|stack|vector|map|set|bitset|multiset|multimap|unordered_map|unordered_set|unordered_multiset|unordered_multimap|array)\\s*<",e:">",k:a,r:10,c:["self"]}]}}}();hljs.LANGUAGES.r={dM:{c:[hljs.HCM,{cN:"number",b:"\\b0[xX][0-9a-fA-F]+[Li]?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+(?:[eE][+\\-]?\\d*)?L\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+\\.(?!\\d)(?:i\\b)?",e:hljs.IMMEDIATE_RE,r:1},{cN:"number",b:"\\b\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\.\\d+(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"keyword",b:"(?:tryCatch|library|setGeneric|setGroupGeneric)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\.",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\d+(?![\\w.])",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\b(?:function)",e:hljs.IMMEDIATE_RE,r:2},{cN:"keyword",b:"(?:if|in|break|next|repeat|else|for|return|switch|while|try|stop|warning|require|attach|detach|source|setMethod|setClass)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"literal",b:"(?:NA|NA_integer_|NA_real_|NA_character_|NA_complex_)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"literal",b:"(?:NULL|TRUE|FALSE|T|F|Inf|NaN)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"identifier",b:"[a-zA-Z.][a-zA-Z0-9._]*\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"<\\-(?!\\s*\\d)",e:hljs.IMMEDIATE_RE,r:2},{cN:"operator",b:"\\->|<\\-",e:hljs.IMMEDIATE_RE,r:1},{cN:"operator",b:"%%|~",e:hljs.IMMEDIATE_RE},{cN:"operator",b:">=|<=|==|!=|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||\\$|:",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"%",e:"%",i:"\\n",r:1},{cN:"identifier",b:"`",e:"`",r:0},{cN:"string",b:'"',e:'"',c:[hljs.BE],r:0},{cN:"string",b:"'",e:"'",c:[hljs.BE],r:0},{cN:"paren",b:"[[({\\])}]",e:hljs.IMMEDIATE_RE,r:0}]}};
+hljs.initHighlightingOnLoad();
+</script>
+
+
+
+
+</head>
+
+<body>
+<h1>Microarry pre-processing for Illumina BeadArray data</h1>
+
+<h2>Project Directory and Files</h2>
+
+<pre><code class="r">
+# Data Directory
+project_dir=/media/D/expression/GAP_Expression
+
+# Data Files
+control_probe_profile_Final_Report.txt
+Group_Probe_Profile_Final_Report.txt
+probe_annotation_Final_Report.txt
+Sample_and_Control_Probe_Profile_FinalReport.txt # input for lumiR
+sample_table_Final_Report.txt
+pheno_info.txt
+batch_info.txt
+
+</code></pre>
+
+<h1>Begin R</h1>
+
+<p>Start R and call the following</p>
+
+<pre><code class="r">rm(list = ls())
+options(stringsAsFactors = FALSE)
+</code></pre>
+
+<h2>setwd</h2>
+
+<p>This is the full path to the directory where all the raw genomestudio output is stored</p>
+
+<pre><code class="r">setwd(&quot;/media/D/sjnewhouse/GENE_EXPRESSION&quot;)
+</code></pre>
+
+<h2>load libs</h2>
+
+<pre><code class="r"># Load libraries
+library(lumi)
+</code></pre>
+
+<pre><code>## Loading required package: Biobase
+## Loading required package: BiocGenerics
+## Loading required package: parallel
+## 
+## Attaching package: &#39;BiocGenerics&#39;
+## 
+## The following objects are masked from &#39;package:parallel&#39;:
+## 
+##     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+##     clusterExport, clusterMap, parApply, parCapply, parLapply,
+##     parLapplyLB, parRapply, parSapply, parSapplyLB
+## 
+## The following object is masked from &#39;package:stats&#39;:
+## 
+##     xtabs
+## 
+## The following objects are masked from &#39;package:base&#39;:
+## 
+##     anyDuplicated, append, as.data.frame, as.vector, cbind,
+##     colnames, duplicated, eval, evalq, Filter, Find, get,
+##     intersect, is.unsorted, lapply, Map, mapply, match, mget,
+##     order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+##     rbind, Reduce, rep.int, rownames, sapply, setdiff, sort,
+##     table, tapply, union, unique, unlist
+## 
+## Welcome to Bioconductor
+## 
+##     Vignettes contain introductory material; view with
+##     &#39;browseVignettes()&#39;. To cite Bioconductor, see
+##     &#39;citation(&quot;Biobase&quot;)&#39;, and for packages &#39;citation(&quot;pkgname&quot;)&#39;.
+</code></pre>
+
+<pre><code>## Warning: replacing previous import by &#39;graphics::image&#39; when loading
+## &#39;methylumi&#39;
+</code></pre>
+
+<pre><code>## KernSmooth 2.23 loaded
+## Copyright M. P. Wand 1997-2009
+</code></pre>
+
+<pre><code>## Warning: replacing previous import by &#39;nleqslv::nleqslv&#39; when loading
+## &#39;lumi&#39;
+</code></pre>
+
+<pre><code class="r">library(annotate)
+</code></pre>
+
+<pre><code>## Loading required package: AnnotationDbi
+</code></pre>
+
+<pre><code class="r">library(lumiHumanAll.db)
+</code></pre>
+
+<pre><code>## Loading required package: org.Hs.eg.db
+## Loading required package: DBI
+## 
+## 
+## lumiHumanAll.db is using or is likely to need access to special
+##   nuID identifiers.  Users can learn about these identifiers from
+##   vignette documentation provided with the lumi package.
+</code></pre>
+
+<pre><code class="r">library(affy)
+</code></pre>
+
+<pre><code>## 
+## Attaching package: &#39;affy&#39;
+## 
+## The following objects are masked from &#39;package:lumi&#39;:
+## 
+##     MAplot, plotDensity
+</code></pre>
+
+<pre><code class="r">library(cluster)
+library(impute)
+library(WGCNA)
+</code></pre>
+
+<pre><code>## Loading required package: dynamicTreeCut
+## Loading required package: flashClust
+## 
+## Attaching package: &#39;flashClust&#39;
+## 
+## The following object is masked from &#39;package:stats&#39;:
+## 
+##     hclust
+## 
+## Loading required package: Hmisc
+## Loading required package: grid
+## Loading required package: lattice
+## Loading required package: survival
+## Loading required package: splines
+## Loading required package: Formula
+## Hmisc library by Frank E Harrell Jr
+## 
+## Type library(help=&#39;Hmisc&#39;), ?Overview, or ?Hmisc.Overview&#39;)
+## to see overall documentation.
+## 
+## 
+## Attaching package: &#39;Hmisc&#39;
+## 
+## The following object is masked from &#39;package:survival&#39;:
+## 
+##     untangle.specials
+## 
+## The following object is masked from &#39;package:AnnotationDbi&#39;:
+## 
+##     contents
+## 
+## The following object is masked from &#39;package:lumi&#39;:
+## 
+##     combine
+## 
+## The following objects are masked from &#39;package:Biobase&#39;:
+## 
+##     combine, contents
+## 
+## The following object is masked from &#39;package:BiocGenerics&#39;:
+## 
+##     combine
+## 
+## The following objects are masked from &#39;package:base&#39;:
+## 
+##     format.pval, round.POSIXt, trunc.POSIXt, units
+</code></pre>
+
+<pre><code>## ==========================================================================
+## *
+## *  Package WGCNA 1.34 loaded.
+## *
+## *    Important note: It appears that your system supports multi-threading,
+## *    but it is not enabled within WGCNA in R. 
+## *    To allow multi-threading within WGCNA with all available cores, use 
+## *
+## *          allowWGCNAThreads()
+## *
+## *    within R. Use disableWGCNAThreads() to disable threading if necessary.
+## *    Alternatively, set the following environment variable on your system:
+## *
+## *          ALLOW_WGCNA_THREADS=&lt;number_of_processors&gt;
+## *
+## *    for example 
+## *
+## *          ALLOW_WGCNA_THREADS=8
+## *
+## *    To set the environment variable in linux bash shell, type 
+## *
+## *           export ALLOW_WGCNA_THREADS=8
+## *
+## *     before running R. Other operating systems or shells will
+## *     have a similar command to achieve the same aim.
+## *
+## ==========================================================================
+</code></pre>
+
+<pre><code>## 
+## Attaching package: &#39;WGCNA&#39;
+## 
+## The following object is masked from &#39;package:stats&#39;:
+## 
+##     cor
+</code></pre>
+
+<pre><code class="r">library(gplots)
+</code></pre>
+
+<pre><code>## 
+## Attaching package: &#39;gplots&#39;
+## 
+## The following object is masked from &#39;package:stats&#39;:
+## 
+##     lowess
+</code></pre>
+
+<pre><code class="r">library(limma)
+</code></pre>
+
+<pre><code>## 
+## Attaching package: &#39;limma&#39;
+## 
+## The following object is masked from &#39;package:BiocGenerics&#39;:
+## 
+##     plotMA
+</code></pre>
+
+<pre><code class="r">library(vsn)
+library(MBCB)
+</code></pre>
+
+<pre><code>## Loading required package: tcltk
+## Loading required package: tcltk2
+## 
+## Attaching package: &#39;tcltk2&#39;
+## 
+## The following objects are masked from &#39;package:Hmisc&#39;:
+## 
+##     label, label&lt;-
+</code></pre>
+
+<pre><code class="r">library(lumiHumanIDMapping)
+library(scatterplot3d)
+library(relaimpo)
+</code></pre>
+
+<pre><code>## Loading required package: MASS
+## 
+## Attaching package: &#39;MASS&#39;
+## 
+## The following object is masked from &#39;package:AnnotationDbi&#39;:
+## 
+##     select
+## 
+## Loading required package: boot
+## 
+## Attaching package: &#39;boot&#39;
+## 
+## The following object is masked from &#39;package:survival&#39;:
+## 
+##     aml
+## 
+## The following object is masked from &#39;package:lattice&#39;:
+## 
+##     melanoma
+## 
+## Loading required package: survey
+## 
+## Attaching package: &#39;survey&#39;
+## 
+## The following object is masked from &#39;package:Hmisc&#39;:
+## 
+##     deff
+## 
+## The following object is masked from &#39;package:graphics&#39;:
+## 
+##     dotchart
+## 
+## Loading required package: mitools
+## Loading required package: foreign
+## This is the global version of package relaimpo.
+## 
+## If you are a non-US user, a version with the interesting additional metric pmvd is available
+## 
+## from Ulrike Groempings web site at prof.beuth-hochschule.de/groemping.
+</code></pre>
+
+<h2>source processing functions</h2>
+
+<pre><code class="r"># path to gene expression processing scripts
+path_to_scripts &lt;- &quot;/media/D/sjnewhouse/GENE_EXPRESSION&quot;
+source(paste(path_to_scripts, &quot;/sjnewhouse_misc_R.R&quot;, sep = &quot;&quot;))
+ls()
+</code></pre>
+
+<pre><code>##  [1] &quot;basic_sampleNetwork&quot;        &quot;basic_sampleNetworkIterate&quot;
+##  [3] &quot;data_summary_plots&quot;         &quot;has_var_probe&quot;             
+##  [5] &quot;has_var_probe2&quot;             &quot;max_probe&quot;                 
+##  [7] &quot;mean_probe&quot;                 &quot;min_probe&quot;                 
+##  [9] &quot;negBeadOutlierRepMean&quot;      &quot;path_to_scripts&quot;           
+## [11] &quot;quantfun&quot;                   &quot;removeSamples_eset_lumi&quot;   
+## [13] &quot;sd_probe&quot;                   &quot;shuffle_cols&quot;              
+## [15] &quot;shuffle_rows&quot;               &quot;var_probe&quot;                 
+## [17] &quot;write_expression_files&quot;     &quot;zero_var_probe&quot;
+</code></pre>
+
+<h2>set project settings and I/O</h2>
+
+<p>User is asked to manually provide the options</p>
+
+<pre><code class="r"># project directory
+project_dir &lt;- &quot;/media/D/expression/GAP_Expression&quot;
+
+# set working dir again
+setwd(project_dir)
+
+# project name
+project_name &lt;- &quot;GAPtest01&quot;
+
+# output directory for lumi process and plots
+out_dir &lt;- paste(project_name, &quot;_lumi_processing&quot;, sep = &quot;&quot;)
+
+# make project pre-processing directory
+make_dir_command &lt;- paste(&quot; if [ ! -e ./&quot;, out_dir, &quot; ]; then mkdir ./&quot;, out_dir, 
+    &quot;; fi&quot;, sep = &quot;&quot;)
+
+system(make_dir_command)
+
+# genomestudio reports
+gs_report &lt;- &quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/Sample_and_Control_Probe_Profile_FinalReport.txt&quot;
+gs_probe &lt;- &quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/Group_Probe_Profile_Final_Report.txt&quot;  # genomestudio report
+gs_sample &lt;- &quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/sample_table_Final_Report.txt&quot;  # genomestudio report
+gs_control &lt;- &quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/control_probe_profile_Final_Report.txt&quot;  # genomestudio report
+anno_table &lt;- &quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/probe_annotation_Final_Report.txt&quot;
+
+# sample information FILE NAME must contain :
+# Sample.ID,SEX,GROUPS,TISSUE,PHENOTYPE,Study_ID
+pheno_file &lt;- &quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/pheno_info.txt&quot;
+
+# batch information
+tech_pheno_file &lt;- &quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/batch_info.txt&quot;
+
+# detection call rate threshold
+probe_det &lt;- 80
+sample_det &lt;- 80
+
+# flag for gender and sampleNetwork
+sex_check &lt;- 1  # DO THIS!! I&#39;m not providing an option to skip this
+iac_check &lt;- 1  # DO THIS!! I&#39;m not providing an option to skip this
+iac_sd_thrs &lt;- 2  # 2 or 3
+
+# Model based background correction method (MLE as default) All data should
+# be background correceted. The recomended methods is MBCB (Model-based
+# Background Correction for Beadarray) URL
+# http://www.bioconductor.org/packages/release/bioc/html/MBCB.html
+mbcb_method &lt;- &quot;MLE&quot;
+
+# Transformation method
+transform_method &lt;- &quot;log2&quot;  ## &#39;vst&#39; # log2, vst or both
+
+# Normalisation method
+norm_method &lt;- &quot;quantile&quot;  ## &#39;rsn&#39; # quantile, rsn, or both
+
+# write settings to file
+project_settings &lt;- data.frame(project_dir = project_dir, project_name = project_name, 
+    out_dir = out_dir, gs_report = gs_report, gs_probe = gs_probe, gs_sample = gs_sample, 
+    gs_control = gs_control, anno_table = anno_table, pheno_file = pheno_file, 
+    tech_pheno_file = tech_pheno_file, probe_det = probe_det, sample_det = sample_det, 
+    sex_check = sex_check, iac_check = iac_check, iac_sd_thrs = iac_sd_thrs, 
+    mbcb_method = mbcb_method, transform_method = transform_method, norm_method = norm_method)
+
+# write table to out_dir
+write.table(project_settings, file = paste(out_dir, &quot;/&quot;, project_name, &quot;.project_settings&quot;, 
+    sep = &quot;&quot;), row.names = FALSE, quote = FALSE, sep = &quot;\t&quot;)
+
+# check settings
+t(project_settings)
+</code></pre>
+
+<pre><code>##                  [,1]                                                                                                            
+## project_dir      &quot;/media/D/expression/GAP_Expression&quot;                                                                            
+## project_name     &quot;GAPtest01&quot;                                                                                                     
+## out_dir          &quot;GAPtest01_lumi_processing&quot;                                                                                     
+## gs_report        &quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/Sample_and_Control_Probe_Profile_FinalReport.txt&quot;
+## gs_probe         &quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/Group_Probe_Profile_Final_Report.txt&quot;            
+## gs_sample        &quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/sample_table_Final_Report.txt&quot;                   
+## gs_control       &quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/control_probe_profile_Final_Report.txt&quot;          
+## anno_table       &quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/probe_annotation_Final_Report.txt&quot;               
+## pheno_file       &quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/pheno_info.txt&quot;                                  
+## tech_pheno_file  &quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/batch_info.txt&quot;                                  
+## probe_det        &quot;80&quot;                                                                                                            
+## sample_det       &quot;80&quot;                                                                                                            
+## sex_check        &quot;1&quot;                                                                                                             
+## iac_check        &quot;1&quot;                                                                                                             
+## iac_sd_thrs      &quot;2&quot;                                                                                                             
+## mbcb_method      &quot;MLE&quot;                                                                                                           
+## transform_method &quot;log2&quot;                                                                                                          
+## norm_method      &quot;quantile&quot;
+</code></pre>
+
+<h1>BEGIN PRE-PROCESSING</h1>
+
+<h2>Raw Expression Set</h2>
+
+<h2>1. read raw gene expression data</h2>
+
+<pre><code class="r">
+# raw input
+gs_report
+</code></pre>
+
+<pre><code>## [1] &quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/Sample_and_Control_Probe_Profile_FinalReport.txt&quot;
+</code></pre>
+
+<pre><code class="r">
+# read raw gene expression data from genomestudio reports and create
+# ExpressionSet
+
+eset_raw &lt;- lumiR(paste(gs_report), lib.mapping = &quot;lumiHumanIDMapping&quot;, annotationColumn = c(&quot;PROBE_ID&quot;, 
+    &quot;CHROMOSOME&quot;, &quot;SYMBOL&quot;, &quot;DEFINITION&quot;, &quot;ACCESSION&quot;, &quot;ENTREZ_GENE_ID&quot;, &quot;PROBE_TYPE&quot;, 
+    &quot;PROBE_START&quot;, &quot;PROBE_SEQUENCE&quot;, &quot;PROBE_CHR_ORIENTATION&quot;, &quot;PROBE_COORDINATES&quot;, 
+    &quot;CHROMOSOME&quot;, &quot;TRANSCRIPT&quot;, &quot;ILMN_GENE&quot;, &quot;REFSEQ_ID&quot;, &quot;UNIGENE_ID&quot;, &quot;SYMBOL&quot;, 
+    &quot;PROTEIN_PRODUCT&quot;))
+</code></pre>
+
+<pre><code>## Inputting the data ...
+## Perform Quality Control assessment of the LumiBatch object ...
+## Directly converting probe sequence to nuIDs ...
+</code></pre>
+
+<pre><code class="r">
+# check it
+eset_raw
+</code></pre>
+
+<pre><code>## Summary of data information:
+##   Data File Information:
+##      GSGX Version    1.9.0
+##      Report Date 29/10/2013 14:56:38
+##      Project BRC_GAP_Expression_02
+##      Group Set   BRC_GAP_Expression
+##      Analysis    BRC_GAP_Expression_nonorm_nobkgd
+##      Normalization   none
+## 
+## Major Operation History:
+##             submitted            finished
+## 1 2014-01-08 18:18:18 2014-01-08 18:23:44
+## 2 2014-01-08 18:18:18 2014-01-08 18:23:44
+##                                                                                                                                       command
+## 1                    lumiR(&quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/Sample_and_Control_Probe_Profile_FinalReport.txt&quot;, 
+## 2     annotationColumn = c(&quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/Sample_and_Control_Probe_Profile_FinalReport.txt&quot;, 
+##   lumiVersion
+## 1      2.14.1
+## 2      2.14.1
+## ...
+##             submitted            finished
+## 7 2014-01-08 18:23:44 2014-01-08 18:27:51
+## 8 2014-01-08 18:27:51 2014-01-08 18:27:57
+##                                                                       command
+## 7        lumiQ(x.lumi = x.lumi, detectionTh = detectionTh, verbose = verbose)
+## 8 addNuID2lumi(x.lumi = x.lumi, lib.mapping = lib.mapping, verbose = verbose)
+##   lumiVersion
+## 7      2.14.1
+## 8      2.14.1
+## 
+## Object Information:
+## LumiBatch (storageMode: lockedEnvironment)
+## assayData: 47231 features, 618 samples 
+##   element names: beadNum, detection, exprs, se.exprs 
+## protocolData: none
+## phenoData
+##   sampleNames: 9020374058_A 9020374058_B ... 9249907052_L (618
+##     total)
+##   varLabels: sampleID
+##   varMetadata: labelDescription
+## featureData
+##   featureNames: Ku8QhfS0n_hIOABXuE fqPEquJRRlSVSfL.8A ...
+##     N8t5EuJCr0Tk9.zHno (47231 total)
+##   fvarLabels: ProbeID TargetID ... DEFINITION (17 total)
+##   fvarMetadata: labelDescription
+## experimentData: use &#39;experimentData(object)&#39;
+## Annotation: lumiHumanAll.db 
+## Control Data: Available
+## QC information: Please run summary(x, &#39;QC&#39;) for details!
+</code></pre>
+
+<h2>2. read in sample and batch information</h2>
+
+<pre><code class="r">
+# gs_sample
+if (is.na(gs_sample)) stop(&quot; WARNING!: YOU HAVENT PROVIDED ANY SAMPLE INFORMATION!!!&quot;)
+gs_sample
+</code></pre>
+
+<pre><code>## [1] &quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/sample_table_Final_Report.txt&quot;
+</code></pre>
+
+<pre><code class="r">
+raw_sample_data &lt;- read.table(paste(gs_sample), skip = 8, as.is = T, fill = T, 
+    head = T, sep = &quot;\t&quot;)
+rownames(raw_sample_data) &lt;- raw_sample_data$Sample.ID
+raw_sample_data &lt;- raw_sample_data[, names(raw_sample_data) != &quot;X&quot;]  # added this as genomestudio likes to add mystery columns to the end of this report 
+raw_n_samples &lt;- dim(raw_sample_data)[1]  # number of rows ie samples
+save(raw_sample_data, file = paste(out_dir, &quot;/&quot;, project_name, &quot;.raw_sample_data.RData&quot;, 
+    sep = &quot;&quot;))
+</code></pre>
+
+<pre><code>## Warning: cannot open compressed file
+## &#39;GAPtest01_lumi_processing/GAPtest01.raw_sample_data.RData&#39;, probable
+## reason &#39;No such file or directory&#39;
+</code></pre>
+
+<pre><code>## Error: cannot open the connection
+</code></pre>
+
+<pre><code class="r">
+# pheno_file
+if (is.na(pheno_file)) stop(&quot; WARNING!: YOU HAVENT PROVIDED ANY PHENOTYPE INFORMATION!!!&quot;)
+pheno_file
+</code></pre>
+
+<pre><code>## [1] &quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/pheno_info.txt&quot;
+</code></pre>
+
+<pre><code class="r">
+pheno_dat &lt;- read.table(paste(pheno_file), as.is = T, fill = T, head = T, sep = &quot;\t&quot;)
+save(pheno_dat, file = paste(out_dir, &quot;/&quot;, project_name, &quot;.pheno_dat.RData&quot;, 
+    sep = &quot;&quot;))
+</code></pre>
+
+<pre><code>## Warning: cannot open compressed file
+## &#39;GAPtest01_lumi_processing/GAPtest01.pheno_dat.RData&#39;, probable reason &#39;No
+## such file or directory&#39;
+</code></pre>
+
+<pre><code>## Error: cannot open the connection
+</code></pre>
+
+<pre><code class="r">has_pheno_cols &lt;- c(&quot;Sample.ID&quot;, &quot;SEX&quot;, &quot;GROUPS&quot;, &quot;TISSUE&quot;, &quot;PHENOTYPE&quot;, &quot;Study_ID&quot;) %in% 
+    names(pheno_dat)
+missing_pheno_cols &lt;- &quot;FALSE&quot; %in% has_pheno_cols
+if (missing_pheno_cols == &quot;TRUE&quot;) stop(&quot; WARNING!: YOU ARE MISSING ESSENTIAL SAMPLE INFORMATION! MAKE SURE YOUR PHENO_FILE HAS:- Sample.ID,SEX,GROUPS,TISSUE,PHENOTYPE,Study_ID !!!&quot;)
+raw_n_pheno_dat &lt;- dim(pheno_dat)[1]  # number of rows ie samples
+
+# tech_pheno_file
+if (is.na(tech_pheno_file)) stop(&quot; WARNING!: YOU HAVENT PROVIDED ANY BATCH INFORMATION!!!&quot;)
+tech_pheno_file
+</code></pre>
+
+<pre><code>## [1] &quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/batch_info.txt&quot;
+</code></pre>
+
+<pre><code class="r">
+tech_pheno &lt;- read.table(paste(tech_pheno_file), head = T, sep = &quot;\t&quot;)
+tech_pheno$Sentrix.Barcode &lt;- as.character(tech_pheno$Sentrix.Barcode)
+colnames(tech_pheno) &lt;- paste(&quot;tech.&quot;, names(tech_pheno), sep = &quot;&quot;)
+save(tech_pheno, file = paste(out_dir, &quot;/&quot;, project_name, &quot;.tech_pheno.RData&quot;, 
+    sep = &quot;&quot;))
+</code></pre>
+
+<pre><code>## Warning: cannot open compressed file
+## &#39;GAPtest01_lumi_processing/GAPtest01.tech_pheno.RData&#39;, probable reason
+## &#39;No such file or directory&#39;
+</code></pre>
+
+<pre><code>## Error: cannot open the connection
+</code></pre>
+
+<pre><code class="r">
+# get pData()
+eset_samples &lt;- pData(eset_raw)
+# add chip order and flad for &#39;has expression data&#39; to eset_samples (pData)
+eset_samples$has_expression &lt;- 1
+eset_samples$chip_order &lt;- 1:dim(eset_samples)[1]
+save(eset_samples, file = paste(out_dir, &quot;/&quot;, project_name, &quot;.eset_samples.RData&quot;, 
+    sep = &quot;&quot;))
+</code></pre>
+
+<pre><code>## Warning: cannot open compressed file
+## &#39;GAPtest01_lumi_processing/GAPtest01.eset_samples.RData&#39;, probable reason
+## &#39;No such file or directory&#39;
+</code></pre>
+
+<pre><code>## Error: cannot open the connection
+</code></pre>
+
+<pre><code class="r">
+# col names
+names(eset_samples)
+</code></pre>
+
+<pre><code>## [1] &quot;sampleID&quot;       &quot;has_expression&quot; &quot;chip_order&quot;
+</code></pre>
+
+<pre><code class="r">names(raw_sample_data)
+</code></pre>
+
+<pre><code>##  [1] &quot;Index&quot;                 &quot;Sample.ID&quot;            
+##  [3] &quot;Sample.Group&quot;          &quot;Sentrix.Barcode&quot;      
+##  [5] &quot;Sample.Section&quot;        &quot;Detected.Genes..0.01.&quot;
+##  [7] &quot;Detected.Genes..0.05.&quot; &quot;Signal.Average&quot;       
+##  [9] &quot;Signal.P05&quot;            &quot;Signal.P25&quot;           
+## [11] &quot;Signal.P50&quot;            &quot;Signal.P75&quot;           
+## [13] &quot;Signal.P95&quot;            &quot;BIOTIN&quot;               
+## [15] &quot;CY3_HYB&quot;               &quot;HOUSEKEEPING&quot;         
+## [17] &quot;LABELING&quot;              &quot;LOW_STRINGENCY_HYB&quot;   
+## [19] &quot;NEGATIVE..background.&quot; &quot;Noise&quot;
+</code></pre>
+
+<pre><code class="r">names(pheno_dat)
+</code></pre>
+
+<pre><code>## [1] &quot;Sample.ID&quot; &quot;GROUPS&quot;    &quot;SEX&quot;       &quot;TISSUE&quot;    &quot;PHENOTYPE&quot; &quot;Study_ID&quot;
+</code></pre>
+
+<pre><code class="r">names(tech_pheno)
+</code></pre>
+
+<pre><code>##  [1] &quot;tech.Sample.ID&quot;                      
+##  [2] &quot;tech.Sentrix.Barcode&quot;                
+##  [3] &quot;tech.SampleSection&quot;                  
+##  [4] &quot;tech.Batch&quot;                          
+##  [5] &quot;tech.Date_out&quot;                       
+##  [6] &quot;tech.Date_extraction&quot;                
+##  [7] &quot;tech.person&quot;                         
+##  [8] &quot;tech.Conc_Nanodrop&quot;                  
+##  [9] &quot;tech.Date_Dilutionand_Amplification&quot; 
+## [10] &quot;tech.Date_cRNApurification&quot;          
+## [11] &quot;tech.Date_Quantitation_by_RiboGreen&quot; 
+## [12] &quot;tech.Eluted_Total_labelled_cRNA&quot;     
+## [13] &quot;tech.labelled_cRNA_Yield&quot;            
+## [14] &quot;tech.concentration_of_labelled_cRNA&quot; 
+## [15] &quot;tech.Date_labelled_cRNA&quot;             
+## [16] &quot;tech.Date_Hybridization_for_15_hours&quot;
+## [17] &quot;tech.Date_Washing_and_scanning&quot;
+</code></pre>
+
+<pre><code class="r">
+# quick check these should all have the same number of rows or samples!
+dim(eset_samples)
+</code></pre>
+
+<pre><code>## [1] 618   3
+</code></pre>
+
+<pre><code class="r">dim(raw_sample_data)
+</code></pre>
+
+<pre><code>## [1] 618  20
+</code></pre>
+
+<pre><code class="r">dim(pheno_dat)
+</code></pre>
+
+<pre><code>## [1] 618   6
+</code></pre>
+
+<pre><code class="r">dim(tech_pheno)
+</code></pre>
+
+<pre><code>## [1] 641  17
+</code></pre>
+
+<pre><code class="r">
+# Venn of Sample.ID
+ex &lt;- eset_samples$sampleID
+pp &lt;- pheno_dat$Sample.ID
+tt &lt;- tech_pheno$tech.Sample.ID
+gs &lt;- raw_sample_data$Sample.ID
+venninput &lt;- list(ArrayExpression = ex, Batch_Info = tt, Pheno_Info = pp, GenomeStudio = gs)
+venn(venninput)
+</code></pre>
+
+<p><img src="data:image/png;base64,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" alt="plot of chunk readSamplePhenoAndBatchInfo"/> </p>
+
+<h2>3. check eset_samples, sample &amp; batch info Sample.ID&#39;s match in names and numbers &amp; merge all</h2>
+
+<pre><code class="r">
+# 1. merge eset_samples with pheno_dat. Keep ALL overlaps only
+eset_pheno_merge &lt;- merge(eset_samples, pheno_dat, by.x. = &quot;sampleID&quot;, by.y = &quot;Sample.ID&quot;)
+</code></pre>
+
+<pre><code>## Error: &#39;by.x&#39; and &#39;by.y&#39; specify different numbers of columns
+</code></pre>
+
+<pre><code class="r">eset_pheno_merge &lt;- eset_pheno_merge[order(eset_pheno_merge$chip_order), ]
+</code></pre>
+
+<pre><code>## Error: object &#39;eset_pheno_merge&#39; not found
+</code></pre>
+
+<pre><code class="r">dim(eset_samples)
+</code></pre>
+
+<pre><code>## [1] 618   3
+</code></pre>
+
+<pre><code class="r">eset_pheno_merge  # check size
+</code></pre>
+
+<pre><code>## Error: object &#39;eset_pheno_merge&#39; not found
+</code></pre>
+
+<pre><code class="r">
+# 2. merge eset_pheno_merge with tech_pheno
+eset_pheno_batch_merge &lt;- merge(eset_pheno_merge, tech_pheno, by.x. = &quot;Sample.ID&quot;, 
+    by.y = &quot;tech.Sample.ID&quot;)
+</code></pre>
+
+<pre><code>## Error: object &#39;eset_pheno_merge&#39; not found
+</code></pre>
+
+<pre><code class="r">eset_pheno_batch_merge &lt;- eset_pheno_batch_merge[order(eset_pheno_batch_merge$chip_order), 
+    ]
+</code></pre>
+
+<pre><code>## Error: object &#39;eset_pheno_batch_merge&#39; not found
+</code></pre>
+
+<pre><code class="r">dim(eset_samples)
+</code></pre>
+
+<pre><code>## [1] 618   3
+</code></pre>
+
+<pre><code class="r">dim(eset_pheno_merge)
+</code></pre>
+
+<pre><code>## Error: object &#39;eset_pheno_merge&#39; not found
+</code></pre>
+
+<pre><code class="r">dim(eset_pheno_batch_merge)  # check size
+</code></pre>
+
+<pre><code>## Error: object &#39;eset_pheno_batch_merge&#39; not found
+</code></pre>
+
+<pre><code class="r">
+# 3. merge all with genomestudio final report
+eset_pheno_batch_gs_merge &lt;- merge(eset_pheno_batch_merge, gs_sample, by.x. = &quot;Sample.ID&quot;, 
+    by.y = &quot;Sample.ID&quot;)
+</code></pre>
+
+<pre><code>## Error: object &#39;eset_pheno_batch_merge&#39; not found
+</code></pre>
+
+<pre><code class="r">eset_pheno_batch_gs_merge &lt;- eset_pheno_batch_gs_merge[order(eset_pheno_batch_gs_merge$chip_order), 
+    ]
+</code></pre>
+
+<pre><code>## Error: object &#39;eset_pheno_batch_gs_merge&#39; not found
+</code></pre>
+
+<pre><code class="r">
+dim(eset_samples)
+</code></pre>
+
+<pre><code>## [1] 618   3
+</code></pre>
+
+<pre><code class="r">dim(eset_pheno_merge)
+</code></pre>
+
+<pre><code>## Error: object &#39;eset_pheno_merge&#39; not found
+</code></pre>
+
+<pre><code class="r">dim(eset_pheno_batch_merge)
+</code></pre>
+
+<pre><code>## Error: object &#39;eset_pheno_batch_merge&#39; not found
+</code></pre>
+
+<pre><code class="r">dim(eset_pheno_batch_gs_merge)  # check size
+</code></pre>
+
+<pre><code>## Error: object &#39;eset_pheno_batch_gs_merge&#39; not found
+</code></pre>
+
+<pre><code class="r">
+</code></pre>
+
+<h2>4. Update pData() slot and subset raw ExpressionSet to matched/complete Sample.IDs</h2>
+
+<h2>5. Save raw ExpressionSet eset_raw</h2>
+
+<h2>6. Write data files to out_dir for eset_raw</h2>
+
+<h2>7. Basic QC and plots on eset_raw</h2>
+
+<p>##</p>
+
+<h2>MBCB (Model-based Background Correction for Beadarray)</h2>
+
+</body>
+
+</html>
+

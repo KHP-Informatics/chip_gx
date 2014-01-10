@@ -42,6 +42,7 @@ library(impute)
 library(WGCNA)
 library(gplots)
 library(limma)
+library(vsn)
 library(MBCB)
 library(lumiHumanIDMapping)
 library(scatterplot3d)
@@ -53,6 +54,31 @@ cat(" #-------------------------------------------------------------------------
 cat(" #--------------------------------------------------------------------------------------------------------------------------------------------------------# " ,"\r","\n")
 
 ##-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+## lumiB(x.lumi, method = c('none', 'bgAdjust', 'forcePositive', 'bgAdjust.affy'), verbose = TRUE, ...)
+## lumiN(x.lumi, method = c("quantile", "rsn", "vsn"), verbose = TRUE, ...)
+## lumiT(x.lumi, method = c("vst", 'log2', 'cubicRoot'), ifPlot = FALSE, simpleOutput = TRUE, verbose = TRUE, ...)
+## lumiExpresso(lumiBatch,bg.correct=TRUE, bgcorrect.param=list(method='bgAdjust'), variance.stabilize=TRUE, varianceStabilize.param = list(), normalize=TRUE, normalize.param=list(), QC.evaluation = TRUE, QC.param = list(), verbose = TRUE)
+
+## bgcor_log_quantile <- lumiExpresso(bgcor, variance.stabilize=TRUE, varianceStabilize.param=list(method='log2'), normalize.param=list(method='quantile'), verbose=FALSE)
+## bgcor_log_rsn      <- lumiExpresso(bgcor, variance.stabilize=TRUE, varianceStabilize.param=list(method='log2'), normalize.param=list(method='rsn'),      verbose=FALSE)
+## bgcor_vst_quantile <- lumiExpresso(bgcor, variance.stabilize=TRUE, varianceStabilize.param=list(method='vst'),  normalize.param=list(method='quantile'), verbose=FALSE)
+## bgcor_vst_rsn      <- lumiExpresso(bgcor, variance.stabilize=TRUE, varianceStabilize.param=list(method='vst'),  normalize.param=list(method='rsn'),      verbose=FALSE)
+
+
+    Options for processing
+
+	bg_rma
+	bg_mb
+
+	bg_vst_rsn*
+	bg_vst_quantile*
+
+	bg_log_rsn
+	bg_log_quantile
+
+	bg_vsn
+
+
 
 ###################
 ## some functins ##
