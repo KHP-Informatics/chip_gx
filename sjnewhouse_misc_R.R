@@ -601,6 +601,7 @@ if(mbcb_method=="MLE") { gx_mbcb <- gx_mbcb$MLE }
 #############################################################
 cat(" replace names with original sampleNames(eset_raw), as R adds X to numbers ","\r","\n")
 colnames(gx_mbcb) <- sampleNames(eset)
+gx_mbcb[1:10,1:10]
 #############################################################
 ## make new eset for bk corrected data
 #############################################################
@@ -611,6 +612,8 @@ eset_bg <- eset
 #############################################################
 cat(" replace old exprs data with new mbcb Background corrected data ","\r","\n")
 exprs(eset_bg) <- as.matrix(gx_mbcb)
+sampleNames(eset_bg) <- sampleNames(eset)
+sampleNames(eset_bg)
 ## return 
 cat(" returning new mbcb Background corrected data: eset_bg ","\r","\n")
 return(eset_bg)
@@ -959,20 +962,16 @@ basic_sampleNetworkIterate_summary_names <- c("Group","round","nSamp","nOutlier"
 basic_sampleNetworkIterate_summary <- matrix(ncol=length(basic_sampleNetworkIterate_summary_names),nrow=1000, dimnames=list(1:1000,basic_sampleNetworkIterate_summary_names))
 
 ## get group names
-group_list <- unique(pData(eset)$GROUPS); cat(" Number of Groups [",length(group_list),"]\nGroup Names [",group_list,"]","\r","\n")
-
+group_list <- unique(pData(eset)$GROUPS); 
+cat(" Number of Groups [",length(group_list),"]\nGroup Names [",group_list,"]","\r","\n")
 ## set outlier running count to 0
 outlier_running_count <- 0;
-
 ## iteration count
 iteration <- 1;
-
 ## sd threshold
 sd_thrs <- sd_thrs
-
 ## outlier count
 iac_outlier_samples <- c();
-
 ## n groups
 n_groups <- length(group_list)
 
@@ -982,9 +981,8 @@ n_groups <- length(group_list)
 
 ## subset eset to group samples
 group_samples <- sampleNames(eset[,pData(eset)$GROUPS==mgroup]) ## sample names in group
-
+cat(" Subset eset to group [",mgroup,"]","\r","\n")
 group_eset <- eset[,pData(eset)$GROUPS==mgroup] ## get eset for group
-
 cat(" doing group [",mgroup,"]","\r","\n")
 
 ## run basic_sampleNetwork
@@ -993,10 +991,10 @@ out <- basic_sampleNetwork(group_eset,col_by_chip=0,groups="byGroup",outfile=pas
 ## get stats from basic_sampleNetwork
 n_samp <-  length(sampleNames(group_eset))
 mgroup <- out$Group
-mean_IAC <- out$mean_IAC;
-min_Z.K <- out$min_Z.K;
-rho_pvalue <- out$rho_pvalue
-rho <- out$rho
+mean_IAC <- as.numeric(out$mean_IAC);
+min_Z.K <- as.numeric(out$min_Z.K);
+rho_pvalue <- as.numeric(out$rho_pvalue);
+rho <- as.numeric(out$rho)
 
 ## Outlier samples
 Z.K_outliers <- out$Z.K_outliers
@@ -1012,7 +1010,7 @@ outlier_running_count <- outlier_running_count + length(Z.K_outliers_list);
 iac_outlier_samples <- c(Z.K_outliers_list, iac_outlier_samples)
 
 ## store in basic_sampleNetworkIterate_summary results matrix
-res <- c(mgroup,iteration,n_samp,length(Z.K_outliers_list),mean_IAC,min_Z.K,rho,rho_pvalue,Z.K_outliers)
+res <- cbind(mgroup,iteration,n_samp,length(Z.K_outliers_list),mean_IAC,min_Z.K,rho,rho_pvalue,Z.K_outliers)
 
 basic_sampleNetworkIterate_summary[iteration,] <- res
 

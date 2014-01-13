@@ -633,193 +633,117 @@ write_expression_files(eset=eset_bkcor,outfile= paste(out_dir,"/",project_name,"
 ##############################################
 ## PROBE DETECTED 2SD ABOVE MEAN BACKGROUND ##
 ##############################################
-
 cat(" Calculating Probe Detection rates. \n Probe is seen as Detected if it has background corrected signal intensity >= 2SD of the mean intensity of the negative control beads","\r","\n")
-
 #####################################################
 ## get expression matrix
 #####################################################
 gx <- exprs(eset_bkcor)
-
 #####################################################
 ## get negative bead ranges mean or max or >2SD mean  of neg beads
 #####################################################
 neg_2sd <- neg_mean + 2*neg_sd
-
 #######################################################################
 ## sweep through gx matrix to id probes > 2SD Mean of negative beads
 #######################################################################
 det <- sweep(gx, 1, neg_2sd,">=")
-
 ##########################################
 ## Writing Probe Detection Calls to file #
 ##########################################
 det_tmp  <- as.data.frame(det)
-
 det_tmp$nuID <- rownames(det_tmp)
-
 probe_detected <- merge(fData(eset_bkcor), det_tmp , by.x="nuID",by.y="nuID",sort=FALSE)
-
 cat(" Writing Probe Detection Calls to",paste(out_dir,"/",project_name,".eset_bkcor.probe_detected.txt",sep="") ,"\r","\n")
-
 write.table(probe_detected , file=paste(out_dir,"/",project_name,".eset_bkcor.probe_detected.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
-
 rm("det_tmp")
-
 #####################################################
 ## probe_detection counts
 #####################################################
 probe_detection <- rowSums(det)
-
 ##########################################
 ## n samples
 ##########################################
 n_samples <- dim(gx)[2]
-
 #####################################################
 ## probe annotations
 #####################################################
-
 probes_not_detected_in_any_sample <- probe_detection==0
-
 probes_detected_in_80_sample <- probe_detection>=n_samples*0.80
-
 probes_detected_in_all_sample <- probe_detection==n_samples
-
 probe_annotations_0_detected <- fData(eset_bkcor[probes_not_detected_in_any_sample,])
 probe_annotations_80_detected  <- fData(eset_bkcor[probes_detected_in_80_sample ,])
 probe_annotations_100_detected  <- fData(eset_bkcor[probes_detected_in_all_sample,])
-
 cat(" Adding detetion call rate for all probes and samples to fData() slot for eset_bkcor","\r","\n")
-
 fData(eset_bkcor)$n_detected <- probe_detection
 fData(eset_bkcor)$n_detected_call_rate <- round( probe_detection/n_samples ,3)
-
 #####################################################
 ## sample_detection counts
 #####################################################
 n_probes <- dim(eset_bkcor)[1]
-
 sample_detection <- colSums(det)
-
 pData(eset_bkcor)$n_probes_detected <- sample_detection
-
 pData(eset_bkcor)$n_probes_detected_call_rate <- round( sample_detection/n_probes ,3)
-
-##plot(pData(eset_bkcor)$n_probes_detected_call_rate)
-##plot(pData(eset_bkcor)$n_probes_detected ,pData(eset_bkcor)$Detected.Genes..0.01.)
-
 save(eset_bkcor, file=paste(out_dir,"/",project_name,".eset_bkcor.RData",sep=""))
-
-#--------------------------------------------------------------------------------------------------------------------------------------------------------#
-
 #####################################################
 ## get group information from pData() slot
 #####################################################
-group_names <- unique(pData(eset_bkcor)$EPI_TYPE);
-
+group_names <- unique(pData(eset_bkcor)$GROUPS);
 groups  <- pData(eset_bkcor)$EPI_TYPE
-
 n_groups <- length(group_names)
-
 ###########################
 ## get expression matrix ##
 ###########################
 gx <- exprs(eset_bkcor)
-
 neg_2sd <- as.numeric(neg_2sd)
-
 ##########################################################################################
 ## loop through each group and id probes > 2SD mean neg beads in X% of samples/group
 ##########################################################################################
 for(n in group_names ) {
-
 cat(" Finding probes in ",probe_det," of sample group [",n,"] with signal intensity >= 2SD mean intensity of the negative control beads ","\r","\n")
-
 group_label <- paste(n)
-
 sel_samples <- pData(eset_bkcor)$EPI_TYPE==n;
-
 n_samples_in_group <- dim(gx[,sel_samples])[2];
-
 cat(" Number of samples in group [",n,"] = ",n_samples_in_group,"\r","\n")
-
 detection_matrix <- sweep(gx[,sel_samples],1,neg_2sd[sel_samples],">=")
-
 group_probe_detection <- rowSums(detection_matrix) >= probe_det*n_samples_in_group
-
 group_probe_detection_nuID <- rownames( gx[group_probe_detection, ])
-
 cat(" Number of probes in group [",n,"] with signal intensity >= 2SD mean intensity of the negative control beads = ", length(group_probe_detection_nuID) ,"\r","\n")
-
 cat(" Writing probe list to ",paste(out_dir,"/",project_name,".GROUP.",group_label,".detected_probes_nuID.txt",sep=""), "\r","\n" )
-
 det_probes <- as.data.frame(group_probe_detection_nuID)
-
 colnames(det_probes) <- c("nuID")
-
 write.table( det_probes ,file=paste(out_dir,"/",project_name,".GROUP.",group_label,".detected_probes_nuID.txt",sep=""),row.names=FALSE,quote=FALSE,col.names=FALSE)
-
 }
-
-#--------------------------------------------------------------------------------------------------------------------------------------------------------#
-
 #####################################################
 ## Y CHROM EXPRESSION IN XIST MALES
 #####################################################
 cat(" Y Chromosome probe detection based on XIST males","\r","\n")
-
 xist_males <- pData(eset_bkcor)$xist_gender=="Male"
-
 gx_y <- exprs(eset_bkcor[fData(eset_bkcor)$CHR=="Y",])
-
 detection_matrix_y <- sweep( gx_y[,xist_males],1, neg_2sd[xist_males ],">=")
-
 y_probe_detection <- rowSums(detection_matrix_y) >= probe_det * sum(xist_males==TRUE)
-
 y_probe_detection_nuID <- rownames( gx_y[y_probe_detection, ])
-
 y_det_probes <- as.data.frame(y_probe_detection_nuID)
-
 colnames(y_det_probes) <- c("nuID")
-
 write.table( y_det_probes ,file=paste(out_dir,"/",project_name,".GROUP.Y.detected_probes_nuID.txt",sep=""),row.names=FALSE,quote=FALSE,col.names=FALSE)
-
-#--------------------------------------------------------------------------------------------------------------------------------------------------------#
-
 #####################################################
 ## writing final good probe list
 ######################################################
-
 cat(" writing final good probe list to ",paste(out_dir,"/",project_name,".detected_probes_nuID_final.txt",sep=""),"\r","\n")
-
 system(paste("cat ",out_dir,"/",project_name,"****.detected_probes_nuID.txt | sort | uniq >> ",out_dir,"/",project_name,".detected_probes_nuID_final.txt", sep="") )
-
 good_probes <- read.table(file=paste(out_dir,"/",project_name,".detected_probes_nuID_final.txt",sep=""),head=FALSE)
-
 good_probes <- paste(good_probes[,1])
-
 n_good_probes <- length(good_probes)
-
 cat(" Total number of good probes = ",n_good_probes,"\n","\r" )
-
 good_probes_annotation <- fData(eset_bkcor[paste(good_probes,sep=""),])
-
 good_probes_annotation$raw_mean <- apply( exprs(eset_bkcor[good_probes,]), 1,mean)
 good_probes_annotation$raw_sd <- apply( exprs(eset_bkcor[good_probes,]), 1,sd)
 good_probes_annotation$raw_var <- apply( exprs(eset_bkcor[good_probes,]), 1,var)
 good_probes_annotation$raw_min <- apply( exprs(eset_bkcor[good_probes,]), 1,min)
 good_probes_annotation$raw_max <- apply( exprs(eset_bkcor[good_probes,]), 1,max)
-
 head(good_probes_annotation)
-
 cat(" saving good probe annotations to ",paste(out_dir,"/",project_name,".detected_probes_nuID_final.***",sep=""),"\r","\n")
-
 save(good_probes_annotation, file=paste(out_dir,"/",project_name,".detected_probes_nuID_final.RData",sep="") )
-
 write.table(good_probes_annotation, file=paste(out_dir,"/",project_name,".detected_probes_nuID_final.txt",sep=""),quote=F,sep="\t",row.names=F )
 
-#--------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 
 
