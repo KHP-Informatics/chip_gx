@@ -375,6 +375,8 @@ rm("gx","pca_gx","pgx","fgx")
 ##############
 ## qc_plots ##
 ##############
+
+
 gx_qc_plots_lumi <- function(eset, outfile ,do_pca=TRUE ) {
   outpdf <- paste(outfile,".qc_plots.pdf",sep="");
   cat(" startin qc plots","\r","\n")
@@ -522,6 +524,271 @@ gx_qc_plots_lumi <- function(eset, outfile ,do_pca=TRUE ) {
 ## qc_plots_2 ##
 ##  no 3D scatter plot, no save pdf
 ##############
+
+# basic_qc_plot_lumi
+basic_qc_plot_lumi <- function(eset) {
+  
+  ## flashClust
+  cat(" Running flashClust","\r","\n")
+  datExprs <- exprs(eset)
+  dist_exprs <- dist( t(datExprs), method="e" )
+  sampleTree <- flashClust( dist_exprs, method = "average");
+  ## Standard plots
+  cat(" beging plotting boxplot","\r","\n")
+  plot(eset, what='boxplot', col=chip_col )
+  cat(" beging plotting outlier","\r","\n")
+  plot(eset, what='outlier'  )
+  cat(" beging plotting sampleTree <- flashClust( dist_exprs, method = "average")","\r","\n")
+  plot(sampleTree)
+  cat(" beging plotting density","\r","\n")
+  plot(eset, what='density' )
+  cat(" beging plotting cv","\r","\n")
+  plot(eset, what='cv'  )
+  
+}
+
+## pca_plot_lumi
+pca_plot_lumi <- function(eset) {
+  
+  cat(" setting up data for qc plots","\r","\n")
+  ## get pheno data
+  cat(" get pheno data","\r","\n")
+  pheno <- pData(eset)
+  ## basic colours
+  cat(" basic colours","\r","\n")
+  chip_col <- labels2colors( as.character(pData(eset)$Sentrix.Barcode))
+  group_col <- labels2colors( as.character(pData(eset)$GROUPS))
+  pheno_col <- labels2colors( as.character(pData(eset)$PHENOTYPE))
+  gender_col <- labels2colors( as.character(pData(eset)$SEX))
+  tissue_col <- labels2colors( as.character(pData(eset)$TISSUE))
+  ## batch pheno data
+  cat(" batch pheno data","\r","\n")
+  sel_tech <- grep("tech",names(pheno))
+  batch_pheno <- pheno[,sel_tech]
+  ## id what is char/fav versus numerical
+  sel_batch <- sapply(batch_pheno ,class) %in% c("character","factor")
+  sel_num_batch <- sapply(batch_pheno ,class) %in% c("numeric")
+  ## get names
+  batch_var_names <- names( batch_pheno[sel_batch])
+  batch_var_names_numeric <- names(batch_pheno[sel_num_batch])
+  ## quantfun numeric data
+  numeric_tech <- as.data.frame(batch_pheno[,sel_num_batch])
+  colnames(numeric_tech) <- batch_var_names_numeric
+  quant_numeric <- apply( numeric_tech,2,quantfun)
+  ## colours
+  batch_col <- apply(batch_pheno[,sel_batch],2,labels2colors) ## colours
+  quant_numeric_col <- apply(quant_numeric,2,numbers2colors)
+  datColors <- cbind(chip_col,group_col,pheno_col,gender_col,tissue_col,batch_col,quant_numeric_col)
+  #
+  cat(" begin PCA plots","\r","\n")
+  cat(" calculating PCs using prcomp()","\r","\n")
+  gx <- t(exprs(eset));
+  pca_gx <- prcomp(gx);
+  pca_raw <- pca_raw$x;
+  ## PCA plots
+  plot(pca_raw[,"PC1"],pca_raw[,"PC2"], main=" PCA plot coloured by chip ",col="black", pch=21,bg=chip_col)
+  plot(pca_raw[,"PC1"],pca_raw[,"PC2"], main=" PCA plot  coloured by Group ",col="black", pch=21,bg=group_col)
+  plot(pca_raw[,"PC1"],pca_raw[,"PC2"], main=" PCA plot  coloured by Phenotype ",col="black", pch=21,bg=pheno_col)
+  plot(pca_raw[,"PC1"],pca_raw[,"PC2"], main=" PCA plot  coloured by Gender ",col="black", pch=21,bg=gender_col)
+  plot(pca_raw[,"PC1"],pca_raw[,"PC2"], main=" PCA plot  coloured by Tissue ",col="black", pch=21,bg=tissue_col)
+  ## loop PCA and plot by tech var
+  for(tech_var in batch_var_names) {
+    cat(" begin looping through batch variable PCA plots ",tech_var,"\r","\n")
+    tech_var_name <- paste(tech_var,sep="")
+    tech_var_col <- labels2colors( as.character(batch_pheno[,tech_var_name]) )
+    plot(pca_raw[,"PC1"],pca_raw[,"PC2"], main=paste(" PCA plot coloured by ",tech_var_name,sep=""),col="black",pch=21,bg=tech_var_col)
+  }
+  for(tech_var in batch_var_names_numeric) {
+    cat(" begin looping through batch variable PCA plots ",tech_var,"\r","\n")
+    tech_var_name <- paste(tech_var,sep="")
+    tech_var_col <- numbers2colors( quant_numeric[,tech_var_name])
+    plot(pca_raw[,"PC1"],pca_raw[,"PC2"], main=paste(" PCA plot coloured by ",tech_var_name,sep=""),col="black",bg=tech_var_col,pch=21)
+  }
+}
+
+# coloured_dendrogram_lumi
+coloured_dendrogram_lumi <- function(eset){
+  ## get pheno data
+  cat(" get pheno data","\r","\n")
+  pheno <- pData(eset)
+  ## basic colours
+  cat(" basic colours","\r","\n")
+  chip_col <- labels2colors( as.character(pData(eset)$Sentrix.Barcode))
+  group_col <- labels2colors( as.character(pData(eset)$GROUPS))
+  pheno_col <- labels2colors( as.character(pData(eset)$PHENOTYPE))
+  gender_col <- labels2colors( as.character(pData(eset)$SEX))
+  tissue_col <- labels2colors( as.character(pData(eset)$TISSUE))
+  ## batch pheno data
+  cat(" batch pheno data","\r","\n")
+  sel_tech <- grep("tech",names(pheno))
+  batch_pheno <- pheno[,sel_tech]
+  ## id what is char/fav versus numerical
+  sel_batch <- sapply(batch_pheno ,class) %in% c("character","factor")
+  sel_num_batch <- sapply(batch_pheno ,class) %in% c("numeric")
+  ## get names
+  batch_var_names <- names( batch_pheno[sel_batch])
+  batch_var_names_numeric <- names(batch_pheno[sel_num_batch])
+  ## quantfun numeric data
+  numeric_tech <- as.data.frame(batch_pheno[,sel_num_batch])
+  colnames(numeric_tech) <- batch_var_names_numeric
+  quant_numeric <- apply( numeric_tech,2,quantfun)
+  ## colours
+  cat(" batch colours","\r","\n")
+  batch_col <- apply(batch_pheno[,sel_batch],2,labels2colors) ## colours
+  quant_numeric_col <- apply(quant_numeric,2,numbers2colors)
+  datColors <- cbind(chip_col,group_col,pheno_col,gender_col,tissue_col,batch_col,quant_numeric_col)
+  # sampleTree
+  cat(" datExprs and sampleTree","\r","\n")
+  datExprs <- exprs(eset)
+  dist_exprs <- dist( t(datExprs), method="e" )
+  sampleTree <- flashClust( dist_exprs, method = "average");
+  # plotDendroAndColors
+  cat(" plotDendroAndColors","\r","\n")
+  plotDendroAndColors(sampleTree,
+                      groupLabels=names(datColors),
+                      colors=datColors,
+                      dendroLabels = pData(eset)$Sample.ID, 
+                      main="Sample dendrogram and trait heatmap")
+  
+}
+
+# heatmap_plot_lumi_eset_raw
+heatmap_plot_lumi <- function(eset){
+  
+  cat(" setting up data for qc plots","\r","\n")
+  ## get pheno data
+  cat(" get pheno data","\r","\n")
+  pheno <- pData(eset)
+  ## basic colours
+  cat(" basic colours","\r","\n")
+  chip_col <- labels2colors( as.character(pData(eset)$Sentrix.Barcode))
+  group_col <- labels2colors( as.character(pData(eset)$GROUPS))
+  pheno_col <- labels2colors( as.character(pData(eset)$PHENOTYPE))
+  gender_col <- labels2colors( as.character(pData(eset)$SEX))
+  tissue_col <- labels2colors( as.character(pData(eset)$TISSUE))
+  ## batch pheno data
+  cat(" batch pheno data","\r","\n")
+  sel_tech <- grep("tech",names(pheno))
+  batch_pheno <- pheno[,sel_tech]
+  ## id what is char/fav versus numerical
+  sel_batch <- sapply(batch_pheno ,class) %in% c("character","factor")
+  sel_num_batch <- sapply(batch_pheno ,class) %in% c("numeric")
+  ## get names
+  batch_var_names <- names( batch_pheno[sel_batch])
+  batch_var_names_numeric <- names(batch_pheno[sel_num_batch])
+  ## quantfun numeric data
+  numeric_tech <- as.data.frame(batch_pheno[,sel_num_batch])
+  colnames(numeric_tech) <- batch_var_names_numeric
+  quant_numeric <- apply( numeric_tech,2,quantfun)
+  ## colours
+  batch_col <- apply(batch_pheno[,sel_batch],2,labels2colors) ## colours
+  quant_numeric_col <- apply(quant_numeric,2,numbers2colors)
+  datColors <- cbind(chip_col,group_col,pheno_col,gender_col,tissue_col,batch_col,quant_numeric_col)
+  ## expression matrix and IAC
+  cat(" expression matrix and IAC","\r","\n")
+  gx <- t(exprs(eset));
+  datExprs <- exprs(eset)
+  IAC <- cor(datExprs)
+  IAC_d <- 1-IAC
+  samle_names <- sampleNames(eset)
+  IAC=cor(datExprs, method="p",use="p")
+  diag(IAC)=0
+  A.IAC=((1+IAC)/2)^2  ## ADJACENCY MATRIX
+  
+  #  heatmap IAC
+  heatmap.2(IAC , trace="none", 
+            ColSideColors=labels2colors( as.character(pData(eset)$PHENOTYPE)), 
+            RowSideColors=labels2colors( as.character(pData(eset)$GROUPS)), 
+            col="bluered", main="IAC",
+            hclustfun=function(x) hclust(x,method='complete'), 
+            distfun= function(x) dist(x,method='euclidean') )
+  
+  # heatmap A.IAC
+  heatmap.2(A.IAC , trace="none", 
+            ColSideColors=labels2colors( as.character(pData(eset)$PHENOTYPE)),
+            RowSideColors=labels2colors( as.character(pData(eset)$GROUPS)), 
+            col="bluered", main="A.IAC",
+            hclustfun=function(x) hclust(x,method='complete'), 
+            distfun= function(x) dist(x,method='euclidean') )
+  
+}
+
+
+# sampleNetwork_plot_all_lumi
+
+sampleNetwork_plot_all_lumi <- function(eset, colBy=c("chip","group") ) {
+  
+  gp_col <- colBy
+  cat(" setting up data for qc plots","\r","\n")
+  ## expression matrix and IAC
+  cat(" expression matrix and IAC","\r","\n")
+  datExprs <- exprs(eset)
+  IAC <- cor(datExprs)
+  IAC_d <- 1-IAC
+  samle_names <- sampleNames(eset)
+  IAC=cor(datExprs, method="p",use="p")
+  diag(IAC)=0
+  A.IAC=((1+IAC)/2)^2  ## ADJACENCY MATRIX
+  cat(" fundamentalNetworkConcepts","\r","\n")
+  FNC=fundamentalNetworkConcepts(A.IAC) ## WGCNA
+  K2=FNC$ScaledConnectivity
+  Z.K=(K2-mean(K2))/sd(K2)
+  Z.C=(FNC$ClusterCoef-mean(FNC$ClusterCoef))/sd(FNC$ClusterCoef)
+  rho <- signif(cor.test(Z.K,Z.C,method="s")$estimate,2)
+  rho_pvalue <- signif(cor.test(Z.K,Z.C,method="s")$p.value,2)
+# set colours
+  cat(" colorvec [",paste(gp_col),"]","\r","\n")
+if(gp_col=="chip") { colorvec <- labels2colors(as.character(pData(eset)$Sentrix.Barcode)) }
+if(gp_col=="group") { colorvec <- labels2colors(as.character(pData(eset)$GROUPS)) }
+  mean_IAC <- mean(IAC[upper.tri(IAC)])
+   ## samplenetwork
+  local( 
+{colLab <<- function(n,treeorder) { 
+  if(is.leaf(n)) {
+    a <- attributes(n)
+    i <<- i+1
+    attr(n, "nodePar") <-   c(a$nodePar, list(lab.col = colorvec[treeorder][i], lab.font = i%%3))
+  } 
+  n 
+} 
+ i <- 0
+})
+  cat(" begin SampleNetwork plots","\r","\n")
+  ## Cluster for pics
+  cluster1 <- hclust(as.dist(1-A.IAC),method="average")
+  cluster1order <- cluster1$order
+  cluster2 <- as.dendrogram(cluster1,hang=0.1)
+  cluster3 <- dendrapply(cluster2,colLab,cluster1order)
+  ## PLOTS
+  ## cluster IAC
+  par(mfrow=c(2,2))
+  par(mar=c(5,6,4,2))
+  plot(cluster3,nodePar=list(lab.cex=1,pch=NA),
+       main=paste("Mean ISA = ",signif(mean(A.IAC[upper.tri(A.IAC)]),3),sep=""),
+       xlab="",ylab="1 - ISA",sub="",cex.main=1.8,cex.lab=1.4)
+  mtext(paste("distance: 1 - ISA ",sep=""),cex=0.8,line=0.2)
+  ## Connectivity
+  par(mar=c(5,5,4,2))
+  plot(Z.K,main="Connectivity", ylab="Z.K",xaxt="n",xlab="Sample",type="n",cex.main=1.8,cex.lab=1.4)
+  text(Z.K,labels=samle_names,cex=0.8,col=colorvec)
+  abline(h=-2)
+  abline(h=-3)
+  ## ClusterCoef
+  par(mar=c(5,5,4,2))
+  plot(Z.C,main="ClusterCoef", ylab="Z.C",xaxt="n",xlab="Sample",cex.main=1.8,cex.lab=1.4,type="n")
+  text(Z.C,labels=samle_names,cex=0.8,col=colorvec)
+  abline(h=-2)
+  abline(h=-3)
+  ## Connectivity vs ClusterCoef
+  par(mar=c(5,5,4,2))
+  plot(Z.K,Z.C,main="Connectivity vs ClusterCoef",xlab="Z.K",ylab="Z.C",col=colorvec,cex.main=1.8,cex.lab=1.4)
+  abline(lm(Z.C~Z.K),col="black",lwd=2)
+  mtext(paste("rho = ",signif(cor.test(Z.K,Z.C,method="s")$estimate,2)," p = ",signif(cor.test(Z.K,Z.C,method="s")$p.value,2),sep=""),cex=0.8,line=0.2)
+  abline(v=-2,lty=2,col="grey")
+  abline(h=-2,lty=2,col="grey")
+}
+
+# gx_qc_plots_lumi_2
 gx_qc_plots_lumi_2 <- function(eset, do_pca=TRUE ) {
   cat(" starting qc plots","\r","\n")
   cat(" setting up data for qc plots","\r","\n")

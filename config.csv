@@ -1,2 +1,0 @@
-project_dir,gs_report,gs_probe,gs_sample,gs_control,anno_table,pheno_file,project_name,probe_det,sample_det,sex_check,iac_check,iac_sd_thrs,norm_method,transform_method
-/scratch/project/pipelines/DATA/expression/GAP_Expression,Sample_and_Control_Probe_Profile_FinalReport.txt,Group_Probe_Profile_Final_Report.txt,sample_table_Final_Report.txt,control_probe_profile_Final_Report.txt,NA,NA,GAP,80,80,1,1,2,rsn,vst
