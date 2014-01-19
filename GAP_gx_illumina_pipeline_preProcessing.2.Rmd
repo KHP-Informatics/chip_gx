@@ -1,7 +1,11 @@
+```{r setup, include=FALSE}
+opts_chunk$set(dev = 'pdf')
+```
+
 Microarry pre-processing for Illumina BeadArray data
 =====================================================
 
-## Project Directory and Files
+# Project Directory and Files
 ```{r Files, eval=FALSE}
 
 # Data Directory
@@ -21,8 +25,22 @@ Sample_and_Control_Probe_Profile_FinalReport.txt
 # Use Unknown to record missing values in pheno_info.txt 
 pheno_info.txt # REQUIRED COLUMNS (MATCH FORMAT SHOWN HERE ie SEX not Sex or Gender etc!):- "Sample.ID","SEX","GROUPS","TISSUE","PHENOTYPE","Study_ID"
 batch_info.txt # REQUIRED COLUMNS:- "Sample.ID","RIN","RNA_YIELD" and any other related batch info eg dates or processing. 
+
+* Naming Convensions
+* All UPPERCASE
+* SEX = MALE, FEMALE or UNKNOWN
+
+
 ```
-***********************************************************************************************************************************************************
+
+## Basic workflow
+1.Rawdata  
+2.Sample Pheno & batch data 
+3.Check for duplicate Study Id
+4.Match Sample.ID (Chips) to Sample data provided in 
+
+
+****
 
 # Begin R
 Start R and call the following
@@ -62,6 +80,7 @@ library(ggplot2)
 ```
 
 ## load source file with some processing functions
+email stephen.newhouse@kcl.ac.uk for code. Will all be on git soon
 ```{r loadSource, eval=TRUE}
 # path to gene expression processing scripts
 path_to_scripts <- "/media/D/sjnewhouse/GENE_EXPRESSION" 
@@ -71,7 +90,8 @@ ls()
 ```
 
 ## set project settings and I/O
-User is asked to manually provide these options. This sets the working directoty, prjoect name, input and output files, along with qc options for transformation and normalisation methods. 
+User is asked to manually provide these options.  
+This sets the working directoty, prjoect name, input and output files, along with qc options for transformation and normalisation methods. 
 
 ```{r setProjectOptions, eval=TRUE}
 # project directory
@@ -81,10 +101,11 @@ project_dir <- "/media/D/expression/GAP_Expression"
 setwd(project_dir)
 
 # project name
-project_name <- "GAPtest01"
+project_name <- "GAP"
 
 # output directory for lumi process and plots
-out_dir <- paste(project_dir,"/",project_name,"_lumi_processing" ,sep="")
+processing_date <- format(Sys.Date(),"%d_%m_%Y")
+out_dir <- paste(project_dir,"/",project_name,"_lumi_processing_",processing_date ,sep="")
 
 # make project pre-processing directory
 make_dir_command <- paste(" if [ ! -e ",out_dir," ]; then mkdir ",out_dir,"; fi",sep="")
@@ -125,6 +146,13 @@ transform_method <- "log2" ## "vst" # log2, vst or both
 # Normalisation method
 norm_method <- "rsn" ## "rsn" # quantile, rsn, or both
 
+# Folks that done stuff
+analyst_email <- "stephen.newhouse@kcl.ac.uk"
+analyst_name <-  "Stephen Newhouse"
+lab_contact_email <- "charles.curtis@kcl.ac.uk"
+lab_contact_name <- "Charle Curtis"
+
+  
 # write settings to file
 project_settings <- data.frame(
   project_dir=project_dir,
@@ -144,7 +172,11 @@ project_settings <- data.frame(
   iac_sd_thrs=iac_sd_thrs,
   mbcb_method=mbcb_method,
   transform_method=transform_method,
-  norm_method=norm_method
+  norm_method=norm_method,
+  analyst_email=analyst_email,
+  analyst_name=analyst_name,
+  lab_contact_email=lab_contact_email,
+  lab_contact_name=lab_contact_name
   )
 
 # some data wrangling
@@ -160,7 +192,7 @@ write.table(project_settings, file=paste(out_dir,"/",project_name,".project_sett
 project_settings
 
 ```
-***********************************************************************************************************************************************************
+****
 
 BEGIN PRE-PROCESSING
 =====================
@@ -169,11 +201,11 @@ Raw Expression Set
 -------------------
 
 ## 1. read raw gene expression data 
-```{r lumiR, eval=TRUE}
+```{r lumiR, tidy=TRUE, eval=TRUE}
 
 # raw input 
 # This is the 1) Probe Profile, 2) Control Probe Profile and 3) Sample Table, Final Reports exported from GenomeStudio, all concatenated 
-gs_report
+if(is.na(gs_report))  stop(" WARNING!: YOU HAVENT PROVIDED ANY DATA TO READ" )
 
 # read raw gene expression data from genomestudio reports and create ExpressionSet
 
@@ -201,9 +233,10 @@ if(is.na(gs_sample))  stop(" WARNING!: YOU HAVENT PROVIDED ANY SAMPLE INFORMATIO
 gs_sample
 
 gs_sample_data <- read.table(paste(gs_sample) ,skip=8,as.is=T,fill=T,head=T,sep="\t")
-rownames(gs_sample_data) <- gs_sample_data.ID
+rownames(gs_sample_data) <- gs_sample_data$Sample.ID
 gs_sample_data <- gs_sample_data[,names(gs_sample_data)!="X"] # added this as genomestudio likes to add mystery columns to the end of this report 
 n_samples <- dim(gs_sample_data)[1]  # number of rows ie samples
+
 save(gs_sample_data,file=paste(out_dir,"/",project_name,".gs_sample_data.RData",sep="") )
 
 #  pheno_file
@@ -217,12 +250,25 @@ missing_pheno_cols <- "FALSE" %in% has_pheno_cols
 if(missing_pheno_cols == "TRUE") stop(" WARNING!: YOU ARE MISSING ESSENTIAL SAMPLE INFORMATION! MAKE SURE YOUR PHENO_FILE HAS:- Sample.ID,SEX,GROUPS,TISSUE,PHENOTYPE,Study_ID !!!")
 raw_n_pheno_dat <- dim(pheno_dat)[1] # number of rows ie samples
 
+cat(" Running toupper() on PHENOTYPE, GROUP AND TISSUE variables to fix potential case issues","\r")
+# fix case
+pheno_dat$PHENOTYPE <- toupper(pheno_dat$PHENOTYPE)
+pheno_dat$SEX <- toupper(pheno_dat$SEX)
+pheno_dat$GROUPS <- toupper(pheno_dat$GROUPS)
+pheno_dat$TISSUE <- toupper(pheno_dat$TISSUE)
+# a quick looksee at counts
+table(pheno_dat$PHENOTYPE)
+table(pheno_dat$GROUPS)
+table(pheno_dat$TISSUE)
+table(pheno_dat$SEX)
+
 # tech_pheno_file
 if(is.na(tech_pheno_file))  stop(" WARNING!: YOU HAVENT PROVIDED ANY BATCH INFORMATION!!!" )
 tech_pheno_file
 
 tech_pheno <- read.table(paste(tech_pheno_file),head=T,sep="\t")
 tech_pheno$Sentrix.Barcode <- as.character(tech_pheno$Sentrix.Barcode)
+rownames(tech_pheno) <- tech_pheno$Sample.ID
 colnames(tech_pheno) <- paste("tech.",names(tech_pheno),sep="")
 colnames(tech_pheno) <- c("Sample.ID", names(tech_pheno[,-1]))
 save(tech_pheno,file=paste(out_dir,"/",project_name,".tech_pheno.RData",sep="") )
@@ -240,6 +286,12 @@ names(gs_sample_data)
 names(pheno_dat)
 names(tech_pheno)
 
+# head
+head(eset_samples) 
+head(gs_sample_data)
+head(pheno_dat)
+head(tech_pheno)
+
 # quick check
 # these should all have the same number of rows or samples!
 dim(eset_samples);dim(gs_sample_data);dim(pheno_dat);dim(tech_pheno)
@@ -250,8 +302,19 @@ pp <- pheno_dat$Sample.ID
 tt <- tech_pheno$Sample.ID
 venninput  <-list(ArrayExpression=ex,Batch_Info=tt,Pheno_Info=pp)
 venn(venninput)
-dev.off()
+#dev.off()
+```
 
+## 2.1 check for duplicate Study_ID
+```{r check_for_ duplicate Study_ID, eval=TRUE}
+# check for duplicate Study_ID
+tab_id <- table(pheno_dat$Study_ID)
+tab_id_df <- as.data.frame(tab_id)
+colnames(tab_id_df) <- c("Study_ID","Freq")
+dupe_samples <- subset(tab_id_df,tab_id_df$Freq>=2) 
+cat("  WARNING!: You have duplicate Study_IDs. N=[",dim(dupe_samples)[1],"]","\r","\n")
+dupe_samples
+write.table(dupe_samples,file=paste(out_dir,"/",project_name,".dupe_Study_IDs.txt",sep=""),sep="\t",quote=FALSE,row.names=FALSE)
 ```
 
 ## 3. check eset_samples, sample & batch info Sample.ID's match in names and numbers & merge all
@@ -339,31 +402,434 @@ head(fData(eset_raw))
 save(eset_raw, file=paste(out_dir,"/",project_name,".eset_raw.RData",sep=""))
 ```
 
-## 7. Write data files to out_dir for eset_raw
+## 7. Write Expression data files to project directory for eset_raw
 ```{r writeEsetRawData, eval=TRUE}
 # Write data files to out_dir for eset_raw
 write_expression_files(eset=eset_raw,outfile=paste(out_dir,"/",project_name,".eset_raw",sep="") )
 ```
 
-## 8. Basic QC and plots on eset_raw
-```{r basicQCplots, eval=TRUE}
+## 8. Basic QC plots on eset_raw
+Standard QC plots, PCA vs Batch variables and Sample Network stats
+```{r basicQCplots_eset_raw, fig.width=16, fig.height=8, eval=TRUE}
+# Basic QC plots & Sample Network Plot based an all data pre-qc
+gx_qc_plots_lumi_2(eset_raw, do_pca=TRUE)
+```
+
+****
+
+MBCB (Model-based Background Correction for Beadarray)
+-------------------------------------------------------
+Background correction! Do not skip this step.  
+If you have data from Genomestudio you will have NEGATIVE BEAD expression levels to use for background correction.  
+http://www.ncbi.nlm.nih.gov/pubmed/18450815.  
+Nucleic Acids Res. 2008 Jun;36(10):e58. doi: 10.1093/nar/gkn234. Epub 2008 May 1.  
+**Enhanced identification and biological validation of differential gene expression via Illumina whole-genome expression arrays through the use of the model-based background correction methodology**.Ding LH, Xie Y, Park S, Xiao G, Story MD.  
+The alternative is Robust multi-array (RMA) if you dont have NEGATIVE BEAD expression levels.
+
+## 1. Run mbcb.correct(signal,negCon,npBool=FALSE,mleBool=TRUE,isRawBead=FALSE)
+```{r runMBCB, eval=TRUE}
+# Run Model-based Background Correction for Beadarray : method = MLE
+# mbcb.correct(signal,negCon,npBool=FALSE,mleBool=TRUE, isRawBead=FALSE)
+eset_bg <- bgcor_mbcb(eset=eset_raw, outfile=paste(out_dir,"/",project_name,".eset_bg",sep="") )
+eset_bg 
+```
+
+## 2. SAVE BACKGROUND CORRECTED DATA 
+```{r save_eset_bg, eval=TRUE}
+save(eset_bg, file=paste(out_dir,"/",project_name,".eset_bg.RData",sep="")  , compress=T)
+```
+
+## 3. Write data files to out_dir for eset_bg
+```{r write_eset_bg_Data, eval=TRUE}
+# Write data files to out_dir for eset_raw
+write_expression_files(eset=eset_bg,outfile=paste(out_dir,"/",project_name,".eset_bg",sep="") )
+
+# NB: SKIP QC PLOTS ETC. Not really needed at this point
+```
+
+****
+
+Check Gender based on XIST gene expression
+-------------------------------------------------------
+```{r checkGender, fig.width = 10, fig.height = 10,eval=TRUE}
+cat(" Checking Gender based on XIST gene expression","\r","\n")
+
+## get neg control data from eset_bg
+cat(" get negativeControl data from eset_bg","\r","\n")
+negativeControl <- getControlData(eset_bg)
+negativeControl <- subset(negativeControl, negativeControl$controlType=="NEGATIVE")
+negativeControl <- negativeControl[,c(3:dim(negativeControl)[2])]
+
+## get neg control info mean,sd,max etc
+cat(" get negativeControl mean,sd,max etc","\r","\n")
+neg_max <- apply(negativeControl,2,max)
+neg_min <- apply(negativeControl,2,min)
+neg_sd <- apply(negativeControl,2,sd)
+neg_mean <- apply(negativeControl,2,mean)
+neg_2sd <- neg_mean + 2*neg_sd
+
+## get XIST gene postion
+cat(" get XIST gene postion from feature data slot","\r","\n")
+xist_raw <- fData(eset_raw)$ILMN_GENE=="XIST";
+xist_bkcor <- fData(eset_bg)$ILMN_GENE=="XIST";
+
+## get XIST gene expression signal
+cat(" get XIST gene expression data","\r","\n")
+xist_gx_raw  <- exprs(eset_raw[xist_raw, ]  )
+xist_gx_raw <- as.data.frame( t(xist_gx_raw));
+xist_gx_bkcor <- exprs(eset_bg[xist_bkcor , ]  )
+xist_gx_bkcor <- as.data.frame( t(xist_gx_bkcor));
+
+## cobine xist_gx_raw and xist_gx_bkcor data
+xist_gx <- cbind(xist_gx_raw,xist_gx_bkcor)
+colnames(xist_gx) <- c("raw_XIST","bkcor_XIST")
+xist_gx$neg_2sd <- neg_2sd
+xist_gx$neg_max <- neg_max
+xist_gx$neg_min <- neg_min
+xist_gx$neg_mean <- neg_mean
+xist_gx$neg_sd <- neg_sd
+
+## gender based on XIST expression 1=FEMALE , 0 = MALE
+xist_gx$XIST_z <-  ( xist_gx$bkcor_XIST - xist_gx$neg_mean ) / xist_gx$neg_sd
+# illumina detection p value for xist
+xist_gx$xist_illumina_detection_p <- as.numeric(detection(eset_bg[fData(eset_bg)$ILMN_GENE=="XIST",]))
+xist_gx$xist_illumina_detection_p <- ifelse( xist_gx$xist_illumina_detection_p  == 0.00000, 0.00001,xist_gx$xist_illumina_detection_p )
+
+# gender based on bg cor expression > 2SD negatibe beads
+xist_gx$xist_gender <- ifelse(xist_gx$bkcor_XIST > xist_gx$neg_2sd,"FEMALE","MALE")
+
+# gender provided in database
+xist_gx$clinical_gender <- toupper(pData(eset_bg)$SEX)
+
+# gender based on illumina detecetion p value
+xist_gx$xist_illumina_detection_p_gender <- ifelse(xist_gx$xist_illumina_detection_p <= 0.01,"FEMALE","MALE") ## 0.05 makes them all FEMALE!
+
+# flag gender missmatch
+xist_gx$gender_missmatch <- ifelse( xist_gx$xist_gender == xist_gx$clinical_gender, "PASS","GENDER_MISSMATCH" )
+xist_gx$gender_missmatch_illumina_detection_p <- ifelse( xist_gx$xist_illumina_detection_p_gender == xist_gx$clinical_gender, "PASS","GENDER_MISSMATCH" )
+
+# add sample id
+xist_gx$Sample.ID <- rownames(xist_gx)
+
+xist_gx$xist_p <- ifelse(xist_gx$XIST_z >= 0, 2*pnorm(-abs(xist_gx$XIST_z)) ,1 )
+# head
+head(xist_gx)
+
+# table SEX
+table(xist_gx$clinical_gender);
+table(xist_gx$xist_gender);
+table(xist_gx$xist_illumina_detection_p_gender);
+
+# tables SEX compare
+table(xist_gx$xist_gender, xist_gx$clinical_gender);
+table(xist_gx$xist_illumina_detection_p_gender, xist_gx$clinical_gender);
+
+# Density plots with semi-transparent fill of SEX CALLS
+df <- xist_gx[,c("bkcor_XIST", "clinical_gender", "xist_gender", "xist_illumina_detection_p_gender")]
+#head(df)
+
+# Find the mean of each group
+# library(plyr)
+#cdf_clinical_gender <- ddply(df, "clinical_gender", summarise, mean=mean(log2(bkcor_XIST)))
+#cdf_xist_gender <- ddply(df, "xist_gender", summarise, mean=mean(log2(bkcor_XIST)))
+#cdf_xist_illumina_detection_p_gender <- ddply(df, "xist_illumina_detection_p_gender", summarise, mean=mean(log2(bkcor_XIST)))
+#cdf_clinical_gender
+#cdf_xist_gender 
+#cdf_xist_illumina_detection_p_gender
+
+# ggplots
+ggplot(df, aes(x=log2(bkcor_XIST), fill=clinical_gender )) + geom_histogram(binwidth=.5, alpha=.5, position="identity")
+ggplot(df, aes(x=log2(bkcor_XIST), fill=xist_gender )) + geom_histogram(binwidth=.5, alpha=.5, position="identity")
+ggplot(df, aes(x=log2(bkcor_XIST), fill=xist_illumina_detection_p_gender )) + geom_histogram(binwidth=.5, alpha=.5, position="identity")
+
+# Box plots With flipped axes
+ggplot(df, aes( y=log2(bkcor_XIST), x=clinical_gender, fill=clinical_gender)) + geom_boxplot() +  guides(fill=FALSE) + coord_flip()
+ggplot(df, aes( y=log2(bkcor_XIST), x=xist_gender, fill=xist_gender)) + geom_boxplot() +  guides(fill=FALSE) + coord_flip()
+ggplot(df, aes( y=log2(bkcor_XIST), x=xist_illumina_detection_p_gender, fill=xist_illumina_detection_p_gender)) + geom_boxplot() +  guides(fill=FALSE) + coord_flip()
+
+# save plots to pdf
+#pdf(file=paste(out_dir,"/",project_name,".eset_bg.XIST.Gender_plot.pdf",sep=""),height=8,width=11)
+# some plots 
+#boxplot( log2(bkcor_XIST) ~ clinical_gender, data=xist_gx, main="bg XIST.gx ~ clinical_gender")
+#boxplot( log2(bkcor_XIST) ~ xist_gender, data=xist_gx, main="bg XIST.gx ~ xist_gender")
+#boxplot( log2(bkcor_XIST) ~ xist_illumina_detection_p_gender, data=xist_gx, main="bg XIST.gx ~ xist_illumina_detection_p_gender")
+plot(log2(xist_gx$bkcor_XIST), type="p", col=labels2colors(xist_gx$xist_gender), pch=19 , cex=0.6);
+points(log2(xist_gx$neg_2sd),col="grey", type="l")
+points(log2(xist_gx$neg_mean),col="black", type="l")
+points(log2(xist_gx$neg_min),col="lightgrey", type="l")
+points(log2(xist_gx$bkcor_XIST), type="p", col=labels2colors(xist_gx$xist_gender), pch=19 , cex=0.6);
+#plot(xist_gx$bkcor_XIST, type="p", col=labels2colors(xist_gx$xist_gender), pch=19 , cex=0.6);
+#points(xist_gx$neg_2sd,col="blue", type="l")
+#points(xist_gx$neg_mean,col="black", type="l")
+#dev.off()
+
+# save xist_gx data
+save(xist_gx, file=paste(out_dir,"/",project_name,".eset_bg.XIST.Gender.RData",sep=""))
+write.table(xist_gx, file=paste(out_dir,"/",project_name,".eset_bg.XIST.Gender.txt",sep=""),sep="\t",row.names=F)
+## check sex and add to pData
+
+pheno_update <- merge(pData(eset_bg), xist_gx, by.x="sampleID", by.y="Sample.ID",all.x=TRUE,sort=FALSE)
+rownames(pheno_update) <-  pheno_update$sampleID
+pData(eset_bg) <- pheno_update
+save(eset_bg, file=paste(out_dir,"/",project_name,".eset_bg.RData",sep=""))
+
+# n_gender_fails
+n_gender_fails <- sum( pData(eset_bg)$gender_missmatch=="GENDER_MISSMATCH" )
+if ( n_gender_fails > 0 ) {
+    cat(" WARNING: Youn have GENDER_MISSMATCH samples!!!!!!! N=[",n_gender_fails,"]","\r","\n")
+} else {
+  cat(" Congratulations! \n All your MALEs are MALE and FEMALEs are FEMALE. \n You have NO GENDER_MISSMATCH samples!!!", "\r","\n")
+}
+
+## write file of sex fails
+gender_missmatch_table <- subset(pData(eset_bg),pData(eset_bg)$gender_missmatch=="GENDER_MISSMATCH")
+write.table(gender_missmatch_table, file=paste(out_dir,"/",project_name,".eset_bg.XIST.gender_missmatch_table.txt",sep=""),sep="\t",row.names=F)
+
+## SAVE BACKGROUND CORRECTED DATA sex checked 
+pData(eset_bg)$GROUPS <- toupper(pData(eset_bg)$GROUPS) ## added as an extra check for those pesky "case" issues!
+pData(eset_bg)$PHENOTYPE <- toupper(pData(eset_bg)$PHENOTYPE)
+save(eset_bg, file=paste(out_dir,"/",project_name,".eset_bg.RData",sep="")  , compress=T)
+
+cat(" Writing eset_bg [beadNum, detection, exprs, se.exprs] data to file ", paste(out_dir,"/",project_name,".eset_bg.[beadNum, detection, exprs, se.exprs].txt",sep=""), "\r","\n")
+write_expression_files(eset=eset_bg,outfile= paste(out_dir,"/",project_name,".eset_bg",sep="") )
+
+```
+
+****
+
+Id Detected Probes per GROUPS
+-------------------------------------------------------
+Here we are creating lists of probes that have expression levels >= 2SD of the mean intensity of the negative control beads.  
+This seems to be a better measure of "expressed/detected" than Illumina's own detection p-values. You can see proof of that when looking at XIST expression levels versus Geneder using Illumina's own detection p-values for both p=0.05 and p=0.01!  
+The expression levels are taken from the **background corrected** data \[eset_bg\].
+This needs be be run after the gender check, as Y Chrom probe expression is determined in xist_MALEs only. 
+
+```{r id_detected_probes_per_group, eval=TRUE}
+## PROBE DETECTED 2SD ABOVE MEAN BACKGROUND ##
+cat(" Calculating Probe Detection rates. \n Probe is seen as Detected if it has background corrected signal intensity >= 2SD of the mean intensity of the negative control beads","\r","\n")
+## get expression matrix
+gx <- exprs(eset_bg)
+## get negative bead ranges mean or max or >2SD mean  of neg beads
+neg_2sd <- neg_mean + 2*neg_sd
+## sweep through gx matrix to id probes > 2SD Mean of negative beads
+det <- sweep(gx, 1, neg_2sd,">=")
+## Writing Probe Detection Calls to file #
+det_tmp  <- as.data.frame(det)
+det_tmp$nuID <- rownames(det_tmp)
+probe_detected <- merge(fData(eset_bg), det_tmp , by.x="nuID",by.y="nuID",sort=FALSE)
+
+cat(" Writing Probe Detection Calls to",paste(out_dir,"/",project_name,".eset_bg.probe_detected.txt",sep="") ,"\r","\n")
+write.table(probe_detected , file=paste(out_dir,"/",project_name,".eset_bg.probe_detected.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
+
+## probe_detection counts
+probe_detection <- rowSums(det)
+
+## n samples
+n_samples <- dim(gx)[2]
+
+## probe annotations
+probes_not_detected_in_any_sample <- probe_detection==0
+probes_detected_in_80_sample <- probe_detection>=n_samples*0.80
+probes_detected_in_all_sample <- probe_detection==n_samples
+probe_annotations_0_detected <- fData(eset_bg[probes_not_detected_in_any_sample,])
+probe_annotations_80_detected  <- fData(eset_bg[probes_detected_in_80_sample ,])
+probe_annotations_100_detected  <- fData(eset_bg[probes_detected_in_all_sample,])
+cat(" Adding detetion call rate for all probes and samples to fData() slot for eset_bg","\r","\n")
+fData(eset_bg)$n_detected <- probe_detection
+fData(eset_bg)$n_detected_call_rate <- round( probe_detection/n_samples ,3)
+
+## sample_detection counts
+n_probes <- dim(eset_bg)[1]
+sample_detection <- colSums(det)
+pData(eset_bg)$n_probes_detected <- sample_detection
+pData(eset_bg)$n_probes_detected_call_rate <- round( sample_detection/n_probes ,3)
+save(eset_bg, file=paste(out_dir,"/",project_name,".eset_bg.RData",sep=""))
+
+## get group information from pData() slot
+group_names <- unique(pData(eset_bg)$GROUPS);
+group_names
+groups  <- pData(eset_bg)$GROUPS
+n_groups <- length(group_names)
+
+## get expression matrix ##
+gx <- exprs(eset_bg)
+neg_2sd <- as.numeric(neg_2sd)
+
+## loop through each group and id probes > 2SD mean neg beads in X% of samples/group
+for(n in group_names ) {
+cat(" Finding probes in ",probe_det," of sample group [",n,"] with signal intensity >= 2SD mean intensity of the negative control beads ","\r","\n")
+group_label <- paste(n)
+sel_samples <- pData(eset_bg)$GROUPS==n;
+n_samples_in_group <- dim(gx[,sel_samples])[2];
+cat(" Number of samples in group [",n,"] = ",n_samples_in_group,"\r","\n")
+detection_matrix <- sweep(gx[,sel_samples],1,neg_2sd[sel_samples],">=")
+group_probe_detection <- rowSums(detection_matrix) >= (probe_det/100)*n_samples_in_group
+group_probe_detection_nuID <- rownames( gx[group_probe_detection==TRUE, ])
+cat(" Number of probes in group [",n,"] with signal intensity >= 2SD mean intensity of the negative control beads = ", length(group_probe_detection_nuID) ,"\r","\n")
+cat(" Writing probe list to ",paste(out_dir,"/",project_name,".GROUP.",group_label,".detected_probes_nuID.txt",sep=""), "\r","\n" )
+det_probes <- as.data.frame(group_probe_detection_nuID)
+colnames(det_probes) <- c("nuID")
+write.table( det_probes ,file=paste(out_dir,"/",project_name,".GROUP.",group_label,".detected_probes_nuID.txt",sep=""),row.names=FALSE,quote=FALSE,col.names=FALSE)
+}
+
+## Y CHROM EXPRESSION IN XIST MALES
+cat(" Y Chromosome probe detection based on XIST MALEs","\r","\n")
+xist_MALEs <- pData(eset_bg)$xist_gender=="MALE"
+gx_y <- exprs(eset_bg[fData(eset_bg)$CHR=="Y",])
+detection_matrix_y <- sweep( gx_y[,xist_MALEs],1, neg_2sd[xist_MALEs ],">=")
+y_probe_detection <- rowSums(detection_matrix_y) >= probe_det * sum(xist_MALEs==TRUE)
+y_probe_detection_nuID <- rownames( gx_y[y_probe_detection, ])
+y_det_probes <- as.data.frame(y_probe_detection_nuID)
+colnames(y_det_probes) <- c("nuID")
+write.table( y_det_probes ,file=paste(out_dir,"/",project_name,".GROUP.Y.detected_probes_nuID.txt",sep=""),row.names=FALSE,quote=FALSE,col.names=FALSE)
+
+## writing final good probe list
+cat(" writing final good probe list to ",paste(out_dir,"/",project_name,".detected_probes_nuID_final.txt",sep=""),"\r","\n")
+system(paste("cat ",out_dir,"/",project_name,"****.detected_probes_nuID.txt | sort | uniq >> ",out_dir,"/",project_name,".detected_probes_nuID_final.txt", sep="") )
+good_probes <- read.table(file=paste(out_dir,"/",project_name,".detected_probes_nuID_final.txt",sep=""),head=FALSE)
+good_probes <- paste(good_probes[,1])
+n_good_probes <- length(good_probes)
+cat(" Total number of good probes = ",n_good_probes,"\n","\r" )
+good_probes_annotation <- fData(eset_bg[paste(good_probes,sep=""),])
+good_probes_annotation$raw_mean <- apply( exprs(eset_bg[good_probes,]), 1,mean)
+good_probes_annotation$raw_sd <- apply( exprs(eset_bg[good_probes,]), 1,sd)
+good_probes_annotation$raw_var <- apply( exprs(eset_bg[good_probes,]), 1,var)
+good_probes_annotation$raw_min <- apply( exprs(eset_bg[good_probes,]), 1,min)
+good_probes_annotation$raw_max <- apply( exprs(eset_bg[good_probes,]), 1,max)
+head(good_probes_annotation)
+
+# Saving good probe annotations
+cat(" saving good probe annotations to ",paste(out_dir,"/",project_name,".detected_probes_nuID_final.***",sep=""),"\r","\n")
+save(good_probes_annotation, file=paste(out_dir,"/",project_name,".detected_probes_nuID_final.RData",sep="") )
+write.table(good_probes_annotation, file=paste(out_dir,"/",project_name,".detected_probes_nuID_final.txt",sep=""),quote=F,sep="\t",row.names=F )
+
+# looksee
+table(good_probes_annotation$CHROMOSOME)
+boxplot(log2(good_probes_annotation$raw_mean),main="log2(mean_raw_expression)")
+plot(good_probes_annotation$n_detected_call_rate,ylim=c(0,1),pch=20)
+summary(good_probes_annotation$n_detected_call_rate)
+summary(log2(good_probes_annotation$raw_mean))
+```
+
+****
+
+Transform and Normalise
+-------------------------------------------------------
+See **Comparison of normalization methods for Illumina BeadChip HumanHT-12 v3**
+BMC Genomics. 2010; 11: 349. Ramona Schmid et al
+http://www.pubmedcentral.nih.gov/articlerender.fcgi?artid=3091625&tool=pmcentrez&rendertype=abstract
+Figure 10 Pearson correlation of log2 ratios for different normalization methods and qRT-PCR. 
+This study selects bg_rma_log_rsn as the best.
+Here we have used a better method for background correction, followed by log2 transformation and robust-splince normalisation (rsn).
+The robust spline normalization (RSN) algorithm combines the features of quantile and loess normalization.
+
+```{r lumiExpresso, eval=TRUE}
+# See Comparison of normalization methods for Illumina BeadChip HumanHT-12 v3.
+# BMC Genomics. 2010; 11: 349.
+# Ramona Schmid et al
+# Figure 10 Pearson correlation of log2 ratios for different normalization methods and qRT-PCR. 
+# This study selects bg_rma_log_rsn as the best
+# http://www.pubmedcentral.nih.gov/articlerender.fcgi?artid=3091625&tool=pmcentrez&rendertype=abstract
+
+# log2 > rsn
+eset_bg_log2_rsn_0 <- lumiExpresso(eset_bg, bg.correct = FALSE,
+                                    variance.stabilize=TRUE, 
+                                    varianceStabilize.param=list(method=paste(transform_method,sep="")), 
+                                    normalize.param=list(method=paste(norm_method,sep="")), 
+                                    verbose=FALSE);
+```
+
+## Save Transformed and Normalised data pre-sample removal
+```{r save_eset_bg_log2_rsn_0, eval=TRUE}
+# save log2 > rsn
+save(eset_bg_log2_rsn_0, file=paste(out_dir,"/",project_name,".eset_bg_log2_rsn_0.RData",sep="")  , compress=T)
+```
+
+## QC Plots Transformed and Normalised data
+```{r qc_plot_eset_bg_log2_rsn_0, eval=TRUE}
 # Basic Plots
-    chip_col <- labels2colors( as.character(pData(eset_raw)$Sentrix.Barcode))
-    plot(eset_raw, what='boxplot', col=chip_col )
-    plot(eset_raw, what='density' )
-    plot(eset_raw, what='cv'  )
-    plot(eset_raw, what='outlier'  )
+    chip_col <- labels2colors( as.character(pData(eset_bg_log2_rsn_0)$Sentrix.Barcode))
+    plot(eset_bg_log2_rsn_0, what='boxplot', col=chip_col )
+    plot(eset_bg_log2_rsn_0, what='density')
+    plot(eset_bg_log2_rsn_0, what='cv')
+    plot(eset_bg_log2_rsn_0, what='outlier')
 # flashClust
-  datExprs <- exprs(eset_raw)
+  datExprs <- exprs(eset_bg_log2_rsn_0)
   dist_exprs <- dist( t(datExprs), method="e" )
   sampleTree <- flashClust( dist_exprs, method = "average");
   plot(sampleTree)
+# QC Plots of Transformed and Normalised data 
+gx_qc_plots_lumi(eset=eset_bg_log2_rsn_0, outfile=paste(out_dir,"/",project_name,".eset_bg_log2_rsn_0",sep="") )
 ```
 
-## 9. SampleNetwork on all samples as a first pass
-```{r SampleNetwork_eset_raw, eval=TRUE}
+## Write Expression data files for Transformed and Normalised data
+```{r write_expression_files_eset_bg_log2_rsn_0, eval=TRUE}
+# write_expression_files
+write_expression_files(eset=eset_bg_log2_rsn_0,outfile= paste(out_dir,"/",project_name,".eset_bg_log2_rsn_0",sep="") )
+```
+
+SampleNetwork : Id outlier samples 
+-------------------------------------------------------
+Adapted from : ***Network methods for describing sample relationships in genomic datasets: application to Huntington's disease. Michael C Oldham et al.***
+BMC Syst Biol. 2012; 6: 63.
+http://www.ncbi.nlm.nih.gov/pmc/articles/PMC3441531/?tool=pmcentrez&report=abstract
+
+## Basic Iterative SampleNetwork outlier removal
+```{r basic_sampleNetworkIterate, eval=TRUE}
+# Id outlier samples
+# Adapted from : Network methods for describing sample relationships in genomic datasets: application to Huntington's disease. Michael C Oldham et al.
+# BMC Syst Biol. 2012; 6: 63.
+# http://www.ncbi.nlm.nih.gov/pmc/articles/PMC3441531/?tool=pmcentrez&report=abstract
+# Oginal Code : 
+
+# basic_sampleNetworkIterate
+ISAoutliers <- basic_sampleNetworkIterate(eset=eset_bg_log2_rsn_0,
+                                          col_by_chip=0, 
+                                          groups="byGroup" ,
+                                          outfile=paste(out_dir,"/",project_name,".eset_bg_log2_rsn_0.",sep=""), 
+                                          IACthresh=0.95, 
+                                          sd_thrs=iac_sd_thrs );
+
+# Outliers
+outlier_samples <- ISAoutliers$iac_outlier_samples
+cat(" number of outlier samples =", length(outlier_samples),"/",dim(eset_bg)["Samples"],"=",length(outlier_samples)/dim(eset_bg)["Samples"],"\r","\n")
+
+save(outlier_samples, file=paste(out_dir,"/",project_name,".eset_bg_log2_rsn_0_outlier_samples.RData",sep="") )
+
+ISAoutliers$iac_outlier_samples
+#
+ISAoutliers_file <- paste(out_dir,"/",project_name,".eset_bg_log2_rsn_0.group.basic_sampleNetworkIterate_summary.csv",sep="")
+
+```
+
+SampleNetwork : Remove outlier samples 
+-------------------------------------------------------
+```{r removeISAoutlers, eval=TRUE}
+# remove outlier_samples
+eset_bg_log2_rsn <- removeSamples_eset_lumi(eset=eset_bg_log2_rsn_0,sampleRemove=outlier_samples)
+eset_bg_log2_rsn
+save(eset_bg_log2_rsn, file=paste(out_dir,"/",project_name,".eset_bg_log2_rsn.RData",sep="")  , compress=T)
+```
+
+QC Plots of Transformed and Normalised data after outlier removal
+------------------------------------------------------------------
+```{r qcPlots_eset_bg_log2_rsn_post_sampleNetwork,  eval=TRUE}
+
+# Basic Plots
+    chip_col <- labels2colors( as.character(pData(eset_bg_log2_rsn)$Sentrix.Barcode))
+    plot(eset_bg_log2_rsn, what='boxplot', col=chip_col )
+    plot(eset_bg_log2_rsn, what='density')
+    plot(eset_bg_log2_rsn, what='cv')
+    plot(eset_bg_log2_rsn, what='outlier')
+
+# flashClust
+  datExprs <- exprs(eset_bg_log2_rsn)
+  dist_exprs <- dist( t(datExprs), method="e" )
+  sampleTree <- flashClust( dist_exprs, method = "average");
+  plot(sampleTree)
+
 # SampleNetwork on all samples as a first pass
-samle_names <- sampleNames(eset_raw)
+samle_names <- sampleNames(eset_bg_log2_rsn)
 IAC=cor(datExprs, method="p",use="p")
 diag(IAC)=0
 A.IAC=((1+IAC)/2)^2  ## ADJACENCY MATRIX
@@ -374,9 +840,9 @@ Z.C=(FNC$ClusterCoef-mean(FNC$ClusterCoef))/sd(FNC$ClusterCoef)
 Z.MAR=(FNC$MAR-mean(FNC$MAR))/sd(FNC$MAR)
 rho <- signif(cor.test(Z.K,Z.C,method="s")$estimate,2)
 rho_pvalue <- signif(cor.test(Z.K,Z.C,method="s")$p.value,2)
-colorvec <- colorvec <- labels2colors(as.character(pData(eset)$Sentrix.Barcode))
+colorvec <- colorvec <- labels2colors(as.character(pData(eset_raw)$Sentrix.Barcode))
 ## OUTLIERS
-Z.K_outliers <- Z.K < -sd_thrs
+Z.K_outliers <- Z.K < -iac_sd_thrs
 Z.K_outliers <- names(Z.K_outliers[Z.K_outliers==TRUE])
 n_outliers <- length(Z.K_outliers)
 mean_IAC <- mean(IAC[upper.tri(IAC)])
@@ -430,336 +896,29 @@ abline(h=-2,lty=2,col="grey")
 dev.off()
 ```
 
-## 10. Some more advanced QC plots & PCA with Batch variables
-```{r qc_plots_eset_raw, eval=TRUE}
-# Some more advanced QC plots & PCA with Batch variables
-# PCA Plots, heatmaps and SampleNetwork Z.K plots
-# Review these manually
-gx_qc_plots_lumi(eset=eset_raw, outfile=paste(out_dir,"/",project_name,".eset_raw",sep="") )
-
-```
-
-***********************************************************************************************************************************************************
-
-MBCB (Model-based Background Correction for Beadarray)
--------------------------------------------------------
-
-## 1. Run mbcb.correct(signal,negCon,npBool=FALSE,mleBool=TRUE,isRawBead=FALSE)
-```{r runMBCB, eval=TRUE}
-# Run Model-based Background Correction for Beadarray : method = MLE
-# mbcb.correct(signal,negCon,npBool=FALSE,mleBool=TRUE, isRawBead=FALSE)
-eset_bg <- bgcor_mbcb(eset=eset_raw, outfile=paste(out_dir,"/",project_name,".eset_bg",sep="") )
-eset_bg 
-```
-
-## 2. SAVE BACKGROUND CORRECTED DATA 
-```{r save_eset_bg, eval=TRUE}
-save(eset_bg, file=paste(out_dir,"/",project_name,".eset_bg.RData",sep="")  , compress=T)
-```
-
-## 3. Write data files to out_dir for eset_bg
-```{r write_eset_bg_Data, eval=TRUE}
-# Write data files to out_dir for eset_raw
-write_expression_files(eset=eset_bg,outfile=paste(out_dir,"/",project_name,".eset_bg",sep="") )
-
-# NB: SKIP QC PLOTS ETC. Not really needed at this point
-```
-
-***********************************************************************************************************************************************************
-Id Detected Probes per GROUPS
--------------------------------------------------------
-```{r id_detected_probes_per_group, eval=TRUE}
-## PROBE DETECTED 2SD ABOVE MEAN BACKGROUND ##
-cat(" Calculating Probe Detection rates. \n Probe is seen as Detected if it has background corrected signal intensity >= 2SD of the mean intensity of the negative control beads","\r","\n")
-## get expression matrix
-gx <- exprs(eset_bg)
-## get negative bead ranges mean or max or >2SD mean  of neg beads
-neg_2sd <- neg_mean + 2*neg_sd
-## sweep through gx matrix to id probes > 2SD Mean of negative beads
-det <- sweep(gx, 1, neg_2sd,">=")
-## Writing Probe Detection Calls to file #
-det_tmp  <- as.data.frame(det)
-det_tmp$nuID <- rownames(det_tmp)
-probe_detected <- merge(fData(eset_bg), det_tmp , by.x="nuID",by.y="nuID",sort=FALSE)
-cat(" Writing Probe Detection Calls to",paste(out_dir,"/",project_name,".eset_bg.probe_detected.txt",sep="") ,"\r","\n")
-write.table(probe_detected , file=paste(out_dir,"/",project_name,".eset_bg.probe_detected.txt",sep=""),sep="\t",row.names=FALSE, quote=FALSE)
-rm("det_tmp")
-## probe_detection counts
-probe_detection <- rowSums(det)
-## n samples
-n_samples <- dim(gx)[2]
-## probe annotations
-probes_not_detected_in_any_sample <- probe_detection==0
-probes_detected_in_80_sample <- probe_detection>=n_samples*0.80
-probes_detected_in_all_sample <- probe_detection==n_samples
-probe_annotations_0_detected <- fData(eset_bg[probes_not_detected_in_any_sample,])
-probe_annotations_80_detected  <- fData(eset_bg[probes_detected_in_80_sample ,])
-probe_annotations_100_detected  <- fData(eset_bg[probes_detected_in_all_sample,])
-cat(" Adding detetion call rate for all probes and samples to fData() slot for eset_bg","\r","\n")
-fData(eset_bg)$n_detected <- probe_detection
-fData(eset_bg)$n_detected_call_rate <- round( probe_detection/n_samples ,3)
-## sample_detection counts
-n_probes <- dim(eset_bg)[1]
-sample_detection <- colSums(det)
-pData(eset_bg)$n_probes_detected <- sample_detection
-pData(eset_bg)$n_probes_detected_call_rate <- round( sample_detection/n_probes ,3)
-save(eset_bg, file=paste(out_dir,"/",project_name,".eset_bg.RData",sep=""))
-## get group information from pData() slot
-group_names <- unique(pData(eset_bg)$GROUPS);
-groups  <- pData(eset_bg)$GROUPS
-n_groups <- length(group_names)
-## get expression matrix ##
-gx <- exprs(eset_bg)
-neg_2sd <- as.numeric(neg_2sd)
-
-## loop through each group and id probes > 2SD mean neg beads in X% of samples/group
-for(n in group_names ) {
-cat(" Finding probes in ",probe_det," of sample group [",n,"] with signal intensity >= 2SD mean intensity of the negative control beads ","\r","\n")
-group_label <- paste(n)
-sel_samples <- pData(eset_bg)$GROUPS==n;
-n_samples_in_group <- dim(gx[,sel_samples])[2];
-cat(" Number of samples in group [",n,"] = ",n_samples_in_group,"\r","\n")
-detection_matrix <- sweep(gx[,sel_samples],1,neg_2sd[sel_samples],">=")
-group_probe_detection <- rowSums(detection_matrix) >= (probe_det/100)*n_samples_in_group
-group_probe_detection_nuID <- rownames( gx[group_probe_detection==TRUE, ])
-cat(" Number of probes in group [",n,"] with signal intensity >= 2SD mean intensity of the negative control beads = ", length(group_probe_detection_nuID) ,"\r","\n")
-cat(" Writing probe list to ",paste(out_dir,"/",project_name,".GROUP.",group_label,".detected_probes_nuID.txt",sep=""), "\r","\n" )
-det_probes <- as.data.frame(group_probe_detection_nuID)
-colnames(det_probes) <- c("nuID")
-write.table( det_probes ,file=paste(out_dir,"/",project_name,".GROUP.",group_label,".detected_probes_nuID.txt",sep=""),row.names=FALSE,quote=FALSE,col.names=FALSE)
-}
-
-## Y CHROM EXPRESSION IN XIST MALES
-cat(" Y Chromosome probe detection based on XIST males","\r","\n")
-xist_males <- pData(eset_bg)$xist_gender=="Male"
-gx_y <- exprs(eset_bg[fData(eset_bg)$CHR=="Y",])
-detection_matrix_y <- sweep( gx_y[,xist_males],1, neg_2sd[xist_males ],">=")
-y_probe_detection <- rowSums(detection_matrix_y) >= probe_det * sum(xist_males==TRUE)
-y_probe_detection_nuID <- rownames( gx_y[y_probe_detection, ])
-y_det_probes <- as.data.frame(y_probe_detection_nuID)
-colnames(y_det_probes) <- c("nuID")
-write.table( y_det_probes ,file=paste(out_dir,"/",project_name,".GROUP.Y.detected_probes_nuID.txt",sep=""),row.names=FALSE,quote=FALSE,col.names=FALSE)
-
-## writing final good probe list
-cat(" writing final good probe list to ",paste(out_dir,"/",project_name,".detected_probes_nuID_final.txt",sep=""),"\r","\n")
-system(paste("cat ",out_dir,"/",project_name,"****.detected_probes_nuID.txt | sort | uniq >> ",out_dir,"/",project_name,".detected_probes_nuID_final.txt", sep="") )
-good_probes <- read.table(file=paste(out_dir,"/",project_name,".detected_probes_nuID_final.txt",sep=""),head=FALSE)
-good_probes <- paste(good_probes[,1])
-n_good_probes <- length(good_probes)
-cat(" Total number of good probes = ",n_good_probes,"\n","\r" )
-good_probes_annotation <- fData(eset_bg[paste(good_probes,sep=""),])
-good_probes_annotation$raw_mean <- apply( exprs(eset_bg[good_probes,]), 1,mean)
-good_probes_annotation$raw_sd <- apply( exprs(eset_bg[good_probes,]), 1,sd)
-good_probes_annotation$raw_var <- apply( exprs(eset_bg[good_probes,]), 1,var)
-good_probes_annotation$raw_min <- apply( exprs(eset_bg[good_probes,]), 1,min)
-good_probes_annotation$raw_max <- apply( exprs(eset_bg[good_probes,]), 1,max)
-head(good_probes_annotation)
-cat(" saving good probe annotations to ",paste(out_dir,"/",project_name,".detected_probes_nuID_final.***",sep=""),"\r","\n")
-save(good_probes_annotation, file=paste(out_dir,"/",project_name,".detected_probes_nuID_final.RData",sep="") )
-write.table(good_probes_annotation, file=paste(out_dir,"/",project_name,".detected_probes_nuID_final.txt",sep=""),quote=F,sep="\t",row.names=F )
-```
-
-***********************************************************************************************************************************************************
-Check Gender based on XIST gene expression
--------------------------------------------------------
-```{r checkGender, eval=TRUE}
-cat(" Checking Gender based on XIST gene expression","\r","\n")
-## get neg control data from eset_bg
-negativeControl <- getControlData(eset_bg)
-negativeControl <- subset(negativeControl, negativeControl$controlType=="NEGATIVE")
-negativeControl <- negativeControl[,c(3:dim(negativeControl)[2])]
-## get neg control info mean,sd,max etc
-neg_max <- apply(negativeControl,2,max)
-neg_sd <- apply(negativeControl,2,sd)
-neg_mean <- apply(negativeControl,2,mean)
-neg_2sd <- neg_mean + 2*neg_sd
-## get XIST gene postion
-xist_raw <- fData(eset_raw)$ILMN_GENE=="XIST";
-xist_bkcor <- fData(eset_bg)$ILMN_GENE=="XIST";
-## get XIST gene expression signal
-xist_gx_raw  <- exprs(eset_raw[xist_raw, ]  )
-xist_gx_raw <- as.data.frame( t(xist_gx_raw));
-xist_gx_bkcor <- exprs(eset_bg[xist_bkcor , ]  )
-xist_gx_bkcor <- as.data.frame( t(xist_gx_bkcor));
-## cobine raw and bkCro gx data
-xist_gx <- cbind(xist_gx_raw,xist_gx_bkcor)
-colnames(xist_gx) <- c("raw_XIST","bkcor_XIST")
-xist_gx$neg_2sd <- neg_2sd
-xist_gx$neg_max <- neg_max
-xist_gx$neg_mean <- neg_mean
-xist_gx$neg_sd <- neg_sd
-## gender based on XIST expression 1=female , 0 = male
-xist_gx$XIST_Gender_max <- ifelse(xist_gx$bkcor_XIST > xist_gx$neg_max,1,0)
-xist_gx$XIST_Gender_2sd <- ifelse(xist_gx$bkcor_XIST > xist_gx$neg_2sd,1,0)  # THIS WORKS!! IF GENE IS > 2SD_NEG_BEAD THEN ITS EXPRESSED/DETECTED!
-xist_gx$XIST_z <-  ( xist_gx$bkcor_XIST - xist_gx$neg_mean ) / xist_gx$neg_sd
-xist_gx$Sample.ID <- rownames(xist_gx)
-# illumina detection p value for xist
-xist_gx$xist_illumina_detection_p <- as.numeric(detection(eset_bg[fData(eset_bg)$ILMN_GENE=="XIST",]))
-xist_gx$xist_illumina_detection_p <- ifelse( xist_gx$xist_illumina_detection_p  == 0.00000, 0.00001,xist_gx$xist_illumina_detection_p )
-# gender based on bg cor expression > 2SD negatibe beads
-xist_gx$xist_gender <- ifelse(xist_gx$bkcor_XIST > xist_gx$neg_2sd,"Female","Male")
-# gender provided in database
-xist_gx$clinical_gender <- pData(eset_bg)$SEX
-# gender based on illumina detecetion p value
-xist_gx$xist_illumina_detection_p_gender <- ifelse(xist_gx$xist_illumina_detection_p <= 0.01,"Female","Male") ## 0.05 makes them all female!
-# flag gender missmatch
-xist_gx$gender_missmatch <- ifelse( xist_gx$xist_gender == xist_gx$clinical_gender, "PASS","GENDER_MISSMATCH" )
-xist_gx$gender_missmatch_illumina_detection_p <- ifelse( xist_gx$xist_illumina_detection_p_gender == xist_gx$clinical_gender, "PASS","GENDER_MISSMATCH" )
-# head
-head(xist_gx)
-# table SEX
-table(xist_gx$clinical_gender);
-table(xist_gx$xist_gender);
-table(xist_gx$xist_illumina_detection_p_gender);
-# tables SEX compare
-table(xist_gx$xist_gender, xist_gx$clinical_gender);
-table(xist_gx$xist_illumina_detection_p_gender, xist_gx$clinical_gender);
-# Density plots with semi-transparent fill of SEX CALLS
-df <- xist_gx[,c("bkcor_XIST", "clinical_gender", "xist_gender", "xist_illumina_detection_p_gender")]
-head(df)
-# Find the mean of each group
-# library(plyr)
-cdf_clinical_gender <- ddply(df, "clinical_gender", summarise, mean=mean(log2(bkcor_XIST)))
-cdf_xist_gender <- ddply(df, "xist_gender", summarise, mean=mean(log2(bkcor_XIST)))
-cdf_xist_illumina_detection_p_gender <- ddply(df, "xist_illumina_detection_p_gender", summarise, mean=mean(log2(bkcor_XIST)))
-cdf_clinical_gender
-cdf_xist_gender 
-cdf_xist_illumina_detection_p_gender
-# ggplots
-ggplot(df, aes(x=log2(bkcor_XIST), fill=clinical_gender )) + geom_histogram(binwidth=.5, alpha=.5, position="identity")
-ggplot(df, aes(x=log2(bkcor_XIST), fill=xist_gender )) + geom_histogram(binwidth=.5, alpha=.5, position="identity")
-ggplot(df, aes(x=log2(bkcor_XIST), fill=xist_illumina_detection_p_gender )) + geom_histogram(binwidth=.5, alpha=.5, position="identity")
-# Box plots With flipped axes
-ggplot(df, aes( y=log2(bkcor_XIST), x=clinical_gender, fill=clinical_gender)) + geom_boxplot() +  guides(fill=FALSE) + coord_flip()
-ggplot(df, aes( y=log2(bkcor_XIST), x=xist_gender, fill=xist_gender)) + geom_boxplot() +  guides(fill=FALSE) + coord_flip()
-ggplot(df, aes( y=log2(bkcor_XIST), x=xist_illumina_detection_p_gender, fill=xist_illumina_detection_p_gender)) + geom_boxplot() +  guides(fill=FALSE) + coord_flip()
-# save plots to pdf
-pdf(file=paste(out_dir,"/",project_name,".eset_bg.XIST.Gender_plot.pdf",sep=""),height=8,width=11)
-# some plots 
-boxplot( log2(bkcor_XIST) ~ clinical_gender, data=xist_gx, main="bg XIST.gx ~ clinical_gender")
-boxplot( log2(bkcor_XIST) ~ xist_gender, data=xist_gx, main="bg XIST.gx ~ xist_gender")
-boxplot( log2(bkcor_XIST) ~ xist_illumina_detection_p_gender, data=xist_gx, main="bg XIST.gx ~ xist_illumina_detection_p_gende")
-plot(log2(xist_gx$bkcor_XIST), type="p", col=2+xist_gx$XIST_Gender_2sd, pch=19 , cex=0.6);
-points(log2(xist_gx$neg_2sd),col="blue", type="l")
-plot(xist_gx$bkcor_XIST, type="p", col=2+xist_gx$XIST_Gender_2sd, pch=19 , cex=0.6);
-points(xist_gx$neg_2sd,col="blue", type="l")
-dev.off()
-
-# save xist_gx data
-save(xist_gx, file=paste(out_dir,"/",project_name,".eset_bg.XIST.Gender.RData",sep=""))
-write.table(xist_gx, file=paste(out_dir,"/",project_name,".eset_bg.XIST.Gender.txt",sep=""),sep="\t",row.names=F)
-## check sex and add to pData
-
-pheno_update <- merge(pData(eset_bg), xist_gx, by.x="sampleID", by.y="Sample.ID",all.x=TRUE,sort=FALSE)
-rownames(pheno_update) <-  pheno_update$sampleID
-pData(eset_bg) <- pheno_update
-save(eset_bg, file=paste(out_dir,"/",project_name,".eset_bg.RData",sep=""))
-# n_gender_fails
-n_gender_fails <- sum( pData(eset_bg)$gender_missmatch=="GENDER_MISSMATCH" )
-if ( n_gender_fails > 0 ) {
-    cat(" WARNING: Youn have GENDER_MISSMATCH samples!!!!!!! N=[",n_gender_fails,"]","\r","\n")
-} else {
-  cat(" Congratulations! \n All your Males are Male and Females are Female. \n You have NO GENDER_MISSMATCH samples!!!", "\r","\n")
-}
-## write file of sex fails
-gender_missmatch_table <- subset(pData(eset_bg),pData(eset_bg)$gender_missmatch=="GENDER_MISSMATCH")
-write.table(gender_missmatch_table, file=paste(out_dir,"/",project_name,".eset_bg.XIST.gender_missmatch_table.txt",sep=""),sep="\t",row.names=F)
-## SAVE BACKGROUND CORRECTED DATA sex checked 
-pData(eset_bg)$GROUPS <- toupper(pData(eset_bg)$GROUPS) ## added as an extra check for those pesky "case" issues!
-pData(eset_bg)$PHENOTYPE <- toupper(pData(eset_bg)$PHENOTYPE)
-save(eset_bg, file=paste(out_dir,"/",project_name,".eset_bg.RData",sep="")  , compress=T)
-cat(" Writing eset_bg [beadNum, detection, exprs, se.exprs] data to file ", paste(out_dir,"/",project_name,".eset_bg.[beadNum, detection, exprs, se.exprs].txt",sep=""), "\r","\n")
-write_expression_files(eset=eset_bg,outfile= paste(out_dir,"/",project_name,".eset_bg",sep="") )
-```
-
-***********************************************************************************************************************************************************
-
-Transform and Normalise
--------------------------------------------------------
-See **Comparison of normalization methods for Illumina BeadChip HumanHT-12 v3**
-BMC Genomics. 2010; 11: 349. Ramona Schmid et al
-http://www.pubmedcentral.nih.gov/articlerender.fcgi?artid=3091625&tool=pmcentrez&rendertype=abstract
-Figure 10 Pearson correlation of log2 ratios for different normalization methods and qRT-PCR. 
-This study selects bg_rma_log_rsn as the best.
-Here we have used a better method for background correction, followed by log2 transformation and robust-splince normalisation (rsn).
-The robust spline normalization (RSN) algorithm combines the features of quantile and loess normalization.
-
-```{r lumiExpresso, eval=TRUE}
-# See Comparison of normalization methods for Illumina BeadChip HumanHT-12 v3.
-# BMC Genomics. 2010; 11: 349.
-# Ramona Schmid et al
-# Figure 10 Pearson correlation of log2 ratios for different normalization methods and qRT-PCR. 
-# This study selects bg_rma_log_rsn as the best
-# http://www.pubmedcentral.nih.gov/articlerender.fcgi?artid=3091625&tool=pmcentrez&rendertype=abstract
-
-# log2 > rsn
-eset_bg_log2_rsn_0 <- lumiExpresso(eset_bg, bg.correct = FALSE,
-                                      variance.stabilize=TRUE, varianceStabilize.param=list(method='log2'), 
-                                      normalize.param=list(method='rsn'), verbose=FALSE);
-# save log2 > rsn
-save(eset_bg_log2_rsn_0, file=paste(out_dir,"/",project_name,".eset_bg_log2_rsn_0.RData",sep="")  , compress=T)
-# QC Plots of Transformed and Normalised data 
-gx_qc_plots_lumi(eset=eset_bg_log2_rsn_0, outfile=paste(out_dir,"/",project_name,".eset_bg_log2_rsn_0",sep="") )
-# write_expression_files
-write_expression_files(eset=eset_bg_log2_rsn_0,outfile= paste(out_dir,"/",project_name,".eset_bg_log2_rsn_0",sep="") )
-```
-
-SampleNetwork : Id outlier samples 
--------------------------------------------------------
-Adapted from : Network methods for describing sample relationships in genomic datasets: application to Huntington's disease. Michael C Oldham et al.
-BMC Syst Biol. 2012; 6: 63.
-http://www.ncbi.nlm.nih.gov/pmc/articles/PMC3441531/?tool=pmcentrez&report=abstract
-```{r basic_sampleNetworkIterate, eval=TRUE}
-# Id outlier samples
-# Adapted from : Network methods for describing sample relationships in genomic datasets: application to Huntington's disease. Michael C Oldham et al.
-# BMC Syst Biol. 2012; 6: 63.
-# http://www.ncbi.nlm.nih.gov/pmc/articles/PMC3441531/?tool=pmcentrez&report=abstract
-# Oginal Code : 
-
-# basic_sampleNetworkIterate
-ISAoutliers <- basic_sampleNetworkIterate(eset=eset_bg_log2_rsn_0,
-                                          col_by_chip=0, 
-                                          groups="byGroup" ,
-                                          outfile=paste(out_dir,"/",project_name,".eset_bg_log2_rsn_0.",sep=""), 
-                                          IACthresh=0.95, 
-                                          sd_thrs=2 );
-
-# Outliers
-outlier_samples <- ISAoutliers$iac_outlier_samples
-cat(" number of outlier samples =", length(outlier_samples),"/",dim(eset_bg)["Samples"],"=",length(outlier_samples)/dim(eset_bg)["Samples"],"\r","\n")
-save(outlier_samples, file=paste(out_dir,"/",project_name,".eset_bg_log2_rsn_0_outlier_samples.RData",sep="") )
-```
-
-SampleNetwork : Remove outlier samples 
--------------------------------------------------------
-```{r removeISAoutlers, eval=TRUE}
-# remove outlier_samples
-eset_bg_log2_rsn <- removeSamples_eset_lumi(eset=eset_bg_log2_rsn_0,sampleRemove=outlier_samples)
-eset_bg_log2_rsn
-save(eset_bg_log2_rsn, file=paste(out_dir,"/",project_name,".eset_bg_log2_rsn.RData",sep="")  , compress=T)
-```
-
-QC Plots of Transformed and Normalised data after outlier removal
-------------------------------------------------------------------
-```{r qcPlots_eset_bg_log2_rsn, eval=TRUE}
+```{r gx_qc_plots_lumi_eset_bg_log2_rsn_post_sampleNetwork, eval=TRUE}
 # QC Plots of Transformed and Normalised data 
 gx_qc_plots_lumi(eset=eset_bg_log2_rsn, outfile=paste(out_dir,"/",project_name,".eset_bg_log2_rsn",sep="") )
+```
+
+```{r write_expression_files_eset_bg_log2_rsn_post_sampleNetwork, eval=TRUE}
 # write_expression_files
 write_expression_files(eset=eset_bg_log2_rsn,outfile= paste(out_dir,"/",project_name,".eset_bg_log2_rsn",sep="") )
 ```
 
-***********************************************************************************************************************************************************
+
+****
 
 PCA Batch Regressions
 -------------------------------------------------------
-making this a requirement ie if [tech_pheno_file] then do this
-test for assoc of PHENO with PC1 and batches
+making this a requirement ie if [tech_pheno_file] exits then test for assoc of with PC1 and batches etc
 
 ## 1. Set up data for batch regressions
 ```{r start_PCA_Batch_Regressions, eval=FALSE}
-eset_lumiN <- eset_bg_log2_rsn # a little fix
+# a little fix/renaming
+eset_lumiN <- eset_bg_log2_rsn 
 cat(" Starting batch versus PC1 and PHENOTYPE Rregressions [PC1 ~ batch_var]","\r")
-cat(" Getting Gene expression matrix ","\n","\r")
+cat(" Getting Gene expression matrix ","\r")
 gx <- exprs(eset_lumiN)
 gx <- t(gx)
 cat(" Reading in technical information on eg [Sample.ID, RIN, RNA_YIELD, BATCH, CHIP, DATE_CHIP_RUN, DATE_RNA_EXTRACTED] ",tech_pheno_file ,"\r")
@@ -768,8 +927,9 @@ tech_pheno$Sentrix.Barcode <- as.factor(tech_pheno$Sentrix.Barcode)
 pdata <- pData(eset_lumiN)
 pdata <- as.data.frame(pdata[,c("sampleID","Index")])
 colnames(pdata) <- c("sampleID","Index")
-tech_pheno <- merge( pdata, tech_pheno, by.x="sampleID", by.y="Sample.ID", sort=FALSE, all.x=TRUE)
-tech_batch <- tech_pheno[,3:dim(tech_pheno)[2]]
+tech_batch <- merge( pdata, tech_pheno, by.x="sampleID", by.y="Sample.ID", sort=FALSE, all.x=TRUE)
+tech_batch <- tech_batch[order(tech_batch$Index),]
+tech_batch <- tech_batch[,3:dim(tech_batch)[2]]
 head(tech_batch)
 # get names of var
 cat(" get names of var ","\r")
@@ -783,12 +943,12 @@ pca_gx <- pca_gx[,"PC1"]
 # PHENOTYPES FOR REGRESSIONS
 cat(" setting up phenotypes PC1,PHENOTYPE & GROUPS for regressions ","\r")
 PC1 <- as.numeric(pca_gx)
-PHENOTYPE <- as.numeric(as.factor(pData(eset_lumiN)$PHENOTYPE))
-GROUPS <-    as.numeric(as.factor(pData(eset_lumiN)$GROUPS))
+PHENOTYPE <- as.numeric(as.factor(toupper(pData(eset_lumiN)$PHENOTYPE))) # toupper() called because of pesky 'case' issues
+GROUPS <-    as.numeric(as.factor(toupper(pData(eset_lumiN)$GROUPS))) # toupper() called because of pesky 'case' issues
 #
-df <- cbind(tech_batch,PC1,PHENOTYPE,GROUPS)
-df_z <- apply(df,2,as.factor)
-df_z <- apply(df_z,2,as.numeric)
+#df <- cbind(tech_batch,PC1,PHENOTYPE,GROUPS)
+#df_z <- apply(df,2,as.factor)
+#df_z <- apply(df_z,2,as.numeric)
 ```
 
 ## 2. multivariate model
@@ -796,7 +956,7 @@ df_z <- apply(df_z,2,as.numeric)
 # Test for association of batch vars with PC1
 # multivariate full model
 multivariate_model_terms <- paste(batch_var_names ,collapse="+")
-
+# PC1 is run last 
 for(pheno in c("PHENOTYPE","GROUPS","PC1") ) {
   # make model for lm
   multivariate_model <- paste(pheno,"~",multivariate_model_terms,sep="") ## prot ~ c1+c2+c3...
@@ -804,40 +964,49 @@ for(pheno in c("PHENOTYPE","GROUPS","PC1") ) {
   # multivariate lm
   cat(" running full multivariate models ",pheno," ~ multivariate_model ", "\r","\n")
   lm_batch <- lm(multivariate_model, data=tech_batch)
+  
   # RSQUARED summary lm
   lm_r2 <- round( summary(lm_batch)$adj.r.squared, 3)
+  
   # summary lm
   summary_lm_batch <- summary(lm_batch)$coef
   summary_lm_batch <- as.data.frame(summary_lm_batch)
   summary_lm_batch$terms <- rownames(summary_lm_batch)
   summary_lm_batch$significant <- ifelse(summary_lm_batch$"Pr(>|t|)"<=0.05,1,0)
   summary_lm_batch$model_rsq <- lm_r2
+  
   # save summary lm
   write.table(summary_lm_batch , file=paste(out_dir,"/",project_name,".eset_bg_log2_rsn.",pheno,".multivariate_model_batch_variables.csv",sep=""),row.names=FALSE,quote=FALSE, sep=",")
+  
   # multivariate ANOVA
   anova_lm_batch <- anova(lm_batch)
   anova_lm_data <- as.data.frame(anova_lm_batch)
   anova_lm_data$terms <- rownames(anova_lm_data)
   anova_lm_data <- subset(anova_lm_data, anova_lm_data$terms!="Residuals")
+  
   ## plot ANOVA P
-  par(mar=c(10,5,4,2))
-  barplot(-log10(anova_lm_data $"Pr(>F)"), srt=45,las=3, names=c(anova_lm_data$terms) , ylab="ANOVA -log10(P)", main=paste("multivariate_model. R2=",lm_r2,sep=""),cex.names=0.8,cex.main=0.8,cex.lab=1)
+  par(mar=c(15,5,4,2))
+  barplot(-log10(anova_lm_data $"Pr(>F)"), srt=45,las=3, names=c(anova_lm_data$terms) , ylab="ANOVA -log10(P)", 
+          main=paste(pheno,"~multivariate_model. R2=",lm_r2,sep=""),cex.names=0.8,cex.main=0.8,cex.lab=1)
   abline(h=-log10(0.05),col="blue")
   abline(h=-log10(0.05/dim(anova_lm_data)[1]),col="red")
+  
   ## plot to pdf
   pdf(file=paste(out_dir,"/",project_name,".eset_bg_log2_rsn.",pheno,".ANOVA_multivariate_model_batch_variables.pdf",sep=""), width=8,height=6 )
-  par(mar=c(10,5,4,2))
-  barplot(-log10(anova_lm_data $"Pr(>F)"), srt=45,las=3, names=c(anova_lm_data$terms) , ylab="ANOVA -log10(P)", main=paste(pheno,"~ multivariate_model. R2=",lm_r2,sep=""),cex.names=0.8,cex.main=0.8,cex.lab=1)
+  par(mar=c(15,5,4,2))
+  barplot(-log10(anova_lm_data $"Pr(>F)"), srt=45,las=3, names=c(anova_lm_data$terms) , ylab="ANOVA -log10(P)", 
+          main=paste(pheno,"~ multivariate_model. R2=",lm_r2,sep=""),cex.names=0.8,cex.main=0.8,cex.lab=1)
   abline(h=-log10(0.05),col="blue")
   abline(h=-log10(0.05/dim(anova_lm_data)[1]),col="red")
   dev.off()
+  
   ## save ANOVA
   write.table(anova_lm_data , file=paste(out_dir,"/",project_name,".eset_bg_log2_rsn.",pheno,".ANOVA_multivariate_model_batch_variables.csv",sep=""),row.names=FALSE,quote=FALSE, sep=",")
   
 # are there any sig ANOVA terms
 min_anova_p <- min(anova_lm_data$"Pr(>F)")
   
-# if so then do this:-
+# if sig ANOVA terms then do this:-
 if(min_anova_p <= 0.05) {
   sig_anova_lm_data <- subset(anova_lm_data, anova_lm_data$"Pr(>F)"<=0.05)
   most_sig_term <- sig_anova_lm_data$terms[sig_anova_lm_data$"Pr(>F)"==min_anova_p]
@@ -864,18 +1033,21 @@ if(min_anova_p <= 0.05) {
   best_model
   # RSQ anova step 
   anova_step_r2 <- round( summary(step_lm_batch)$adj.r.squared, 3)
-##
-  par(mar=c(10,5,4,2))
-  barplot(-log10(anova_data$"Pr(>F)"), las=3, names=c(anova_data$terms) , ylab="ANOVA -log10(P)", main=paste(step_lm_batch$call[2]," R2=",anova_step_r2 ,sep=""),cex.names=0.8,cex.main=0.8,cex.lab=1)
+  
+## plot
+  par(mar=c(15,5,4,2))
+  barplot(-log10(anova_data$"Pr(>F)"), las=3, names=c(anova_data$terms) , ylab="ANOVA -log10(P)", main=paste(step_lm_batch$call[2]," R2=",anova_step_r2 ,sep=""),cex.names=0.8,cex.main=0.6,cex.lab=1)
   abline(h=-log10(0.05),col="blue")
   abline(h=-log10(0.05/dim(anova_data)[1]),col="red")
+  
   ## plot ANOVA step P #
   pdf(file=paste(out_dir,"/",project_name,".eset_bg_log2_rsn.",pheno,".stepANOVA_multivariate_model_batch_variables.pdf",sep=""), width=8,height=6 )
-  par(mar=c(10,5,4,2))
-  barplot(-log10(anova_data$"Pr(>F)"), las=3, names=c(anova_data$terms) , ylab="ANOVA -log10(P)", main=paste(step_lm_batch$call[2]," R2=",anova_step_r2 ,sep=""),cex.names=0.8,cex.main=0.8,cex.lab=1)
+  par(mar=c(15,5,4,2))
+  barplot(-log10(anova_data$"Pr(>F)"), las=3, names=c(anova_data$terms) , ylab="ANOVA -log10(P)", main=paste(step_lm_batch$call[2]," R2=",anova_step_r2 ,sep=""),cex.names=0.8,cex.main=0.6,cex.lab=1)
   abline(h=-log10(0.05),col="blue")
   abline(h=-log10(0.05/dim(anova_data)[1]),col="red")
   dev.off()
+
   ## save stepANOVA
   write.table(anova_data , file=paste(out_dir,"/",project_name,".eset_bg_log2_rsn.",pheno,".stepANOVA_multivariate_model_batch_variables.csv",sep=""),row.names=FALSE,quote=FALSE, sep=",")
   cat(" BEST MODEL BASED ON stepAIC [",pheno,"] ~ [",paste(best_model)[3],"] ","\r","\n")
@@ -889,7 +1061,10 @@ if(min_anova_p <= 0.05) {
 
 Batch Correction using linear models
 -------------------------------------------------------
-```{r LM_batch_correction, eval=FALSE}
+```{r linear_model_batch_correction, eval=FALSE}
+
+if(pheno!="PC1") stop(" WARNING!: model terms are not from the PC1 ~ batch regressions" )
+
 # get gene expressuion
 gx <- exprs(eset_bg_log2_rsn)
 n_probes <- dim(gx)[1]
@@ -927,8 +1102,10 @@ for(probe in probe_names){
     adjusted_probe_level <- residual_probe + mean_probe_level
     adj_gx[,probe] <- adjusted_probe_level
     
+    sink(file=paste(out_dir,"/",project_name,".lm_probe_progress_rsq.txt",sep=""))
     cat(" doing [",probe ,"] ~ [",best_model,"].RSQ=",rsq,". Progress:",round(pn/n_probes,3),"\r","\n")
-    
+    sink()
+      
     pn <- pn + 1
 }
 
@@ -936,23 +1113,230 @@ for(probe in probe_names){
 colnames(adj_gx) <- colnames(gx)
 adj_gx <- t(adj_gx)
 adj_gx[1:10,1:10]
-
-# make new eset and replace exprs() matrix with new batch adjusted data
-#eset_bg_log2_rsn_adj <- eset_bg_log2_rsn
-#exprs(eset_bg_log2_rsn_adj) <- adj_gx
-
-# save eset_bg_log2_rsn_adj
-#save(eset_bg_log2_rsn_adj, file=paste(out_dir,"/",project_name,".eset_bg_log2_rsn_adj.RData",sep="")  , compress=T)
-
-# QC Plots of eset_bg_log2_rsn_adj
-#gx_qc_plots_lumi(eset=eset_bg_log2_rsn_adj, outfile=paste(out_dir,"/",project_name,".eset_bg_log2_rsn_adj",sep="") )
-
-# write_expression_files eset_bg_log2_rsn_adj
-#write_expression_files(eset=eset_bg_log2_rsn_adj,outfile= paste(out_dir,"/",project_name,".eset_bg_log2_rsn_adj",sep="") )
-       
 ```
 
+## Make Batch Adjusted Data Set
+
+```{r make_batch_adjusted_data, eval=TRUE}
+# make new eset and replace exprs() matrix with new batch adjusted data
+eset_bg_log2_rsn_adj <- eset_bg_log2_rsn
+exprs(eset_bg_log2_rsn_adj) <- adj_gx
+
+# save eset_bg_log2_rsn_adj
+save(eset_bg_log2_rsn_adj, file=paste(out_dir,"/",project_name,".eset_bg_log2_rsn_adj.RData",sep="")  , compress=T)
+
+# QC Plots of eset_bg_log2_rsn_adj
+gx_qc_plots_lumi(eset=eset_bg_log2_rsn_adj, outfile=paste(out_dir,"/",project_name,".eset_bg_log2_rsn_adj",sep="") )
+
+# write_expression_files eset_bg_log2_rsn_adj
+write_expression_files(eset=eset_bg_log2_rsn_adj,outfile= paste(out_dir,"/",project_name,".eset_bg_log2_rsn_adj",sep="") )
+
+```
+
+****
+
+Create Final QC'd Expression data set: Good Probes & Good Samples
+------------------------------------------------------------------
+Subset data to good_probes. At this stage we have already removed sample outliers. 
+```{r create_final_eset, eval=FALSE}
+
+# subset to good probes 
+eset_final <- eset_bg_log2_rsn_adj[good_probes,]
+
+eset_final
+
+# save eset_final
+save(eset_final, file=paste(out_dir,"/",project_name,".eset_final.RData",sep="")  , compress=T)
+
+# QC Plots of eset_final
+gx_qc_plots_lumi(eset=eset_final, outfile=paste(out_dir,"/",project_name,".eset_final",sep="") )
+
+# write_expression_files eset_final
+write_expression_files(eset=eset_final,outfile= paste(out_dir,"/",project_name,".eset_final",sep="") )
+
+
+# Basic Plots
+    chip_col <- labels2colors( as.character(pData(eset_bg_log2_rsn)$Sentrix.Barcode))
+    plot(eset_bg_log2_rsn, what='boxplot', col=chip_col )
+    plot(eset_bg_log2_rsn, what='density')
+    plot(eset_bg_log2_rsn, what='cv')
+    plot(eset_bg_log2_rsn, what='outlier')
+
+# flashClust
+  datExprs <- exprs(eset_bg_log2_rsn)
+  dist_exprs <- dist( t(datExprs), method="e" )
+  sampleTree <- flashClust( dist_exprs, method = "average");
+  plot(sampleTree)
+
+# SampleNetwork on all samples as a first pass
+samle_names <- sampleNames(eset_bg_log2_rsn)
+IAC=cor(datExprs, method="p",use="p")
+diag(IAC)=0
+A.IAC=((1+IAC)/2)^2  ## ADJACENCY MATRIX
+FNC=fundamentalNetworkConcepts(A.IAC) ## WGCNA
+K2=FNC$ScaledConnectivity
+Z.K=(K2-mean(K2))/sd(K2)
+Z.C=(FNC$ClusterCoef-mean(FNC$ClusterCoef))/sd(FNC$ClusterCoef)
+Z.MAR=(FNC$MAR-mean(FNC$MAR))/sd(FNC$MAR)
+rho <- signif(cor.test(Z.K,Z.C,method="s")$estimate,2)
+rho_pvalue <- signif(cor.test(Z.K,Z.C,method="s")$p.value,2)
+colorvec <- colorvec <- labels2colors(as.character(pData(eset_raw)$Sentrix.Barcode))
+## OUTLIERS
+Z.K_outliers <- Z.K < -iac_sd_thrs
+Z.K_outliers <- names(Z.K_outliers[Z.K_outliers==TRUE])
+n_outliers <- length(Z.K_outliers)
+mean_IAC <- mean(IAC[upper.tri(IAC)])
+min_Z.K <- min(Z.K)
+cat(" Number of Z.K outliers [", n_outliers,"]","\r","\n")
+cat(" mean_IAC [", mean_IAC,"]","\r","\n")
+#
+local( 
+  {colLab <<- function(n,treeorder) { 
+    if(is.leaf(n)) {
+      a <- attributes(n)
+      i <<- i+1
+      attr(n, "nodePar") <-   c(a$nodePar, list(lab.col = colorvec[treeorder][i], lab.font = i%%3))
+      }
+    n
+    }
+   i <- 0
+   })
+## Cluster for pics
+meanIAC <- mean(IAC[upper.tri(IAC)],na.rm=T)
+cluster1 <- hclust(as.dist(1-A.IAC),method="average")
+cluster1order <- cluster1$order
+cluster2 <- as.dendrogram(cluster1,hang=0.1)
+cluster3 <- dendrapply(cluster2,colLab,cluster1order)
+## PLOTS
+## cluster IAC
+par(mfrow=c(2,2))
+par(mar=c(5,6,4,2))
+plot(cluster3,nodePar=list(lab.cex=1,pch=NA),main=paste("Mean ISA = ",signif(mean(A.IAC[upper.tri(A.IAC)]),3),sep=""),xlab="",ylab="1 - ISA",sub="",cex.main=1.8,cex.lab=1.4)
+mtext(paste("distance: 1 - ISA ",sep=""),cex=0.8,line=0.2)
+## Connectivity
+par(mar=c(5,5,4,2))
+plot(Z.K,main="Connectivity", ylab="Z.K",xaxt="n",xlab="Sample",type="n",cex.main=1.8,cex.lab=1.4)
+text(Z.K,labels=samle_names,cex=0.8,col=colorvec)
+abline(h=-2)
+abline(h=-3)
+## ClusterCoef
+par(mar=c(5,5,4,2))
+plot(Z.C,main="ClusterCoef", ylab="Z.C",xaxt="n",xlab="Sample",cex.main=1.8,cex.lab=1.4,type="n")
+text(Z.C,labels=samle_names,cex=0.8,col=colorvec)
+abline(h=-2)
+abline(h=-3)
+## Connectivity vs ClusterCoef
+par(mar=c(5,5,4,2))
+plot(Z.K,Z.C,main="Connectivity vs ClusterCoef",xlab="Z.K",ylab="Z.C",col=colorvec,cex.main=1.8,cex.lab=1.4)
+abline(lm(Z.C~Z.K),col="black",lwd=2)
+mtext(paste("rho = ",signif(cor.test(Z.K,Z.C,method="s")$estimate,2)," p = ",signif(cor.test(Z.K,Z.C,method="s")$p.value,2),sep=""),cex=0.8,line=0.2)
+abline(v=-2,lty=2,col="grey")
+abline(h=-2,lty=2,col="grey")
+#
+dev.off()
+
+
+```
+
+
+****
+
+Create and Write Project Summary
+------------------------------------------------------------------
+Just making a dataframe of all project settings, input, output files, saved \*.RData files and numbers of samples and probes after various stages ot processing.
+
+```{r project_summary, eval=TRUE}
+project_summary <- data.frame(
+  project_dir=project_dir,
+  project_name=project_name,
+  out_dir=out_dir,
+  gs_report=gs_report,
+  gs_probe=gs_probe,
+  gs_sample=gs_sample,
+  gs_control=gs_control,
+  anno_table=anno_table,
+  pheno_file=pheno_file,
+  tech_pheno_file=tech_pheno_file,
+  probe_det=probe_det,
+  sample_det=sample_det,
+  sex_check=sex_check,
+  iac_check=iac_check,
+  iac_sd_thrs=iac_sd_thrs,
+  mbcb_method=mbcb_method,
+  transform_method=transform_method,
+  norm_method=norm_method,
+  analyst_email=analyst_email,
+  analyst_name=analyst_name,
+  lab_contact_email=lab_contact_email,
+  lab_contact_name=lab_contact_name,
+  n_samples=dim(eset_raw)[2],
+  n_samples_final=dim(eset_bg_log2_rsn)[2],
+  n_samples_dupe=dim(dupe_samples)[1],
+  n_xist_gender_fails=n_gender_fails,
+  n_outliers=length(outlier_samples),
+  n_probes=dim(eset_raw)[1],
+  n_probes_detected=dim(eset_final)[1],
+  raw_RData=paste(out_dir,"/",project_name,".eset_raw.RData",sep=""),
+  bg_corrected_RData=paste(out_dir,"/",project_name,".eset_bg.RData",sep=""),
+  bg_log2_rsn_0_RData=paste(out_dir,"/",project_name,".eset_bg_log2_rsn_0.RData",sep=""),
+  bg_log2_rsn_RData=paste(out_dir,"/",project_name,".eset_bg_log2_rsn.RData",sep=""),
+  bg_log2_rsn_adjusted_RData=paste(out_dir,"/",project_name,".eset_bg_log2_rsn_adj.RData",sep=""),
+  final_RData=paste(out_dir,"/",project_name,".eset_final.RData",sep="")
+  )
+
+# looksee
+t(project_summary)
+# some data wrangling
+project_summary <- as.data.frame(t(project_summary))
+colnames(project_summary) <- "Project_Setting"
+project_summary$Project_Variable <- rownames(project_summary)
+project_summary <- project_settings[,c("Project_Variable","Project_Setting")]
+
+# write table to out_dir
+write.table(project_summary, file=paste(out_dir,"/",project_name,".project_summary.csv",sep=""),row.names=FALSE,quote=FALSE,sep=",")
+```
+
+## Clean up
+```{r clean_up, eval=TRUE}
+# clean up SampleNetwork output
+system( paste(" mkdir ",out_dir,"/SampleNetwork_out; mv -v ",out_dir,"/*.SampleNetwork* ",out_dir,"/SampleNetwork_out/",sep="") );
+system( paste(" mv -v ",out_dir,"/*sampleNetworkIterate* ",out_dir,"/SampleNetwork_out/",sep="") );
+
+# clean up linear model output
+system( paste(" mkdir ",out_dir,"/batch_regresions; mv -v ",out_dir,"/*multivariate_model* ",out_dir,"/batch_regresions/",sep="") )
+
+# clean up plots
+system( paste(" mkdir ",out_dir,"/plots; mv -v ",out_dir,"/*.pdf ",out_dir,"/plots/",sep="") )
+
+# clean up data for final_data (END) & raw (START)
+system( paste(" mkdir ",out_dir,"/raw_data; cp -v ",out_dir,"/*eset_raw* ",out_dir,"/raw_data/",sep="") )
+system( paste(" mkdir ",out_dir,"/final_data; cp -v ",out_dir,"/*eset_final* ",out_dir,"/final_data/",sep="") )
+
+```
+
+****
+
+The End!
+------------------------------------------------------------------
+```{r make_pdf_report, eval=FALSE}
+#report_name <- paste(out_dir,"/",project_name,".report",sep="")
+#knit(paste(report_name,".Rmd",sep=""))
+#system(paste(" pandoc -s -t beamer --slide-level 1 ",report_name,".md -o ",report_name,".tex",sep=""))
+```
+
+```{r end, eval=TRUE}
+system( paste(" chmod 776 ",out_dir,"/",project_name,"***",sep="") )
+sessionInfo()
+# Print out tree of results dir
+system( paste(" tree ",out_dir,sep="" ) )
+```
+
+****
+
+GRAVE YARD OR TO THINK ABOUT
+------------------------------------------------------------------
 ## univariate_models
+NOT RUN!
 ```{r univariate_model_PCA_Batch_Regressions, eval=FALSE}
 ## univariate_models
 cat(" running full univariate models ","\r","\n")
@@ -963,7 +1347,7 @@ for(pheno in c("PC1","GROUPS","PHENOTYPE") ) {
   
   for(covar in batch_var_names) {
     pheno_name <- paste(pheno,sep="")
-		model <- as.formula( paste(pheno,"~",covar) )
+  	model <- as.formula( paste(pheno,"~",covar) )
 		univar_lm <- lm( model, data=tech_batch)
 		summary_univar_lm <- summary(univar_lm)
 		rsq <- summary_univar_lm$adj.r.squared
@@ -979,9 +1363,9 @@ for(pheno in c("PC1","GROUPS","PHENOTYPE") ) {
 		summary_univar_lm_data$covariate <- covariate
 		univar_results <- rbind(univar_results , summary_univar_lm_data )
     
-    if( !is.na(anova_univar_lm$"Pr(>F)"[1]) & anova_univar_lm$"Pr(>F)"[1]<=0.05) {
-      cat(" WARNING!: [",pheno,"] ~ [", covar,"] ARE ASSOCIATED, rsq = [",round(rsq,3),"]","\r","\n")
-      }
+#   if( !is.na(anova_univar_lm$"Pr(>F)"[1]) & anova_univar_lm$"Pr(>F)"[1]<=0.05) {
+#      cat(" WARNING!: [",pheno,"] ~ [", covar,"] ARE ASSOCIATED, rsq = [",round(rsq,3),"]","\r","\n")
+#      }
     
     }
 # save res
@@ -989,33 +1373,3 @@ write.table(univar_results, file=paste(out_dir,"/",project_name,".eset_bg_log2_r
   }
 ```
 
-
-***********************************************************************************************************************************************************
-
-Create Final QC'd Expression data set: Good Probes & Good Samples
-------------------------------------------------------------------
-```{r create_final_eset, eval=FALSE}
-
-```
-
-***********************************************************************************************************************************************************
-
-Project Summary
-------------------------------------------------------------------
-```{r project_summary, eval=FALSE}
-
-```
-
-***********************************************************************************************************************************************************
-
-
-The End!
-------------------------------------------------------------------
-```{r end, eval=FALSE}
-#### RMDFILE=example-r-markdown  
-#### Rscript -e "require(knitr); require(markdown); knit('$RMDFILE.rmd', '$RMDFILE.md'); markdownToHTML('$RMDFILE.md', '$RMDFILE.html', options=c('use_xhml'))"
-#### pandoc -s example-r-markdown.html -o example-r-markdown.pdf
-
-system( paste(" chmod 776 ",out_dir,"/",project_name,"***",sep="") )
-sessionInfo()
-```

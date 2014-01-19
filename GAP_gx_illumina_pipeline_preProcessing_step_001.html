@@ -1,0 +1,1747 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+<title>Microarry pre-processing workflow for Illumina BeadArray data</title>
+
+<style type="text/css">
+body, td {
+   font-family: sans-serif;
+   background-color: white;
+   font-size: 12px;
+   margin: 8px;
+}
+
+tt, code, pre {
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+}
+
+h1 { 
+   font-size:2.2em; 
+}
+
+h2 { 
+   font-size:1.8em; 
+}
+
+h3 { 
+   font-size:1.4em; 
+}
+
+h4 { 
+   font-size:1.0em; 
+}
+
+h5 { 
+   font-size:0.9em; 
+}
+
+h6 { 
+   font-size:0.8em; 
+}
+
+a:visited {
+   color: rgb(50%, 0%, 50%);
+}
+
+pre {	
+   margin-top: 0;
+   max-width: 95%;
+   border: 1px solid #ccc;
+   white-space: pre-wrap;
+}
+
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code.r, code.cpp {
+   background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: none;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+   border-top-style: dotted;
+   border-top-color: #999999;
+}
+
+@media print {
+   * { 
+      background: transparent !important; 
+      color: black !important; 
+      filter:none !important; 
+      -ms-filter: none !important; 
+   }
+
+   body { 
+      font-size:12pt; 
+      max-width:100%; 
+   }
+       
+   a, a:visited { 
+      text-decoration: underline; 
+   }
+
+   hr { 
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote { 
+      padding-right: 1em; 
+      page-break-inside: avoid; 
+   }
+
+   tr, img { 
+      page-break-inside: avoid; 
+   }
+
+   img { 
+      max-width: 100% !important; 
+   }
+
+   @page :left { 
+      margin: 15mm 20mm 15mm 10mm; 
+   }
+     
+   @page :right { 
+      margin: 15mm 10mm 15mm 20mm; 
+   }
+
+   p, h2, h3 { 
+      orphans: 3; widows: 3; 
+   }
+
+   h2, h3 { 
+      page-break-after: avoid; 
+   }
+}
+
+</style>
+
+<!-- Styles for R syntax highlighter -->
+<style type="text/css">
+   pre .operator,
+   pre .paren {
+     color: rgb(104, 118, 135)
+   }
+
+   pre .literal {
+     color: rgb(88, 72, 246)
+   }
+
+   pre .number {
+     color: rgb(0, 0, 205);
+   }
+
+   pre .comment {
+     color: rgb(76, 136, 107);
+   }
+
+   pre .keyword {
+     color: rgb(0, 0, 255);
+   }
+
+   pre .identifier {
+     color: rgb(0, 0, 0);
+   }
+
+   pre .string {
+     color: rgb(3, 106, 7);
+   }
+</style>
+
+<!-- R syntax highlighter -->
+<script type="text/javascript">
+var hljs=new function(){function m(p){return p.replace(/&/gm,"&amp;").replace(/</gm,"&lt;")}function f(r,q,p){return RegExp(q,"m"+(r.cI?"i":"")+(p?"g":""))}function b(r){for(var p=0;p<r.childNodes.length;p++){var q=r.childNodes[p];if(q.nodeName=="CODE"){return q}if(!(q.nodeType==3&&q.nodeValue.match(/\s+/))){break}}}function h(t,s){var p="";for(var r=0;r<t.childNodes.length;r++){if(t.childNodes[r].nodeType==3){var q=t.childNodes[r].nodeValue;if(s){q=q.replace(/\n/g,"")}p+=q}else{if(t.childNodes[r].nodeName=="BR"){p+="\n"}else{p+=h(t.childNodes[r])}}}if(/MSIE [678]/.test(navigator.userAgent)){p=p.replace(/\r/g,"\n")}return p}function a(s){var r=s.className.split(/\s+/);r=r.concat(s.parentNode.className.split(/\s+/));for(var q=0;q<r.length;q++){var p=r[q].replace(/^language-/,"");if(e[p]){return p}}}function c(q){var p=[];(function(s,t){for(var r=0;r<s.childNodes.length;r++){if(s.childNodes[r].nodeType==3){t+=s.childNodes[r].nodeValue.length}else{if(s.childNodes[r].nodeName=="BR"){t+=1}else{if(s.childNodes[r].nodeType==1){p.push({event:"start",offset:t,node:s.childNodes[r]});t=arguments.callee(s.childNodes[r],t);p.push({event:"stop",offset:t,node:s.childNodes[r]})}}}}return t})(q,0);return p}function k(y,w,x){var q=0;var z="";var s=[];function u(){if(y.length&&w.length){if(y[0].offset!=w[0].offset){return(y[0].offset<w[0].offset)?y:w}else{return w[0].event=="start"?y:w}}else{return y.length?y:w}}function t(D){var A="<"+D.nodeName.toLowerCase();for(var B=0;B<D.attributes.length;B++){var C=D.attributes[B];A+=" "+C.nodeName.toLowerCase();if(C.value!==undefined&&C.value!==false&&C.value!==null){A+='="'+m(C.value)+'"'}}return A+">"}while(y.length||w.length){var v=u().splice(0,1)[0];z+=m(x.substr(q,v.offset-q));q=v.offset;if(v.event=="start"){z+=t(v.node);s.push(v.node)}else{if(v.event=="stop"){var p,r=s.length;do{r--;p=s[r];z+=("</"+p.nodeName.toLowerCase()+">")}while(p!=v.node);s.splice(r,1);while(r<s.length){z+=t(s[r]);r++}}}}return z+m(x.substr(q))}function j(){function q(x,y,v){if(x.compiled){return}var u;var s=[];if(x.k){x.lR=f(y,x.l||hljs.IR,true);for(var w in x.k){if(!x.k.hasOwnProperty(w)){continue}if(x.k[w] instanceof Object){u=x.k[w]}else{u=x.k;w="keyword"}for(var r in u){if(!u.hasOwnProperty(r)){continue}x.k[r]=[w,u[r]];s.push(r)}}}if(!v){if(x.bWK){x.b="\\b("+s.join("|")+")\\s"}x.bR=f(y,x.b?x.b:"\\B|\\b");if(!x.e&&!x.eW){x.e="\\B|\\b"}if(x.e){x.eR=f(y,x.e)}}if(x.i){x.iR=f(y,x.i)}if(x.r===undefined){x.r=1}if(!x.c){x.c=[]}x.compiled=true;for(var t=0;t<x.c.length;t++){if(x.c[t]=="self"){x.c[t]=x}q(x.c[t],y,false)}if(x.starts){q(x.starts,y,false)}}for(var p in e){if(!e.hasOwnProperty(p)){continue}q(e[p].dM,e[p],true)}}function d(B,C){if(!j.called){j();j.called=true}function q(r,M){for(var L=0;L<M.c.length;L++){if((M.c[L].bR.exec(r)||[null])[0]==r){return M.c[L]}}}function v(L,r){if(D[L].e&&D[L].eR.test(r)){return 1}if(D[L].eW){var M=v(L-1,r);return M?M+1:0}return 0}function w(r,L){return L.i&&L.iR.test(r)}function K(N,O){var M=[];for(var L=0;L<N.c.length;L++){M.push(N.c[L].b)}var r=D.length-1;do{if(D[r].e){M.push(D[r].e)}r--}while(D[r+1].eW);if(N.i){M.push(N.i)}return f(O,M.join("|"),true)}function p(M,L){var N=D[D.length-1];if(!N.t){N.t=K(N,E)}N.t.lastIndex=L;var r=N.t.exec(M);return r?[M.substr(L,r.index-L),r[0],false]:[M.substr(L),"",true]}function z(N,r){var L=E.cI?r[0].toLowerCase():r[0];var M=N.k[L];if(M&&M instanceof Array){return M}return false}function F(L,P){L=m(L);if(!P.k){return L}var r="";var O=0;P.lR.lastIndex=0;var M=P.lR.exec(L);while(M){r+=L.substr(O,M.index-O);var N=z(P,M);if(N){x+=N[1];r+='<span class="'+N[0]+'">'+M[0]+"</span>"}else{r+=M[0]}O=P.lR.lastIndex;M=P.lR.exec(L)}return r+L.substr(O,L.length-O)}function J(L,M){if(M.sL&&e[M.sL]){var r=d(M.sL,L);x+=r.keyword_count;return r.value}else{return F(L,M)}}function I(M,r){var L=M.cN?'<span class="'+M.cN+'">':"";if(M.rB){y+=L;M.buffer=""}else{if(M.eB){y+=m(r)+L;M.buffer=""}else{y+=L;M.buffer=r}}D.push(M);A+=M.r}function G(N,M,Q){var R=D[D.length-1];if(Q){y+=J(R.buffer+N,R);return false}var P=q(M,R);if(P){y+=J(R.buffer+N,R);I(P,M);return P.rB}var L=v(D.length-1,M);if(L){var O=R.cN?"</span>":"";if(R.rE){y+=J(R.buffer+N,R)+O}else{if(R.eE){y+=J(R.buffer+N,R)+O+m(M)}else{y+=J(R.buffer+N+M,R)+O}}while(L>1){O=D[D.length-2].cN?"</span>":"";y+=O;L--;D.length--}var r=D[D.length-1];D.length--;D[D.length-1].buffer="";if(r.starts){I(r.starts,"")}return R.rE}if(w(M,R)){throw"Illegal"}}var E=e[B];var D=[E.dM];var A=0;var x=0;var y="";try{var s,u=0;E.dM.buffer="";do{s=p(C,u);var t=G(s[0],s[1],s[2]);u+=s[0].length;if(!t){u+=s[1].length}}while(!s[2]);if(D.length>1){throw"Illegal"}return{r:A,keyword_count:x,value:y}}catch(H){if(H=="Illegal"){return{r:0,keyword_count:0,value:m(C)}}else{throw H}}}function g(t){var p={keyword_count:0,r:0,value:m(t)};var r=p;for(var q in e){if(!e.hasOwnProperty(q)){continue}var s=d(q,t);s.language=q;if(s.keyword_count+s.r>r.keyword_count+r.r){r=s}if(s.keyword_count+s.r>p.keyword_count+p.r){r=p;p=s}}if(r.language){p.second_best=r}return p}function i(r,q,p){if(q){r=r.replace(/^((<[^>]+>|\t)+)/gm,function(t,w,v,u){return w.replace(/\t/g,q)})}if(p){r=r.replace(/\n/g,"<br>")}return r}function n(t,w,r){var x=h(t,r);var v=a(t);var y,s;if(v){y=d(v,x)}else{return}var q=c(t);if(q.length){s=document.createElement("pre");s.innerHTML=y.value;y.value=k(q,c(s),x)}y.value=i(y.value,w,r);var u=t.className;if(!u.match("(\\s|^)(language-)?"+v+"(\\s|$)")){u=u?(u+" "+v):v}if(/MSIE [678]/.test(navigator.userAgent)&&t.tagName=="CODE"&&t.parentNode.tagName=="PRE"){s=t.parentNode;var p=document.createElement("div");p.innerHTML="<pre><code>"+y.value+"</code></pre>";t=p.firstChild.firstChild;p.firstChild.cN=s.cN;s.parentNode.replaceChild(p.firstChild,s)}else{t.innerHTML=y.value}t.className=u;t.result={language:v,kw:y.keyword_count,re:y.r};if(y.second_best){t.second_best={language:y.second_best.language,kw:y.second_best.keyword_count,re:y.second_best.r}}}function o(){if(o.called){return}o.called=true;var r=document.getElementsByTagName("pre");for(var p=0;p<r.length;p++){var q=b(r[p]);if(q){n(q,hljs.tabReplace)}}}function l(){if(window.addEventListener){window.addEventListener("DOMContentLoaded",o,false);window.addEventListener("load",o,false)}else{if(window.attachEvent){window.attachEvent("onload",o)}else{window.onload=o}}}var e={};this.LANGUAGES=e;this.highlight=d;this.highlightAuto=g;this.fixMarkup=i;this.highlightBlock=n;this.initHighlighting=o;this.initHighlightingOnLoad=l;this.IR="[a-zA-Z][a-zA-Z0-9_]*";this.UIR="[a-zA-Z_][a-zA-Z0-9_]*";this.NR="\\b\\d+(\\.\\d+)?";this.CNR="\\b(0[xX][a-fA-F0-9]+|(\\d+(\\.\\d*)?|\\.\\d+)([eE][-+]?\\d+)?)";this.BNR="\\b(0b[01]+)";this.RSR="!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|\\.|-|-=|/|/=|:|;|<|<<|<<=|<=|=|==|===|>|>=|>>|>>=|>>>|>>>=|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~";this.ER="(?![\\s\\S])";this.BE={b:"\\\\.",r:0};this.ASM={cN:"string",b:"'",e:"'",i:"\\n",c:[this.BE],r:0};this.QSM={cN:"string",b:'"',e:'"',i:"\\n",c:[this.BE],r:0};this.CLCM={cN:"comment",b:"//",e:"$"};this.CBLCLM={cN:"comment",b:"/\\*",e:"\\*/"};this.HCM={cN:"comment",b:"#",e:"$"};this.NM={cN:"number",b:this.NR,r:0};this.CNM={cN:"number",b:this.CNR,r:0};this.BNM={cN:"number",b:this.BNR,r:0};this.inherit=function(r,s){var p={};for(var q in r){p[q]=r[q]}if(s){for(var q in s){p[q]=s[q]}}return p}}();hljs.LANGUAGES.cpp=function(){var a={keyword:{"false":1,"int":1,"float":1,"while":1,"private":1,"char":1,"catch":1,"export":1,virtual:1,operator:2,sizeof:2,dynamic_cast:2,typedef:2,const_cast:2,"const":1,struct:1,"for":1,static_cast:2,union:1,namespace:1,unsigned:1,"long":1,"throw":1,"volatile":2,"static":1,"protected":1,bool:1,template:1,mutable:1,"if":1,"public":1,friend:2,"do":1,"return":1,"goto":1,auto:1,"void":2,"enum":1,"else":1,"break":1,"new":1,extern:1,using:1,"true":1,"class":1,asm:1,"case":1,typeid:1,"short":1,reinterpret_cast:2,"default":1,"double":1,register:1,explicit:1,signed:1,typename:1,"try":1,"this":1,"switch":1,"continue":1,wchar_t:1,inline:1,"delete":1,alignof:1,char16_t:1,char32_t:1,constexpr:1,decltype:1,noexcept:1,nullptr:1,static_assert:1,thread_local:1,restrict:1,_Bool:1,complex:1},built_in:{std:1,string:1,cin:1,cout:1,cerr:1,clog:1,stringstream:1,istringstream:1,ostringstream:1,auto_ptr:1,deque:1,list:1,queue:1,stack:1,vector:1,map:1,set:1,bitset:1,multiset:1,multimap:1,unordered_set:1,unordered_map:1,unordered_multiset:1,unordered_multimap:1,array:1,shared_ptr:1}};return{dM:{k:a,i:"</",c:[hljs.CLCM,hljs.CBLCLM,hljs.QSM,{cN:"string",b:"'\\\\?.",e:"'",i:"."},{cN:"number",b:"\\b(\\d+(\\.\\d*)?|\\.\\d+)(u|U|l|L|ul|UL|f|F)"},hljs.CNM,{cN:"preprocessor",b:"#",e:"$"},{cN:"stl_container",b:"\\b(deque|list|queue|stack|vector|map|set|bitset|multiset|multimap|unordered_map|unordered_set|unordered_multiset|unordered_multimap|array)\\s*<",e:">",k:a,r:10,c:["self"]}]}}}();hljs.LANGUAGES.r={dM:{c:[hljs.HCM,{cN:"number",b:"\\b0[xX][0-9a-fA-F]+[Li]?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+(?:[eE][+\\-]?\\d*)?L\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+\\.(?!\\d)(?:i\\b)?",e:hljs.IMMEDIATE_RE,r:1},{cN:"number",b:"\\b\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\.\\d+(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"keyword",b:"(?:tryCatch|library|setGeneric|setGroupGeneric)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\.",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\d+(?![\\w.])",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\b(?:function)",e:hljs.IMMEDIATE_RE,r:2},{cN:"keyword",b:"(?:if|in|break|next|repeat|else|for|return|switch|while|try|stop|warning|require|attach|detach|source|setMethod|setClass)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"literal",b:"(?:NA|NA_integer_|NA_real_|NA_character_|NA_complex_)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"literal",b:"(?:NULL|TRUE|FALSE|T|F|Inf|NaN)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"identifier",b:"[a-zA-Z.][a-zA-Z0-9._]*\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"<\\-(?!\\s*\\d)",e:hljs.IMMEDIATE_RE,r:2},{cN:"operator",b:"\\->|<\\-",e:hljs.IMMEDIATE_RE,r:1},{cN:"operator",b:"%%|~",e:hljs.IMMEDIATE_RE},{cN:"operator",b:">=|<=|==|!=|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||\\$|:",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"%",e:"%",i:"\\n",r:1},{cN:"identifier",b:"`",e:"`",r:0},{cN:"string",b:'"',e:'"',c:[hljs.BE],r:0},{cN:"string",b:"'",e:"'",c:[hljs.BE],r:0},{cN:"paren",b:"[[({\\])}]",e:hljs.IMMEDIATE_RE,r:0}]}};
+hljs.initHighlightingOnLoad();
+</script>
+
+
+
+
+</head>
+
+<body>
+<h1>Microarry pre-processing workflow for Illumina BeadArray data</h1>
+
+<ul>
+<li>Stephen Newhouse</li>
+<li><a href="mailto:stephen.newhouse@kcl.ac.uk">stephen.newhouse@kcl.ac.uk</a>
+Example workflow based on real data (GAP). </li>
+</ul>
+
+<h1>Project Directory and Files</h1>
+
+<p>Data files and directories used in this workflow</p>
+
+<pre><code class="r">
+# Data Directory
+&quot;/media/D/expression/GAP_Expression&quot;
+
+# Data Files Exported from GenomeStudio
+control_probe_profile_Final_Report.txt
+Group_Probe_Profile_Final_Report.txt
+probe_annotation_Final_Report.txt
+sample_table_Final_Report.txt
+
+# Input for lumiR
+Sample_and_Control_Probe_Profile_FinalReport.txt 
+
+# User Provided Data Files
+# Use NA to record missing values in batch_info.txt
+# Use Unknown to record missing values in pheno_info.txt 
+
+# REQUIRED COLUMNS (MATCH FORMAT SHOWN HERE ie SEX not Sex or Gender etc!):- &quot;Sample.ID&quot;,&quot;SEX&quot;,&quot;GROUPS&quot;,&quot;TISSUE&quot;,&quot;PHENOTYPE&quot;,&quot;Study_ID&quot;
+pheno_info.txt
+
+# REQUIRED COLUMNS:- &quot;Sample.ID&quot;,&quot;RIN&quot;,&quot;RNA_YIELD&quot; and any other related batch info eg dates or processing. 
+batch_info.txt
+
+
+# Naming Convensions
+* All UPPERCASE
+* SEX = MALE, FEMALE or UNKNOWN
+* Missing data = NA for all data. The exceptioins are: SEX,GROUPS,PHENOTYPE, TISSUE. Use UNKNOWN
+
+TO DO: ADD LINK TO Genomestudio SOP and scripts for making lumiR input
+
+</code></pre>
+
+<hr/>
+
+<h2>setwd</h2>
+
+<p>This is the full path to the directory where all the raw genomestudio output is stored</p>
+
+<pre><code class="r">setwd(&quot;/media/D/expression/GAP_Expression&quot;)
+</code></pre>
+
+<h2>load libs</h2>
+
+<pre><code class="r"># Load libraries
+library(lumi)
+library(annotate)
+library(lumiHumanAll.db)
+library(affy)
+library(cluster)
+library(impute)
+library(WGCNA)
+</code></pre>
+
+<pre><code>## ==========================================================================
+## *
+## *  Package WGCNA 1.34 loaded.
+## *
+## *    Important note: It appears that your system supports multi-threading,
+## *    but it is not enabled within WGCNA in R. 
+## *    To allow multi-threading within WGCNA with all available cores, use 
+## *
+## *          allowWGCNAThreads()
+## *
+## *    within R. Use disableWGCNAThreads() to disable threading if necessary.
+## *    Alternatively, set the following environment variable on your system:
+## *
+## *          ALLOW_WGCNA_THREADS=&lt;number_of_processors&gt;
+## *
+## *    for example 
+## *
+## *          ALLOW_WGCNA_THREADS=8
+## *
+## *    To set the environment variable in linux bash shell, type 
+## *
+## *           export ALLOW_WGCNA_THREADS=8
+## *
+## *     before running R. Other operating systems or shells will
+## *     have a similar command to achieve the same aim.
+## *
+## ==========================================================================
+</code></pre>
+
+<pre><code class="r">library(gplots)
+library(limma)
+library(vsn)
+library(MBCB)
+library(lumiHumanIDMapping)
+library(scatterplot3d)
+library(relaimpo)
+library(plyr)
+library(ggplot2)
+</code></pre>
+
+<h2>load source file with some processing functions</h2>
+
+<p>email <a href="mailto:stephen.newhouse@kcl.ac.uk">stephen.newhouse@kcl.ac.uk</a> for code. This will all be on git soon</p>
+
+<pre><code class="r"># path to gene expression processing scripts
+path_to_scripts &lt;- &quot;/media/D/sjnewhouse/GENE_EXPRESSION&quot;
+# load &#39;em
+source(paste(path_to_scripts, &quot;/sjnewhouse_misc_R.R&quot;, sep = &quot;&quot;))
+ls()
+</code></pre>
+
+<pre><code>##  [1] &quot;basic_sampleNetwork&quot;        &quot;basic_sampleNetworkIterate&quot;
+##  [3] &quot;bgcor_mbcb&quot;                 &quot;cv&quot;                        
+##  [5] &quot;data_summary_plots&quot;         &quot;gx_qc_plots_lumi&quot;          
+##  [7] &quot;gx_qc_plots_lumi_2&quot;         &quot;has_var_probe&quot;             
+##  [9] &quot;has_var_probe2&quot;             &quot;max_probe&quot;                 
+## [11] &quot;mean_probe&quot;                 &quot;min_probe&quot;                 
+## [13] &quot;negBeadOutlierRepMean&quot;      &quot;outlierSamples&quot;            
+## [15] &quot;outlierSamplesIterate&quot;      &quot;path_to_scripts&quot;           
+## [17] &quot;preProcess&quot;                 &quot;quantfun&quot;                  
+## [19] &quot;removeOutlierProbes&quot;        &quot;removeOutlierProbesIterate&quot;
+## [21] &quot;removeSamples_eset_lumi&quot;    &quot;removeTooManyNAs&quot;          
+## [23] &quot;runVSN&quot;                     &quot;sd_probe&quot;                  
+## [25] &quot;shuffle_cols&quot;               &quot;shuffle_rows&quot;              
+## [27] &quot;var_probe&quot;                  &quot;write_expression_files&quot;    
+## [29] &quot;zero_var_probe&quot;
+</code></pre>
+
+<h2>set project settings and I/O</h2>
+
+<p>User is asked to manually provide these options.<br/>
+This sets the working directoty, prjoect name, input and output files, along with qc options for transformation and normalisation methods.<br/>
+This project configuration data is written to *.csv file in your project directory.</p>
+
+<pre><code class="r"># project directory
+project_dir &lt;- &quot;/media/D/expression/GAP_Expression&quot;
+
+# set working dir again
+setwd(project_dir)
+
+# project name
+project_name &lt;- &quot;GAP&quot;
+
+# output directory for lumi process and plots
+processing_date &lt;- format(Sys.Date(), &quot;%d_%m_%Y&quot;)
+out_dir &lt;- paste(project_dir, &quot;/&quot;, project_name, &quot;_lumi_processing_&quot;, processing_date, 
+    sep = &quot;&quot;)
+
+# make project pre-processing directory
+make_dir_command &lt;- paste(&quot; if [ ! -e &quot;, out_dir, &quot; ]; then mkdir &quot;, out_dir, 
+    &quot;; fi&quot;, sep = &quot;&quot;)
+
+system(make_dir_command)
+
+# genomestudio reports
+gs_report &lt;- &quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/Sample_and_Control_Probe_Profile_FinalReport.txt&quot;
+gs_probe &lt;- &quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/Group_Probe_Profile_Final_Report.txt&quot;  # genomestudio report
+gs_sample &lt;- &quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/sample_table_Final_Report.txt&quot;  # genomestudio report
+gs_control &lt;- &quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/control_probe_profile_Final_Report.txt&quot;  # genomestudio report
+anno_table &lt;- &quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/probe_annotation_Final_Report.txt&quot;
+
+# sample information FILE NAME must contain :
+# Sample.ID,SEX,GROUPS,TISSUE,PHENOTYPE,Study_ID
+pheno_file &lt;- &quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/pheno_info.txt&quot;
+
+# batch information
+tech_pheno_file &lt;- &quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/batch_info.txt&quot;
+
+# detection call rate threshold
+probe_det &lt;- 80
+sample_det &lt;- 80
+
+# flag for gender and sampleNetwork
+sex_check &lt;- 1  # DO THIS!! I&#39;m not providing an option to skip this
+iac_check &lt;- 1  # DO THIS!! I&#39;m not providing an option to skip this
+iac_sd_thrs &lt;- 2  # 2 or 3
+
+# Model based background correction method (MLE as default) All data should
+# be background correceted. The recomended methods is MBCB (Model-based
+# Background Correction for Beadarray) URL
+# http://www.bioconductor.org/packages/release/bioc/html/MBCB.html
+mbcb_method &lt;- &quot;MLE&quot;
+
+# Transformation method
+transform_method &lt;- &quot;log2&quot;  ## &#39;vst&#39; # log2, vst or both
+
+# Normalisation method
+norm_method &lt;- &quot;rsn&quot;  ## &#39;rsn&#39; # quantile, rsn, or both
+
+# Folks that done stuff
+analyst_email &lt;- &quot;stephen.newhouse@kcl.ac.uk&quot;
+analyst_name &lt;- &quot;Stephen Newhouse&quot;
+lab_contact_email &lt;- &quot;charles.curtis@kcl.ac.uk&quot;
+lab_contact_name &lt;- &quot;Charle Curtis&quot;
+
+
+# write settings to file
+project_settings &lt;- data.frame(project_dir = project_dir, project_name = project_name, 
+    out_dir = out_dir, gs_report = gs_report, gs_probe = gs_probe, gs_sample = gs_sample, 
+    gs_control = gs_control, anno_table = anno_table, pheno_file = pheno_file, 
+    tech_pheno_file = tech_pheno_file, probe_det = probe_det, sample_det = sample_det, 
+    sex_check = sex_check, iac_check = iac_check, iac_sd_thrs = iac_sd_thrs, 
+    mbcb_method = mbcb_method, transform_method = transform_method, norm_method = norm_method, 
+    analyst_email = analyst_email, analyst_name = analyst_name, lab_contact_email = lab_contact_email, 
+    lab_contact_name = lab_contact_name)
+
+# some data wrangling
+project_settings &lt;- as.data.frame(t(project_settings))
+colnames(project_settings) &lt;- &quot;Project_Setting&quot;
+project_settings$Project_Variable &lt;- rownames(project_settings)
+project_settings &lt;- project_settings[, c(&quot;Project_Variable&quot;, &quot;Project_Setting&quot;)]
+
+# write table to out_dir
+write.table(project_settings, file = paste(out_dir, &quot;/&quot;, project_name, &quot;.project_settings.csv&quot;, 
+    sep = &quot;&quot;), row.names = FALSE, quote = FALSE, sep = &quot;,&quot;)
+
+# check settings
+project_settings
+</code></pre>
+
+<pre><code>##                    Project_Variable
+## project_dir             project_dir
+## project_name           project_name
+## out_dir                     out_dir
+## gs_report                 gs_report
+## gs_probe                   gs_probe
+## gs_sample                 gs_sample
+## gs_control               gs_control
+## anno_table               anno_table
+## pheno_file               pheno_file
+## tech_pheno_file     tech_pheno_file
+## probe_det                 probe_det
+## sample_det               sample_det
+## sex_check                 sex_check
+## iac_check                 iac_check
+## iac_sd_thrs             iac_sd_thrs
+## mbcb_method             mbcb_method
+## transform_method   transform_method
+## norm_method             norm_method
+## analyst_email         analyst_email
+## analyst_name           analyst_name
+## lab_contact_email lab_contact_email
+## lab_contact_name   lab_contact_name
+##                                                                                                                  Project_Setting
+## project_dir                                                                                   /media/D/expression/GAP_Expression
+## project_name                                                                                                                 GAP
+## out_dir                                                        /media/D/expression/GAP_Expression/GAP_lumi_processing_18_01_2014
+## gs_report         /media/D/expression/GAP_Expression/final_reports_genomestudio/Sample_and_Control_Probe_Profile_FinalReport.txt
+## gs_probe                      /media/D/expression/GAP_Expression/final_reports_genomestudio/Group_Probe_Profile_Final_Report.txt
+## gs_sample                            /media/D/expression/GAP_Expression/final_reports_genomestudio/sample_table_Final_Report.txt
+## gs_control                  /media/D/expression/GAP_Expression/final_reports_genomestudio/control_probe_profile_Final_Report.txt
+## anno_table                       /media/D/expression/GAP_Expression/final_reports_genomestudio/probe_annotation_Final_Report.txt
+## pheno_file                                          /media/D/expression/GAP_Expression/final_reports_genomestudio/pheno_info.txt
+## tech_pheno_file                                     /media/D/expression/GAP_Expression/final_reports_genomestudio/batch_info.txt
+## probe_det                                                                                                                     80
+## sample_det                                                                                                                    80
+## sex_check                                                                                                                      1
+## iac_check                                                                                                                      1
+## iac_sd_thrs                                                                                                                    2
+## mbcb_method                                                                                                                  MLE
+## transform_method                                                                                                            log2
+## norm_method                                                                                                                  rsn
+## analyst_email                                                                                         stephen.newhouse@kcl.ac.uk
+## analyst_name                                                                                                    Stephen Newhouse
+## lab_contact_email                                                                                       charles.curtis@kcl.ac.uk
+## lab_contact_name                                                                                                   Charle Curtis
+</code></pre>
+
+<hr/>
+
+<h1>BEGIN PRE-PROCESSING</h1>
+
+<h2>Raw Expression Set</h2>
+
+<h2>1. read raw gene expression data</h2>
+
+<pre><code class="r">
+# raw input This is the 1) Probe Profile, 2) Control Probe Profile and 3)
+# Sample Table, Final Reports exported from GenomeStudio, all concatenated
+if (is.na(gs_report)) stop(&quot; WARNING!: YOU HAVENT PROVIDED ANY DATA TO READ&quot;)
+
+# read raw gene expression data from genomestudio reports and create
+# ExpressionSet
+
+eset_raw &lt;- lumiR(paste(gs_report), lib.mapping = &quot;lumiHumanIDMapping&quot;, checkDupId = TRUE, 
+    detectionTh = 0.01, convertNuID = TRUE, inputAnnotation = TRUE, annotationColumn = c(&quot;PROBE_ID&quot;, 
+        &quot;CHROMOSOME&quot;, &quot;SYMBOL&quot;, &quot;DEFINITION&quot;, &quot;ACCESSION&quot;, &quot;ENTREZ_GENE_ID&quot;, 
+        &quot;PROBE_TYPE&quot;, &quot;PROBE_START&quot;, &quot;PROBE_SEQUENCE&quot;, &quot;PROBE_CHR_ORIENTATION&quot;, 
+        &quot;PROBE_COORDINATES&quot;, &quot;CHROMOSOME&quot;, &quot;TRANSCRIPT&quot;, &quot;ILMN_GENE&quot;, &quot;REFSEQ_ID&quot;, 
+        &quot;UNIGENE_ID&quot;, &quot;SYMBOL&quot;, &quot;PROTEIN_PRODUCT&quot;), QC = TRUE)
+</code></pre>
+
+<pre><code>## Inputting the data ...
+## Perform Quality Control assessment of the LumiBatch object ...
+## Directly converting probe sequence to nuIDs ...
+</code></pre>
+
+<pre><code class="r">
+# check it
+eset_raw
+</code></pre>
+
+<pre><code>## Summary of data information:
+##   Data File Information:
+##      GSGX Version    1.9.0
+##      Report Date 29/10/2013 14:56:38
+##      Project BRC_GAP_Expression_02
+##      Group Set   BRC_GAP_Expression
+##      Analysis    BRC_GAP_Expression_nonorm_nobkgd
+##      Normalization   none
+## 
+## Major Operation History:
+##             submitted            finished
+## 1 2014-01-18 12:06:13 2014-01-18 12:11:45
+## 2 2014-01-18 12:06:13 2014-01-18 12:11:45
+##                                                                                                                    command
+## 1 lumiR(&quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/Sample_and_Control_Probe_Profile_FinalReport.txt&quot;, 
+## 2                                                       lib.mapping = &quot;lumiHumanIDMapping&quot;, checkDupId = TRUE, QC = TRUE, 
+##   lumiVersion
+## 1      2.14.1
+## 2      2.14.1
+## ...
+##             submitted            finished
+## 8 2014-01-18 12:11:45 2014-01-18 12:15:55
+## 9 2014-01-18 12:15:55 2014-01-18 12:16:02
+##                                                                       command
+## 8        lumiQ(x.lumi = x.lumi, detectionTh = detectionTh, verbose = verbose)
+## 9 addNuID2lumi(x.lumi = x.lumi, lib.mapping = lib.mapping, verbose = verbose)
+##   lumiVersion
+## 8      2.14.1
+## 9      2.14.1
+## 
+## Object Information:
+## LumiBatch (storageMode: lockedEnvironment)
+## assayData: 47231 features, 618 samples 
+##   element names: beadNum, detection, exprs, se.exprs 
+## protocolData: none
+## phenoData
+##   sampleNames: 9020374058_A 9020374058_B ... 9249907052_L (618
+##     total)
+##   varLabels: sampleID
+##   varMetadata: labelDescription
+## featureData
+##   featureNames: Ku8QhfS0n_hIOABXuE fqPEquJRRlSVSfL.8A ...
+##     N8t5EuJCr0Tk9.zHno (47231 total)
+##   fvarLabels: ProbeID TargetID ... DEFINITION (17 total)
+##   fvarMetadata: labelDescription
+## experimentData: use &#39;experimentData(object)&#39;
+## Annotation: lumiHumanAll.db 
+## Control Data: Available
+## QC information: Please run summary(x, &#39;QC&#39;) for details!
+</code></pre>
+
+<pre><code class="r">
+# n_expression_chips
+n_expression_chips &lt;- dim(eset_raw)[2]
+cat(&quot;  WARNING!: The number of expression chips=[&quot;, dim(eset_raw)[2], &quot;]&quot;, &quot;\r&quot;, 
+    &quot;\n&quot;)
+</code></pre>
+
+<pre><code>##   WARNING!: The number of expression chips=[ 618 ] 
+</code></pre>
+
+<h2>2. read in sample and batch information</h2>
+
+<pre><code class="r">
+# gs_sample
+if (is.na(gs_sample)) stop(&quot; WARNING!: YOU HAVENT PROVIDED ANY SAMPLE INFORMATION!!!&quot;)
+gs_sample
+</code></pre>
+
+<pre><code>## [1] &quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/sample_table_Final_Report.txt&quot;
+</code></pre>
+
+<pre><code class="r">
+gs_sample_data &lt;- read.table(paste(gs_sample), skip = 8, as.is = T, fill = T, 
+    head = T, sep = &quot;\t&quot;)
+rownames(gs_sample_data) &lt;- gs_sample_data$Sample.ID
+gs_sample_data &lt;- gs_sample_data[, names(gs_sample_data) != &quot;X&quot;]  # added this as genomestudio likes to add mystery columns to the end of this report 
+n_samples &lt;- dim(gs_sample_data)[1]  # number of rows ie samples
+
+save(gs_sample_data, file = paste(out_dir, &quot;/&quot;, project_name, &quot;.gs_sample_data.RData&quot;, 
+    sep = &quot;&quot;))
+
+# pheno_file
+if (is.na(pheno_file)) stop(&quot; WARNING!: YOU HAVENT PROVIDED ANY PHENOTYPE INFORMATION!!!&quot;)
+pheno_file
+</code></pre>
+
+<pre><code>## [1] &quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/pheno_info.txt&quot;
+</code></pre>
+
+<pre><code class="r">
+pheno_dat &lt;- read.table(paste(pheno_file), as.is = T, fill = T, head = T, sep = &quot;\t&quot;)
+save(pheno_dat, file = paste(out_dir, &quot;/&quot;, project_name, &quot;.pheno_dat.RData&quot;, 
+    sep = &quot;&quot;))
+has_pheno_cols &lt;- c(&quot;Sample.ID&quot;, &quot;SEX&quot;, &quot;GROUPS&quot;, &quot;TISSUE&quot;, &quot;PHENOTYPE&quot;, &quot;Study_ID&quot;) %in% 
+    names(pheno_dat)
+missing_pheno_cols &lt;- &quot;FALSE&quot; %in% has_pheno_cols
+if (missing_pheno_cols == &quot;TRUE&quot;) stop(&quot; WARNING!: YOU ARE MISSING ESSENTIAL SAMPLE INFORMATION! MAKE SURE YOUR PHENO_FILE HAS:- Sample.ID,SEX,GROUPS,TISSUE,PHENOTYPE,Study_ID !!!&quot;)
+raw_n_pheno_dat &lt;- dim(pheno_dat)[1]  # number of rows ie samples
+
+cat(&quot; Running toupper() on PHENOTYPE, GROUP AND TISSUE variables to fix potential case issues&quot;, 
+    &quot;\r&quot;)
+</code></pre>
+
+<pre><code>##  Running toupper() on PHENOTYPE, GROUP AND TISSUE variables to fix potential case issues 
+</code></pre>
+
+<pre><code class="r"># fix case
+pheno_dat$PHENOTYPE &lt;- toupper(pheno_dat$PHENOTYPE)
+pheno_dat$SEX &lt;- toupper(pheno_dat$SEX)
+pheno_dat$GROUPS &lt;- toupper(pheno_dat$GROUPS)
+pheno_dat$TISSUE &lt;- toupper(pheno_dat$TISSUE)
+# a quick looksee at counts
+table(pheno_dat$PHENOTYPE)
+</code></pre>
+
+<pre><code>## 
+##    CASE CONTROL UNKNOWN 
+##     393     190      25
+</code></pre>
+
+<pre><code class="r">table(pheno_dat$GROUPS)
+</code></pre>
+
+<pre><code>## 
+##    CASE CONTROL UNKNOWN 
+##     393     190      25
+</code></pre>
+
+<pre><code class="r">table(pheno_dat$TISSUE)
+</code></pre>
+
+<pre><code>## 
+## BLOOD 
+##   608
+</code></pre>
+
+<pre><code class="r">table(pheno_dat$SEX)
+</code></pre>
+
+<pre><code>## 
+##  FEMALE    MALE UNKNOWN 
+##     196     319      93
+</code></pre>
+
+<pre><code class="r">
+# tech_pheno_file
+if (is.na(tech_pheno_file)) stop(&quot; WARNING!: YOU HAVENT PROVIDED ANY BATCH INFORMATION!!!&quot;)
+tech_pheno_file
+</code></pre>
+
+<pre><code>## [1] &quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/batch_info.txt&quot;
+</code></pre>
+
+<pre><code class="r">
+tech_pheno &lt;- read.table(paste(tech_pheno_file), head = T, sep = &quot;\t&quot;)
+tech_pheno$Sentrix.Barcode &lt;- as.character(tech_pheno$Sentrix.Barcode)
+rownames(tech_pheno) &lt;- tech_pheno$Sample.ID
+colnames(tech_pheno) &lt;- paste(&quot;tech.&quot;, names(tech_pheno), sep = &quot;&quot;)
+colnames(tech_pheno) &lt;- c(&quot;Sample.ID&quot;, names(tech_pheno[, -1]))
+save(tech_pheno, file = paste(out_dir, &quot;/&quot;, project_name, &quot;.tech_pheno.RData&quot;, 
+    sep = &quot;&quot;))
+
+# get pData()
+eset_samples &lt;- pData(eset_raw)
+# add chip order and flad for &#39;has expression data&#39; to eset_samples (pData)
+eset_samples$has_expression &lt;- 1
+eset_samples$chip_order &lt;- 1:dim(eset_samples)[1]
+save(eset_samples, file = paste(out_dir, &quot;/&quot;, project_name, &quot;.eset_samples.RData&quot;, 
+    sep = &quot;&quot;))
+
+# col names
+names(eset_samples)
+</code></pre>
+
+<pre><code>## [1] &quot;sampleID&quot;       &quot;has_expression&quot; &quot;chip_order&quot;
+</code></pre>
+
+<pre><code class="r">names(gs_sample_data)
+</code></pre>
+
+<pre><code>##  [1] &quot;Index&quot;                 &quot;Sample.ID&quot;            
+##  [3] &quot;Sample.Group&quot;          &quot;Sentrix.Barcode&quot;      
+##  [5] &quot;Sample.Section&quot;        &quot;Detected.Genes..0.01.&quot;
+##  [7] &quot;Detected.Genes..0.05.&quot; &quot;Signal.Average&quot;       
+##  [9] &quot;Signal.P05&quot;            &quot;Signal.P25&quot;           
+## [11] &quot;Signal.P50&quot;            &quot;Signal.P75&quot;           
+## [13] &quot;Signal.P95&quot;            &quot;BIOTIN&quot;               
+## [15] &quot;CY3_HYB&quot;               &quot;HOUSEKEEPING&quot;         
+## [17] &quot;LABELING&quot;              &quot;LOW_STRINGENCY_HYB&quot;   
+## [19] &quot;NEGATIVE..background.&quot; &quot;Noise&quot;
+</code></pre>
+
+<pre><code class="r">names(pheno_dat)
+</code></pre>
+
+<pre><code>## [1] &quot;Sample.ID&quot;       &quot;SEX&quot;             &quot;GROUPS&quot;          &quot;TISSUE&quot;         
+## [5] &quot;PHENOTYPE&quot;       &quot;Study_ID&quot;        &quot;Study_ID_Count&quot;  &quot;GROUPS_ORIGINAL&quot;
+</code></pre>
+
+<pre><code class="r">names(tech_pheno)
+</code></pre>
+
+<pre><code>##  [1] &quot;Sample.ID&quot;                           
+##  [2] &quot;tech.Sentrix.Barcode&quot;                
+##  [3] &quot;tech.SampleSection&quot;                  
+##  [4] &quot;tech.Batch&quot;                          
+##  [5] &quot;tech.Date_out&quot;                       
+##  [6] &quot;tech.Date_extraction&quot;                
+##  [7] &quot;tech.person&quot;                         
+##  [8] &quot;tech.Conc_Nanodrop&quot;                  
+##  [9] &quot;tech.Date_Dilutionand_Amplification&quot; 
+## [10] &quot;tech.Date_cRNApurification&quot;          
+## [11] &quot;tech.Date_Quantitation_by_RiboGreen&quot; 
+## [12] &quot;tech.Eluted_Total_labelled_cRNA&quot;     
+## [13] &quot;tech.labelled_cRNA_Yield&quot;            
+## [14] &quot;tech.concentration_of_labelled_cRNA&quot; 
+## [15] &quot;tech.Date_labelled_cRNA&quot;             
+## [16] &quot;tech.Date_Hybridization_for_15_hours&quot;
+## [17] &quot;tech.Date_Washing_and_scanning&quot;
+</code></pre>
+
+<pre><code class="r">
+# head
+head(eset_samples)
+</code></pre>
+
+<pre><code>##                  sampleID has_expression chip_order
+## 9020374058_A 9020374058_A              1          1
+## 9020374058_B 9020374058_B              1          2
+## 9020374058_C 9020374058_C              1          3
+## 9020374058_D 9020374058_D              1          4
+## 9020374058_E 9020374058_E              1          5
+## 9020374058_F 9020374058_F              1          6
+</code></pre>
+
+<pre><code class="r">head(gs_sample_data)
+</code></pre>
+
+<pre><code>##              Index    Sample.ID Sample.Group Sentrix.Barcode
+## 9020374058_A     1 9020374058_A 9020374058_A        9.02e+09
+## 9020374058_B     2 9020374058_B 9020374058_B        9.02e+09
+## 9020374058_C     3 9020374058_C 9020374058_C        9.02e+09
+## 9020374058_D     4 9020374058_D 9020374058_D        9.02e+09
+## 9020374058_E     5 9020374058_E 9020374058_E        9.02e+09
+## 9020374058_F     6 9020374058_F 9020374058_F        9.02e+09
+##              Sample.Section Detected.Genes..0.01. Detected.Genes..0.05.
+## 9020374058_A              A                  5416                 10351
+## 9020374058_B              B                  7670                 11874
+## 9020374058_C              C                  6186                 10444
+## 9020374058_D              D                  7718                 12057
+## 9020374058_E              E                  7877                 11742
+## 9020374058_F              F                  8623                 12306
+##              Signal.Average Signal.P05 Signal.P25 Signal.P50 Signal.P75
+## 9020374058_A            148         79         83         88        101
+## 9020374058_B            152         79         83         87        100
+## 9020374058_C            119         75         78         82         90
+## 9020374058_D            157         79         84         88        104
+## 9020374058_E            140         77         81         85         96
+## 9020374058_F            179         82         87         92        112
+##              Signal.P95 BIOTIN CY3_HYB HOUSEKEEPING LABELING
+## 9020374058_A        279   7315    4016         2714     84.7
+## 9020374058_B        313   7178    3970         2844     83.6
+## 9020374058_C        189   7129    3893         1769     80.1
+## 9020374058_D        330   7181    3835         3144     82.7
+## 9020374058_E        255   7195    3832         2275     81.2
+## 9020374058_F        396   6936    3721         4006     91.0
+##              LOW_STRINGENCY_HYB NEGATIVE..background. Noise
+## 9020374058_A               3948                  85.5  16.8
+## 9020374058_B               3880                  83.6   6.9
+## 9020374058_C               3800                  79.5   6.9
+## 9020374058_D               3737                  85.0   8.9
+## 9020374058_E               3706                  81.8   6.1
+## 9020374058_F               3704                  88.0   6.8
+</code></pre>
+
+<pre><code class="r">head(pheno_dat)
+</code></pre>
+
+<pre><code>##      Sample.ID     SEX  GROUPS TISSUE PHENOTYPE Study_ID Study_ID_Count
+## 1 9020374058_A    MALE CONTROL  BLOOD   CONTROL  SGAP393              1
+## 2 9020374058_B UNKNOWN CONTROL  BLOOD   CONTROL  SGAP377              1
+## 3 9020374058_C  FEMALE    CASE  BLOOD      CASE  SGAP464              1
+## 4 9020374058_D    MALE CONTROL  BLOOD   CONTROL  SGAP331              1
+## 5 9020374058_E    MALE CONTROL  BLOOD   CONTROL   GAP625              1
+## 6 9020374058_F    MALE    CASE  BLOOD      CASE  SGAP116              1
+##   GROUPS_ORIGINAL
+## 1        baseline
+## 2        baseline
+## 3        baseline
+## 4        baseline
+## 5        baseline
+## 6        baseline
+</code></pre>
+
+<pre><code class="r">head(tech_pheno)
+</code></pre>
+
+<pre><code>##                 Sample.ID tech.Sentrix.Barcode tech.SampleSection
+## 9020374058_A 9020374058_A           9020374058                  A
+## 9020374058_B 9020374058_B           9020374058                  B
+## 9020374058_C 9020374058_C           9020374058                  C
+## 9020374058_D 9020374058_D           9020374058                  D
+## 9020374058_E 9020374058_E           9020374058                  E
+## 9020374058_F 9020374058_F           9020374058                  F
+##              tech.Batch tech.Date_out tech.Date_extraction tech.person
+## 9020374058_A          1    13/05/2013           14/05/2013           1
+## 9020374058_B          1    13/05/2013           14/05/2013           1
+## 9020374058_C          1    21/05/2013           22/05/2013           1
+## 9020374058_D          1    21/05/2013           22/05/2013           1
+## 9020374058_E          1    13/05/2013           14/05/2013           1
+## 9020374058_F          1    13/05/2013           14/05/2013           1
+##              tech.Conc_Nanodrop tech.Date_Dilutionand_Amplification
+## 9020374058_A              62.89                          16/07/2013
+## 9020374058_B              52.75                          16/07/2013
+## 9020374058_C              98.97                          16/07/2013
+## 9020374058_D              78.19                          16/07/2013
+## 9020374058_E              56.07                          16/07/2013
+## 9020374058_F              37.58                          16/07/2013
+##              tech.Date_cRNApurification
+## 9020374058_A                 17/07/2013
+## 9020374058_B                 17/07/2013
+## 9020374058_C                 17/07/2013
+## 9020374058_D                 17/07/2013
+## 9020374058_E                 17/07/2013
+## 9020374058_F                 17/07/2013
+##              tech.Date_Quantitation_by_RiboGreen
+## 9020374058_A                          23/07/2013
+## 9020374058_B                          23/07/2013
+## 9020374058_C                          23/07/2013
+## 9020374058_D                          23/07/2013
+## 9020374058_E                          23/07/2013
+## 9020374058_F                          23/07/2013
+##              tech.Eluted_Total_labelled_cRNA tech.labelled_cRNA_Yield
+## 9020374058_A                              40                     9884
+## 9020374058_B                              40                    13085
+## 9020374058_C                              40                    22013
+## 9020374058_D                              40                    17625
+## 9020374058_E                              40                    16468
+## 9020374058_F                              40                    10738
+##              tech.concentration_of_labelled_cRNA tech.Date_labelled_cRNA
+## 9020374058_A                               247.1              25/07/2013
+## 9020374058_B                               327.1              25/07/2013
+## 9020374058_C                               550.3              25/07/2013
+## 9020374058_D                               440.6              25/07/2013
+## 9020374058_E                               411.7              25/07/2013
+## 9020374058_F                               268.5              25/07/2013
+##              tech.Date_Hybridization_for_15_hours
+## 9020374058_A                           25/07/2013
+## 9020374058_B                           25/07/2013
+## 9020374058_C                           25/07/2013
+## 9020374058_D                           25/07/2013
+## 9020374058_E                           25/07/2013
+## 9020374058_F                           25/07/2013
+##              tech.Date_Washing_and_scanning
+## 9020374058_A                     26/07/2013
+## 9020374058_B                     26/07/2013
+## 9020374058_C                     26/07/2013
+## 9020374058_D                     26/07/2013
+## 9020374058_E                     26/07/2013
+## 9020374058_F                     26/07/2013
+</code></pre>
+
+<pre><code class="r">
+# quick check these should all have the same number of rows or samples!
+dim(eset_samples)
+</code></pre>
+
+<pre><code>## [1] 618   3
+</code></pre>
+
+<pre><code class="r">dim(gs_sample_data)
+</code></pre>
+
+<pre><code>## [1] 618  20
+</code></pre>
+
+<pre><code class="r">dim(pheno_dat)
+</code></pre>
+
+<pre><code>## [1] 608   8
+</code></pre>
+
+<pre><code class="r">dim(tech_pheno)
+</code></pre>
+
+<pre><code>## [1] 641  17
+</code></pre>
+
+<pre><code class="r">
+# Venn of Sample.ID
+ex &lt;- eset_samples$sampleID
+pp &lt;- pheno_dat$Sample.ID
+tt &lt;- tech_pheno$Sample.ID
+venninput &lt;- list(ArrayExpression = ex, Batch_Info = tt, Pheno_Info = pp)
+venn(venninput)
+</code></pre>
+
+<p><img src="figure/readSamplePhenoAndBatchInfo.pdf" alt="plot of chunk readSamplePhenoAndBatchInfo"/> </p>
+
+<pre><code class="r"># dev.off()
+</code></pre>
+
+<h2>2.1 check for duplicate Study_ID</h2>
+
+<pre><code class="r"># check for duplicate Study_ID
+tab_id &lt;- table(pheno_dat$Study_ID)
+tab_id_df &lt;- as.data.frame(tab_id)
+colnames(tab_id_df) &lt;- c(&quot;Study_ID&quot;, &quot;Freq&quot;)
+dupe_samples &lt;- subset(tab_id_df, tab_id_df$Freq &gt;= 2)
+cat(&quot;  WARNING!: You have duplicate Study_IDs. N=[&quot;, dim(dupe_samples)[1], &quot;]&quot;, 
+    &quot;\r&quot;, &quot;\n&quot;)
+</code></pre>
+
+<pre><code>##   WARNING!: You have duplicate Study_IDs. N=[ 59 ] 
+</code></pre>
+
+<pre><code class="r">dupe_samples
+</code></pre>
+
+<pre><code>##     Study_ID Freq
+## 7    CGAP130    2
+## 32   EUGE237    2
+## 63    GAP555    2
+## 78   GAP584L    2
+## 94    GAP619    2
+## 98    GAP626    2
+## 110   GAP645    2
+## 117   GAP660    2
+## 118   GAP661    2
+## 119   GAP663    2
+## 126  GAP674L    2
+## 128   GAP680    2
+## 132   GAP689    2
+## 141   GAP712    2
+## 144   GAP716    2
+## 151   GAP729    2
+## 163  GAP736L    2
+## 165   GAP741    2
+## 168  GAP743C    2
+## 191  GAP796C    2
+## 256   GAP863    2
+## 267   GAP892    2
+## 269  GAP893C    2
+## 280   GAP902    2
+## 283   GAP904    2
+## 285  GAP906C    2
+## 291  GAP909C    2
+## 328   GAP959    2
+## 330   GAP962    2
+## 335   GAP970    2
+## 344   GAP990    2
+## 349  LGAP103    2
+## 351  LGAP134    2
+## 361  LGAP171    2
+## 369  SGAP136    2
+## 381  SGAP161    2
+## 382  SGAP163    2
+## 384  SGAP169    2
+## 387  SGAP175    2
+## 396  SGAP197    2
+## 404  SGAP208    2
+## 408  SGAP232    2
+## 417  SGAP250    2
+## 421  SGAP260    2
+## 423  SGAP265    2
+## 439  SGAP309    2
+## 442  SGAP316    2
+## 444  SGAP320    2
+## 445  SGAP322    2
+## 466  SGAP348    2
+## 469  SGAP353    2
+## 472  SGAP358    2
+## 475  SGAP363    2
+## 496  SGAP391    2
+## 502  SGAP399    2
+## 511  SGAP408    2
+## 520  SGAP421    2
+## 522  SGAP424    2
+## 546  SGAP473    2
+</code></pre>
+
+<pre><code class="r">write.table(dupe_samples, file = paste(out_dir, &quot;/&quot;, project_name, &quot;.dupe_Study_IDs.txt&quot;, 
+    sep = &quot;&quot;), sep = &quot;\t&quot;, quote = FALSE, row.names = FALSE)
+# n_unique_study_id
+n_unique_study_id &lt;- length(unique(tab_id_df$Study_ID))
+cat(&quot;  WARNING!: The number of unique Study_Ids=[&quot;, n_unique_study_id, &quot;]&quot;, 
+    &quot;\r&quot;, &quot;\n&quot;)
+</code></pre>
+
+<pre><code>##   WARNING!: The number of unique Study_Ids=[ 549 ] 
+</code></pre>
+
+<h2>3. check eset_samples, sample &amp; batch info Sample.ID&#39;s match in names and numbers &amp; merge all</h2>
+
+<pre><code class="r">cat(&quot; Megreing pdata, pheno data, batch information adn genomestudio samople data&quot;, 
+    &quot;\r&quot;, &quot;\n&quot;)
+</code></pre>
+
+<pre><code>##  Megreing pdata, pheno data, batch information adn genomestudio samople data 
+</code></pre>
+
+<pre><code class="r"># 1. merge eset_samples with pheno_dat.  Keep ALL overlaps only
+eset_pheno_merge &lt;- merge(eset_samples, pheno_dat, by.x = &quot;sampleID&quot;, by.y = &quot;Sample.ID&quot;)
+eset_pheno_merge &lt;- eset_pheno_merge[order(eset_pheno_merge$chip_order), ]
+dim(eset_samples)
+</code></pre>
+
+<pre><code>## [1] 618   3
+</code></pre>
+
+<pre><code class="r">dim(eset_pheno_merge)  # check size
+</code></pre>
+
+<pre><code>## [1] 608  10
+</code></pre>
+
+<pre><code class="r">
+# 2. merge eset_pheno_merge with tech_pheno
+eset_pheno_batch_merge &lt;- merge(eset_pheno_merge, tech_pheno, by.x = &quot;sampleID&quot;, 
+    by.y = &quot;Sample.ID&quot;)
+eset_pheno_batch_merge &lt;- eset_pheno_batch_merge[order(eset_pheno_batch_merge$chip_order), 
+    ]
+dim(eset_samples)
+</code></pre>
+
+<pre><code>## [1] 618   3
+</code></pre>
+
+<pre><code class="r">dim(eset_pheno_merge)
+</code></pre>
+
+<pre><code>## [1] 608  10
+</code></pre>
+
+<pre><code class="r">dim(eset_pheno_batch_merge)  # check size
+</code></pre>
+
+<pre><code>## [1] 608  26
+</code></pre>
+
+<pre><code class="r">
+# 3. merge all with genomestudio final report
+eset_pheno_batch_gs_merge &lt;- merge(eset_pheno_batch_merge, gs_sample_data, by.x = &quot;sampleID&quot;, 
+    by.y = &quot;Sample.ID&quot;)
+eset_pheno_batch_gs_merge &lt;- eset_pheno_batch_gs_merge[order(eset_pheno_batch_gs_merge$chip_order), 
+    ]
+
+# final look at numbers in each merged data set
+dim(eset_samples)
+</code></pre>
+
+<pre><code>## [1] 618   3
+</code></pre>
+
+<pre><code class="r">dim(eset_pheno_merge)
+</code></pre>
+
+<pre><code>## [1] 608  10
+</code></pre>
+
+<pre><code class="r">dim(eset_pheno_batch_merge)
+</code></pre>
+
+<pre><code>## [1] 608  26
+</code></pre>
+
+<pre><code class="r">dim(eset_pheno_batch_gs_merge)
+</code></pre>
+
+<pre><code>## [1] 608  45
+</code></pre>
+
+<pre><code class="r">
+# names
+names(eset_pheno_batch_gs_merge)
+</code></pre>
+
+<pre><code>##  [1] &quot;sampleID&quot;                            
+##  [2] &quot;has_expression&quot;                      
+##  [3] &quot;chip_order&quot;                          
+##  [4] &quot;SEX&quot;                                 
+##  [5] &quot;GROUPS&quot;                              
+##  [6] &quot;TISSUE&quot;                              
+##  [7] &quot;PHENOTYPE&quot;                           
+##  [8] &quot;Study_ID&quot;                            
+##  [9] &quot;Study_ID_Count&quot;                      
+## [10] &quot;GROUPS_ORIGINAL&quot;                     
+## [11] &quot;tech.Sentrix.Barcode&quot;                
+## [12] &quot;tech.SampleSection&quot;                  
+## [13] &quot;tech.Batch&quot;                          
+## [14] &quot;tech.Date_out&quot;                       
+## [15] &quot;tech.Date_extraction&quot;                
+## [16] &quot;tech.person&quot;                         
+## [17] &quot;tech.Conc_Nanodrop&quot;                  
+## [18] &quot;tech.Date_Dilutionand_Amplification&quot; 
+## [19] &quot;tech.Date_cRNApurification&quot;          
+## [20] &quot;tech.Date_Quantitation_by_RiboGreen&quot; 
+## [21] &quot;tech.Eluted_Total_labelled_cRNA&quot;     
+## [22] &quot;tech.labelled_cRNA_Yield&quot;            
+## [23] &quot;tech.concentration_of_labelled_cRNA&quot; 
+## [24] &quot;tech.Date_labelled_cRNA&quot;             
+## [25] &quot;tech.Date_Hybridization_for_15_hours&quot;
+## [26] &quot;tech.Date_Washing_and_scanning&quot;      
+## [27] &quot;Index&quot;                               
+## [28] &quot;Sample.Group&quot;                        
+## [29] &quot;Sentrix.Barcode&quot;                     
+## [30] &quot;Sample.Section&quot;                      
+## [31] &quot;Detected.Genes..0.01.&quot;               
+## [32] &quot;Detected.Genes..0.05.&quot;               
+## [33] &quot;Signal.Average&quot;                      
+## [34] &quot;Signal.P05&quot;                          
+## [35] &quot;Signal.P25&quot;                          
+## [36] &quot;Signal.P50&quot;                          
+## [37] &quot;Signal.P75&quot;                          
+## [38] &quot;Signal.P95&quot;                          
+## [39] &quot;BIOTIN&quot;                              
+## [40] &quot;CY3_HYB&quot;                             
+## [41] &quot;HOUSEKEEPING&quot;                        
+## [42] &quot;LABELING&quot;                            
+## [43] &quot;LOW_STRINGENCY_HYB&quot;                  
+## [44] &quot;NEGATIVE..background.&quot;               
+## [45] &quot;Noise&quot;
+</code></pre>
+
+<h2>4. Subset raw ExpressionSet to matched/complete Sample.IDs &amp; Update pData() slot.</h2>
+
+<pre><code class="r">
+# samples in gene expression data
+samples_eset &lt;- pData(eset_raw)$sampleID
+length(samples_eset)
+</code></pre>
+
+<pre><code>## [1] 618
+</code></pre>
+
+<pre><code class="r">
+# samples with complete data
+samples_complete_data &lt;- eset_pheno_batch_gs_merge$sampleID
+length(samples_complete_data)
+</code></pre>
+
+<pre><code>## [1] 608
+</code></pre>
+
+<pre><code class="r">
+# samples to remove
+samples_to_remove &lt;- (samples_eset %in% samples_complete_data) == FALSE
+samples_to_remove &lt;- pData(eset_raw)$sampleID[samples_to_remove]
+length(samples_to_remove)
+</code></pre>
+
+<pre><code>## [1] 10
+</code></pre>
+
+<pre><code class="r">
+# rename eset_raw &amp; save
+eset_raw_preqc &lt;- eset_raw
+save(eset_raw_preqc, file = paste(out_dir, &quot;/&quot;, project_name, &quot;.eset_raw_preqc.RData&quot;, 
+    sep = &quot;&quot;))
+
+# subset eset_raw
+eset_raw &lt;- removeSamples_eset_lumi(eset = eset_raw_preqc, sampleRemove = samples_to_remove)
+</code></pre>
+
+<pre><code>## The sample names in the controlData don&#39;t match sampleNames(object).
+</code></pre>
+
+<pre><code class="r">eset_raw
+</code></pre>
+
+<pre><code>## Summary of data information:
+##   Data File Information:
+##      GSGX Version    1.9.0
+##      Report Date 29/10/2013 14:56:38
+##      Project BRC_GAP_Expression_02
+##      Group Set   BRC_GAP_Expression
+##      Analysis    BRC_GAP_Expression_nonorm_nobkgd
+##      Normalization   none
+## 
+## Major Operation History:
+##             submitted            finished
+## 1 2014-01-18 12:06:13 2014-01-18 12:11:45
+## 2 2014-01-18 12:06:13 2014-01-18 12:11:45
+##                                                                                                                    command
+## 1 lumiR(&quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/Sample_and_Control_Probe_Profile_FinalReport.txt&quot;, 
+## 2                                                       lib.mapping = &quot;lumiHumanIDMapping&quot;, checkDupId = TRUE, QC = TRUE, 
+##   lumiVersion
+## 1      2.14.1
+## 2      2.14.1
+## ...
+##              submitted            finished
+## 9  2014-01-18 12:15:55 2014-01-18 12:16:02
+## 10 2014-01-18 12:16:47 2014-01-18 12:16:50
+##                                                                        command
+## 9  addNuID2lumi(x.lumi = x.lumi, lib.mapping = lib.mapping, verbose = verbose)
+## 10                                                     Subsetting 618 samples.
+##    lumiVersion
+## 9       2.14.1
+## 10      2.14.1
+## 
+## Object Information:
+## LumiBatch (storageMode: lockedEnvironment)
+## assayData: 47231 features, 608 samples 
+##   element names: beadNum, detection, exprs, se.exprs 
+## protocolData: none
+## phenoData
+##   sampleNames: 9020374058_A 9020374058_B ... 9249907052_L (608
+##     total)
+##   varLabels: sampleID
+##   varMetadata: labelDescription
+## featureData
+##   featureNames: Ku8QhfS0n_hIOABXuE fqPEquJRRlSVSfL.8A ...
+##     N8t5EuJCr0Tk9.zHno (47231 total)
+##   fvarLabels: ProbeID TargetID ... DEFINITION (17 total)
+##   fvarMetadata: labelDescription
+## experimentData: use &#39;experimentData(object)&#39;
+## Annotation: lumiHumanAll.db 
+## Control Data: Available
+## QC information: Please run summary(x, &#39;QC&#39;) for details!
+</code></pre>
+
+<pre><code class="r">
+# update pData
+old_pdata &lt;- pData(eset_raw)
+old_pdata$old_order &lt;- 1:dim(old_pdata)[1]
+
+# merge with eset_pheno_batch_gs_merge
+new_pdata &lt;- merge(old_pdata, eset_pheno_batch_gs_merge, by.x = &quot;sampleID&quot;, 
+    by.y = &quot;sampleID&quot;, all = TRUE, sort = FALSE)
+new_pdata &lt;- new_pdata[order(new_pdata$old_order), ]
+
+# remove columns old_order has_expression chip_order
+new_pdata &lt;- new_pdata[, -c(2, 3, 4)]
+
+# update rownames
+rownames(new_pdata) &lt;- new_pdata$sampleID
+
+# update pData slot
+pData(eset_raw) &lt;- new_pdata
+dim(pData(eset_raw))
+</code></pre>
+
+<pre><code>## [1] 608  43
+</code></pre>
+
+<pre><code class="r">
+# check it
+eset_raw
+</code></pre>
+
+<pre><code>## Summary of data information:
+##   Data File Information:
+##      GSGX Version    1.9.0
+##      Report Date 29/10/2013 14:56:38
+##      Project BRC_GAP_Expression_02
+##      Group Set   BRC_GAP_Expression
+##      Analysis    BRC_GAP_Expression_nonorm_nobkgd
+##      Normalization   none
+## 
+## Major Operation History:
+##             submitted            finished
+## 1 2014-01-18 12:06:13 2014-01-18 12:11:45
+## 2 2014-01-18 12:06:13 2014-01-18 12:11:45
+##                                                                                                                    command
+## 1 lumiR(&quot;/media/D/expression/GAP_Expression/final_reports_genomestudio/Sample_and_Control_Probe_Profile_FinalReport.txt&quot;, 
+## 2                                                       lib.mapping = &quot;lumiHumanIDMapping&quot;, checkDupId = TRUE, QC = TRUE, 
+##   lumiVersion
+## 1      2.14.1
+## 2      2.14.1
+## ...
+##              submitted            finished
+## 9  2014-01-18 12:15:55 2014-01-18 12:16:02
+## 10 2014-01-18 12:16:47 2014-01-18 12:16:50
+##                                                                        command
+## 9  addNuID2lumi(x.lumi = x.lumi, lib.mapping = lib.mapping, verbose = verbose)
+## 10                                                     Subsetting 618 samples.
+##    lumiVersion
+## 9       2.14.1
+## 10      2.14.1
+## 
+## Object Information:
+## LumiBatch (storageMode: lockedEnvironment)
+## assayData: 47231 features, 608 samples 
+##   element names: beadNum, detection, exprs, se.exprs 
+## protocolData: none
+## phenoData
+##   sampleNames: 9020374058_A 9020374058_B ... 9249907052_L (608
+##     total)
+##   varLabels: sampleID SEX ... Noise (43 total)
+##   varMetadata: labelDescription
+## featureData
+##   featureNames: Ku8QhfS0n_hIOABXuE fqPEquJRRlSVSfL.8A ...
+##     N8t5EuJCr0Tk9.zHno (47231 total)
+##   fvarLabels: ProbeID TargetID ... DEFINITION (17 total)
+##   fvarMetadata: labelDescription
+## experimentData: use &#39;experimentData(object)&#39;
+## Annotation: lumiHumanAll.db 
+## Control Data: Available
+## QC information: Please run summary(x, &#39;QC&#39;) for details!
+</code></pre>
+
+<pre><code class="r">
+## n_expression_chips_with_data
+n_expression_chips_with_data &lt;- dim(eset_raw)[2]
+</code></pre>
+
+<h2>5. Add nuID to fData</h2>
+
+<pre><code class="r"># Add nuID to fData
+fData(eset_raw)$nuID &lt;- rownames(fData(eset_raw))
+head(fData(eset_raw))
+</code></pre>
+
+<pre><code>##                    ProbeID TargetID  TRANSCRIPT ILMN_GENE   REFSEQ_ID
+## Ku8QhfS0n_hIOABXuE 6450255      7A5 ILMN_183371       7A5 NM_182762.2
+## fqPEquJRRlSVSfL.8A 2570615     A1BG ILMN_175569      A1BG NM_130786.2
+## ckiehnugOno9d7vf1Q 6370619     A1BG  ILMN_18893      A1BG NM_130786.2
+## x57Vw5B5Fbt5JUnQkI 2600039     A1CF  ILMN_18532      A1CF NM_138932.1
+## ritxUH.kuHlYqjozpE 2650615     A1CF   ILMN_7300      A1CF NM_014576.2
+## QpE5UiUgmJOJEkPXpc 5340672     A1CF ILMN_165661      A1CF NM_138933.1
+##                    UNIGENE_ID ENTREZ_GENE_ID   ACCESSION SYMBOL
+## Ku8QhfS0n_hIOABXuE                    346389 NM_182762.2    7A5
+## fqPEquJRRlSVSfL.8A                         1 NM_130786.2   A1BG
+## ckiehnugOno9d7vf1Q                         1 NM_130786.2   A1BG
+## x57Vw5B5Fbt5JUnQkI                     29974 NM_138932.1   A1CF
+## ritxUH.kuHlYqjozpE                     29974 NM_014576.2   A1CF
+## QpE5UiUgmJOJEkPXpc                     29974 NM_138933.1   A1CF
+##                    PROTEIN_PRODUCT     PROBE_ID PROBE_TYPE PROBE_START
+## Ku8QhfS0n_hIOABXuE     NP_877439.2 ILMN_1762337          S        2725
+## fqPEquJRRlSVSfL.8A     NP_570602.2 ILMN_2055271          S        3151
+## ckiehnugOno9d7vf1Q     NP_570602.2 ILMN_1736007          S        2512
+## x57Vw5B5Fbt5JUnQkI     NP_620310.1 ILMN_2383229          A        1826
+## ritxUH.kuHlYqjozpE     NP_055391.2 ILMN_1806310          A        1893
+## QpE5UiUgmJOJEkPXpc     NP_620311.1 ILMN_1779670          I         278
+##                    CHROMOSOME PROBE_CHR_ORIENTATION PROBE_COORDINATES
+## Ku8QhfS0n_hIOABXuE          7                     - 20147187-20147236
+## fqPEquJRRlSVSfL.8A         19                     - 63548541-63548590
+## ckiehnugOno9d7vf1Q         19                     - 63549180-63549229
+## x57Vw5B5Fbt5JUnQkI         10                     - 52566586-52566635
+## ritxUH.kuHlYqjozpE         10                     - 52566495-52566544
+## QpE5UiUgmJOJEkPXpc         10                     - 52610479-52610528
+##                                                                                         DEFINITION
+## Ku8QhfS0n_hIOABXuE                          Homo sapiens putative binding protein 7a5 (7A5), mRNA.
+## fqPEquJRRlSVSfL.8A                               Homo sapiens alpha-1-B glycoprotein (A1BG), mRNA.
+## ckiehnugOno9d7vf1Q                               Homo sapiens alpha-1-B glycoprotein (A1BG), mRNA.
+## x57Vw5B5Fbt5JUnQkI Homo sapiens APOBEC1 complementation factor (A1CF), transcript variant 2, mRNA.
+## ritxUH.kuHlYqjozpE Homo sapiens APOBEC1 complementation factor (A1CF), transcript variant 1, mRNA.
+## QpE5UiUgmJOJEkPXpc Homo sapiens APOBEC1 complementation factor (A1CF), transcript variant 3, mRNA.
+##                                  nuID
+## Ku8QhfS0n_hIOABXuE Ku8QhfS0n_hIOABXuE
+## fqPEquJRRlSVSfL.8A fqPEquJRRlSVSfL.8A
+## ckiehnugOno9d7vf1Q ckiehnugOno9d7vf1Q
+## x57Vw5B5Fbt5JUnQkI x57Vw5B5Fbt5JUnQkI
+## ritxUH.kuHlYqjozpE ritxUH.kuHlYqjozpE
+## QpE5UiUgmJOJEkPXpc QpE5UiUgmJOJEkPXpc
+</code></pre>
+
+<h2>6. Save updated raw ExpressionSet eset_raw</h2>
+
+<pre><code class="r"># Save updated raw ExpressionSet eset_raw
+save(eset_raw, file = paste(out_dir, &quot;/&quot;, project_name, &quot;.eset_raw.RData&quot;, sep = &quot;&quot;))
+</code></pre>
+
+<h2>7. Write data files to out_dir for eset_raw</h2>
+
+<pre><code class="r"># Write data files to out_dir for eset_raw
+write_expression_files(eset = eset_raw, outfile = paste(out_dir, &quot;/&quot;, project_name, 
+    &quot;.eset_raw&quot;, sep = &quot;&quot;))
+</code></pre>
+
+<pre><code>##  Writing probe exprs matrix [ /media/D/expression/GAP_Expression/GAP_lumi_processing_18_01_2014/GAP.eset_raw.exprs_matrix.txt ] 
+
+##  Writing probe se.exprs matrix [ /media/D/expression/GAP_Expression/GAP_lumi_processing_18_01_2014/GAP.eset_raw.se.exprs_matrix.txt ] 
+
+##  Writing probe detection matrix [ /media/D/expression/GAP_Expression/GAP_lumi_processing_18_01_2014/GAP.eset_raw.detection_matrix.txt ] 
+
+##  Writing probe beadNum matrix [ /media/D/expression/GAP_Expression/GAP_lumi_processing_18_01_2014/GAP.eset_raw.beadNum_matrix.txt ] 
+
+##  Writing probe PCA matrix [ /media/D/expression/GAP_Expression/GAP_lumi_processing_18_01_2014/GAP.eset_raw.pca_matrix.txt ] 
+
+##  Writing pData slot of eset and adding PCA data to [ /media/D/expression/GAP_Expression/GAP_lumi_processing_18_01_2014/GAP.eset_raw.pData.txt ] 
+
+##  Writing fData slot of eset [ /media/D/expression/GAP_Expression/GAP_lumi_processing_18_01_2014/GAP.eset_raw.fData.txt ] 
+</code></pre>
+
+<h2>8. Basic QC plots on eset_raw</h2>
+
+<pre><code class="r">gx_qc_plots_lumi_2(eset_raw)
+</code></pre>
+
+<pre><code>##  starting qc plots 
+
+##  setting up data for qc plots 
+
+##  get pheno data 
+
+##  basic colours 
+
+##  batch pheno data 
+
+##  expression matrix and IAC 
+
+##  fundamentalNetworkConcepts 
+
+##  flashClust 
+
+##  beging plotting boxplot 
+</code></pre>
+
+<p><img src="figure/basicQCplots_eset_raw1.pdf" alt="plot of chunk basicQCplots_eset_raw"/> </p>
+
+<pre><code>##  beging plotting density 
+</code></pre>
+
+<p><img src="figure/basicQCplots_eset_raw2.pdf" alt="plot of chunk basicQCplots_eset_raw"/> </p>
+
+<pre><code>##  beging plotting cv 
+</code></pre>
+
+<p><img src="figure/basicQCplots_eset_raw3.pdf" alt="plot of chunk basicQCplots_eset_raw"/> </p>
+
+<pre><code>##  beging plotting outlier 
+</code></pre>
+
+<p><img src="figure/basicQCplots_eset_raw4.pdf" alt="plot of chunk basicQCplots_eset_raw"/> </p>
+
+<pre><code>##  beging plotting sampleTree 
+</code></pre>
+
+<p><img src="figure/basicQCplots_eset_raw5.pdf" alt="plot of chunk basicQCplots_eset_raw"/> </p>
+
+<pre><code>##  begin PCA plots 
+</code></pre>
+
+<p><img src="figure/basicQCplots_eset_raw6.pdf" alt="plot of chunk basicQCplots_eset_raw"/> <img src="figure/basicQCplots_eset_raw7.pdf" alt="plot of chunk basicQCplots_eset_raw"/> <img src="figure/basicQCplots_eset_raw8.pdf" alt="plot of chunk basicQCplots_eset_raw"/> <img src="figure/basicQCplots_eset_raw9.pdf" alt="plot of chunk basicQCplots_eset_raw"/> <img src="figure/basicQCplots_eset_raw10.pdf" alt="plot of chunk basicQCplots_eset_raw"/> </p>
+
+<pre><code>##  begin looping through batch variable PCA plots  tech.Sentrix.Barcode 
+</code></pre>
+
+<p><img src="figure/basicQCplots_eset_raw11.pdf" alt="plot of chunk basicQCplots_eset_raw"/> </p>
+
+<pre><code>##  begin looping through batch variable PCA plots  tech.SampleSection 
+</code></pre>
+
+<p><img src="figure/basicQCplots_eset_raw12.pdf" alt="plot of chunk basicQCplots_eset_raw"/> </p>
+
+<pre><code>##  begin looping through batch variable PCA plots  tech.Date_out 
+</code></pre>
+
+<p><img src="figure/basicQCplots_eset_raw13.pdf" alt="plot of chunk basicQCplots_eset_raw"/> </p>
+
+<pre><code>##  begin looping through batch variable PCA plots  tech.Date_extraction 
+</code></pre>
+
+<p><img src="figure/basicQCplots_eset_raw14.pdf" alt="plot of chunk basicQCplots_eset_raw"/> </p>
+
+<pre><code>##  begin looping through batch variable PCA plots  tech.Date_Dilutionand_Amplification 
+</code></pre>
+
+<p><img src="figure/basicQCplots_eset_raw15.pdf" alt="plot of chunk basicQCplots_eset_raw"/> </p>
+
+<pre><code>##  begin looping through batch variable PCA plots  tech.Date_cRNApurification 
+</code></pre>
+
+<p><img src="figure/basicQCplots_eset_raw16.pdf" alt="plot of chunk basicQCplots_eset_raw"/> </p>
+
+<pre><code>##  begin looping through batch variable PCA plots  tech.Date_Quantitation_by_RiboGreen 
+</code></pre>
+
+<p><img src="figure/basicQCplots_eset_raw17.pdf" alt="plot of chunk basicQCplots_eset_raw"/> </p>
+
+<pre><code>##  begin looping through batch variable PCA plots  tech.Date_labelled_cRNA 
+</code></pre>
+
+<p><img src="figure/basicQCplots_eset_raw18.pdf" alt="plot of chunk basicQCplots_eset_raw"/> </p>
+
+<pre><code>##  begin looping through batch variable PCA plots  tech.Date_Hybridization_for_15_hours 
+</code></pre>
+
+<p><img src="figure/basicQCplots_eset_raw19.pdf" alt="plot of chunk basicQCplots_eset_raw"/> </p>
+
+<pre><code>##  begin looping through batch variable PCA plots  tech.Date_Washing_and_scanning 
+</code></pre>
+
+<p><img src="figure/basicQCplots_eset_raw20.pdf" alt="plot of chunk basicQCplots_eset_raw"/> </p>
+
+<pre><code>##  begin looping through batch variable PCA plots  tech.Conc_Nanodrop 
+</code></pre>
+
+<p><img src="figure/basicQCplots_eset_raw21.pdf" alt="plot of chunk basicQCplots_eset_raw"/> </p>
+
+<pre><code>##  begin looping through batch variable PCA plots  tech.labelled_cRNA_Yield 
+</code></pre>
+
+<p><img src="figure/basicQCplots_eset_raw22.pdf" alt="plot of chunk basicQCplots_eset_raw"/> </p>
+
+<pre><code>##  begin looping through batch variable PCA plots  tech.concentration_of_labelled_cRNA 
+</code></pre>
+
+<p><img src="figure/basicQCplots_eset_raw23.pdf" alt="plot of chunk basicQCplots_eset_raw"/> </p>
+
+<pre><code>##  begin plotDendroAndColors and  heatmap.2 plots 
+</code></pre>
+
+<p><img src="figure/basicQCplots_eset_raw24.pdf" alt="plot of chunk basicQCplots_eset_raw"/> <img src="figure/basicQCplots_eset_raw25.pdf" alt="plot of chunk basicQCplots_eset_raw"/> <img src="figure/basicQCplots_eset_raw26.pdf" alt="plot of chunk basicQCplots_eset_raw"/> </p>
+
+<pre><code>##  begin SampleNetwork plots 
+</code></pre>
+
+<p><img src="figure/basicQCplots_eset_raw27.pdf" alt="plot of chunk basicQCplots_eset_raw"/> </p>
+
+<h2>9. SampleNetwork on eset_raw for all samples as a first pass</h2>
+
+<pre><code class="r">datExprs &lt;- exprs(eset_raw)
+samle_names &lt;- sampleNames(eset_raw)
+IAC = cor(datExprs, method = &quot;p&quot;, use = &quot;p&quot;)
+diag(IAC) = 0
+A.IAC = ((1 + IAC)/2)^2  ## ADJACENCY MATRIX
+# fundamentalNetworkConcepts
+FNC = fundamentalNetworkConcepts(A.IAC)  ## WGCNA
+K2 = FNC$ScaledConnectivity
+Z.K = round((K2 - mean(K2))/sd(K2), 3)
+Z.C = round((FNC$ClusterCoef - mean(FNC$ClusterCoef))/sd(FNC$ClusterCoef), 3)
+# cor K,C
+rho &lt;- signif(cor.test(Z.K, Z.C, method = &quot;s&quot;)$estimate, 2)
+rho_pvalue &lt;- signif(cor.test(Z.K, Z.C, method = &quot;s&quot;)$p.value, 2)
+# Z.K_outliers
+Z.K_outliers &lt;- Z.K &lt; -iac_sd_thrs
+Z.K_outliers &lt;- names(Z.K_outliers[Z.K_outliers == TRUE])
+n_outliers &lt;- length(Z.K_outliers)
+mean_IAC &lt;- signif(mean(IAC[upper.tri(IAC)]), 2)
+min_Z.K &lt;- min(Z.K)
+cat(&quot; Number of Z.K outliers=[&quot;, n_outliers, &quot;]&quot;, &quot;\r&quot;, &quot;\n&quot;)
+</code></pre>
+
+<pre><code>##  Number of Z.K outliers=[ 22 ] 
+</code></pre>
+
+<pre><code class="r">cat(&quot; mean_IAC=[&quot;, mean_IAC, &quot;]&quot;, &quot;\r&quot;, &quot;\n&quot;)
+</code></pre>
+
+<pre><code>##  mean_IAC=[ 0.93 ] 
+</code></pre>
+
+<pre><code class="r">cat(&quot; cor(Z.k,Z.C)=[&quot;, rho, &quot;] P=[&quot;, rho_pvalue, &quot;]&quot;, &quot;\r&quot;, &quot;\n&quot;)
+</code></pre>
+
+<pre><code>##  cor(Z.k,Z.C)=[ 0.29 ] P=[ 7.2e-13 ] 
+</code></pre>
+
+<pre><code class="r"># print chip ids
+Z.K_outliers
+</code></pre>
+
+<pre><code>##  [1] &quot;9020374071_I&quot; &quot;9020374072_F&quot; &quot;9031356054_A&quot; &quot;9031356100_H&quot;
+##  [5] &quot;9031356100_K&quot; &quot;9216457012_A&quot; &quot;9216457023_A&quot; &quot;9216457023_I&quot;
+##  [9] &quot;9216457029_K&quot; &quot;9216457032_J&quot; &quot;9216457033_L&quot; &quot;9234921070_L&quot;
+## [13] &quot;9234921082_J&quot; &quot;9234921083_J&quot; &quot;9234921100_A&quot; &quot;9234921100_E&quot;
+## [17] &quot;9235792061_J&quot; &quot;9235792095_J&quot; &quot;9249896091_B&quot; &quot;9249896091_C&quot;
+## [21] &quot;9249907011_A&quot; &quot;9249907031_F&quot;
+</code></pre>
+
+<pre><code class="r"># get these bad samples from pData and update pdata to include these metrics
+pData(eset_raw)$Z.K_eset_raw &lt;- Z.K
+pData(eset_raw)$Z.C_eset_raw &lt;- Z.C
+pData(eset_raw)$cor_Z.K.Z.C_eset_raw &lt;- rho
+pData(eset_raw)$cor_p_Z.K.Z.C_eset_ra &lt;- rho_pvalue
+# take a look at these outliers
+samples_out &lt;- pData(eset_raw[, Z.K_outliers])
+head(samples_out)
+</code></pre>
+
+<pre><code>##                  sampleID     SEX  GROUPS TISSUE PHENOTYPE Study_ID
+## 9020374071_I 9020374071_I UNKNOWN CONTROL  BLOOD   CONTROL   GAP932
+## 9020374072_F 9020374072_F    MALE    CASE  BLOOD      CASE  SGAP415
+## 9031356054_A 9031356054_A  FEMALE CONTROL  BLOOD   CONTROL   GAP578
+## 9031356100_H 9031356100_H    MALE CONTROL  BLOOD   CONTROL  SGAP406
+## 9031356100_K 9031356100_K  FEMALE UNKNOWN  BLOOD   UNKNOWN   GAP949
+## 9216457012_A 9216457012_A    MALE    CASE  BLOOD      CASE  GAP651L
+##              Study_ID_Count GROUPS_ORIGINAL tech.Sentrix.Barcode
+## 9020374071_I              1        baseline           9020374071
+## 9020374072_F              1        baseline           9020374072
+## 9031356054_A              1        baseline           9031356054
+## 9031356100_H              1        baseline           9031356100
+## 9031356100_K              1 MotherofProband           9031356100
+## 9216457012_A              1      12FollowUp           9216457012
+##              tech.SampleSection tech.Batch tech.Date_out
+## 9020374071_I                  I          1    22/05/2013
+## 9020374072_F                  F          1    21/05/2013
+## 9031356054_A                  A          1    25/06/2013
+## 9031356100_H                  H          1    21/05/2013
+## 9031356100_K                  K          1    22/05/2013
+## 9216457012_A                  A          1    28/05/2013
+##              tech.Date_extraction tech.person tech.Conc_Nanodrop
+## 9020374071_I           22/05/2013           2              66.52
+## 9020374072_F           22/05/2013           1             204.10
+## 9031356054_A           26/06/2013           3              23.00
+## 9031356100_H           22/05/2013           1             124.83
+## 9031356100_K           23/05/2013           2             439.09
+## 9216457012_A           29/05/2013           2              43.29
+##              tech.Date_Dilutionand_Amplification
+## 9020374071_I                          16/07/2013
+## 9020374072_F                          16/07/2013
+## 9031356054_A                          24/07/2013
+## 9031356100_H                          16/07/2013
+## 9031356100_K                          16/07/2013
+## 9216457012_A                          19/07/2013
+##              tech.Date_cRNApurification
+## 9020374071_I                 17/07/2013
+## 9020374072_F                 17/07/2013
+## 9031356054_A                 25/07/2013
+## 9031356100_H                 17/07/2013
+## 9031356100_K                 17/07/2013
+## 9216457012_A                 20/07/2013
+##              tech.Date_Quantitation_by_RiboGreen
+## 9020374071_I                          23/07/2013
+## 9020374072_F                          23/07/2013
+## 9031356054_A                          30/07/2013
+## 9031356100_H                          23/07/2013
+## 9031356100_K                          23/07/2013
+## 9216457012_A                          23/07/2013
+##              tech.Eluted_Total_labelled_cRNA tech.labelled_cRNA_Yield
+## 9020374071_I                              40                    23060
+## 9020374072_F                              40                    27554
+## 9031356054_A                              40                    16584
+## 9031356100_H                              40                    27428
+## 9031356100_K                              40                    48132
+## 9216457012_A                              40                     6107
+##              tech.concentration_of_labelled_cRNA tech.Date_labelled_cRNA
+## 9020374071_I                               576.5              25/07/2013
+## 9020374072_F                               688.8              25/07/2013
+## 9031356054_A                               414.6              05/08/2013
+## 9031356100_H                               685.7              25/07/2013
+## 9031356100_K                              1203.3              25/07/2013
+## 9216457012_A                               152.7              24/07/2013
+##              tech.Date_Hybridization_for_15_hours
+## 9020374071_I                           25/07/2013
+## 9020374072_F                           25/07/2013
+## 9031356054_A                           05/08/2013
+## 9031356100_H                           25/07/2013
+## 9031356100_K                           25/07/2013
+## 9216457012_A                           24/07/2013
+##              tech.Date_Washing_and_scanning Index Sample.Group
+## 9020374071_I                     26/07/2013    32 9020374071_I
+## 9020374072_F                     26/07/2013    41 9020374072_F
+## 9031356054_A                     06/08/2013    69 9031356054_A
+## 9031356100_H                     26/07/2013   142 9031356100_H
+## 9031356100_K                     26/07/2013   145 9031356100_K
+## 9216457012_A                     25/07/2013   171 9216457012_A
+##              Sentrix.Barcode Sample.Section Detected.Genes..0.01.
+## 9020374071_I       9.020e+09              I                  5742
+## 9020374072_F       9.020e+09              F                  4814
+## 9031356054_A       9.031e+09              A                  5567
+## 9031356100_H       9.031e+09              H                  6593
+## 9031356100_K       9.031e+09              K                  5959
+## 9216457012_A       9.216e+09              A                 10208
+##              Detected.Genes..0.05. Signal.Average Signal.P05 Signal.P25
+## 9020374071_I                 10288            115         73         77
+## 9020374072_F                  9224            102         69         72
+## 9031356054_A                  9545            118         73         76
+## 9031356100_H                  9810            108         71         74
+## 9031356100_K                  9285            109         72         75
+## 9216457012_A                 14216            306        103        111
+##              Signal.P50 Signal.P75 Signal.P95 BIOTIN CY3_HYB HOUSEKEEPING
+## 9020374071_I         80         86        185   7029    3702         1730
+## 9020374072_F         75         80        143   6928    3438         1429
+## 9031356054_A         79         84        165   7167    3774         2506
+## 9031356100_H         77         81        148   6512    3463         1429
+## 9031356100_K         78         83        141   6797    3441         1596
+## 9216457012_A        120        173        842   7138    3664         6314
+##              LABELING LOW_STRINGENCY_HYB NEGATIVE..background. Noise
+## 9020374071_I     76.6               3734                  77.7   6.6
+## 9020374072_F     70.8               4048                  73.4   5.2
+## 9031356054_A     78.7               3623                  77.3   7.1
+## 9031356100_H     69.3               3433                  74.8   3.2
+## 9031356100_K     72.9               3402                  75.9   4.1
+## 9216457012_A    107.5               3845                 111.0   9.2
+##              Z.K_eset_raw Z.C_eset_raw cor_Z.K.Z.C_eset_raw
+## 9020374071_I       -2.533       -0.203                 0.29
+## 9020374072_F       -3.314       -0.391                 0.29
+## 9031356054_A       -5.737       -2.536                 0.29
+## 9031356100_H       -3.045        0.110                 0.29
+## 9031356100_K       -4.800       -0.513                 0.29
+## 9216457012_A       -2.197       -1.348                 0.29
+##              cor_p_Z.K.Z.C_eset_ra
+## 9020374071_I               7.2e-13
+## 9020374072_F               7.2e-13
+## 9031356054_A               7.2e-13
+## 9031356100_H               7.2e-13
+## 9031356100_K               7.2e-13
+## 9216457012_A               7.2e-13
+</code></pre>
+
+<pre><code class="r">table(samples_out$GROUPS)
+</code></pre>
+
+<pre><code>## 
+##    CASE CONTROL UNKNOWN 
+##      14       7       1
+</code></pre>
+
+<pre><code class="r">table(samples_out$PHENOTYPE)
+</code></pre>
+
+<pre><code>## 
+##    CASE CONTROL UNKNOWN 
+##      14       7       1
+</code></pre>
+
+<pre><code class="r">table(samples_out$SEX)
+</code></pre>
+
+<pre><code>## 
+##  FEMALE    MALE UNKNOWN 
+##       7      12       3
+</code></pre>
+
+<pre><code class="r">table(samples_out$tech.Sentrix.Barcode)
+</code></pre>
+
+<pre><code>## 
+## 9020374071 9020374072 9031356054 9031356100 9216457012 9216457023 
+##          1          1          1          2          1          2 
+## 9216457029 9216457032 9216457033 9234921070 9234921082 9234921083 
+##          1          1          1          1          1          1 
+## 9234921100 9235792061 9235792095 9249896091 9249907011 9249907031 
+##          2          1          1          2          1          1
+</code></pre>
+
+<pre><code class="r"># Save updated raw ExpressionSet eset_raw
+eset_raw_Z.K_outliers &lt;- Z.K_outliers
+save(eset_raw_Z.K_outliers, file = paste(out_dir, &quot;/&quot;, project_name, &quot;.eset_raw_Z.K_outliers.RData&quot;, 
+    sep = &quot;&quot;))
+save(eset_raw, file = paste(out_dir, &quot;/&quot;, project_name, &quot;.eset_raw.RData&quot;, sep = &quot;&quot;))
+# Write data files to out_dir for eset_raw
+write_expression_files(eset = eset_raw, outfile = paste(out_dir, &quot;/&quot;, project_name, 
+    &quot;.eset_raw&quot;, sep = &quot;&quot;))
+</code></pre>
+
+<pre><code>##  Writing probe exprs matrix [ /media/D/expression/GAP_Expression/GAP_lumi_processing_18_01_2014/GAP.eset_raw.exprs_matrix.txt ] 
+
+##  Writing probe se.exprs matrix [ /media/D/expression/GAP_Expression/GAP_lumi_processing_18_01_2014/GAP.eset_raw.se.exprs_matrix.txt ] 
+
+##  Writing probe detection matrix [ /media/D/expression/GAP_Expression/GAP_lumi_processing_18_01_2014/GAP.eset_raw.detection_matrix.txt ] 
+
+##  Writing probe beadNum matrix [ /media/D/expression/GAP_Expression/GAP_lumi_processing_18_01_2014/GAP.eset_raw.beadNum_matrix.txt ] 
+
+##  Writing probe PCA matrix [ /media/D/expression/GAP_Expression/GAP_lumi_processing_18_01_2014/GAP.eset_raw.pca_matrix.txt ] 
+
+##  Writing pData slot of eset and adding PCA data to [ /media/D/expression/GAP_Expression/GAP_lumi_processing_18_01_2014/GAP.eset_raw.pData.txt ] 
+
+##  Writing fData slot of eset [ /media/D/expression/GAP_Expression/GAP_lumi_processing_18_01_2014/GAP.eset_raw.fData.txt ] 
+</code></pre>
+
+</body>
+
+</html>
+
