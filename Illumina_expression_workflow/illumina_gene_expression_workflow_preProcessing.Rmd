@@ -1228,14 +1228,17 @@ outlier_stats[,1:8]
 
 # get pdata for outliers
 SampleNetWork_outliers <- pData(eset_bg_log2_rsn_0[,outlier_samples])
-SampleNetWork_outliers$Study_ID
+n_unique_study_id_outliers <- length(unique(SampleNetWork_outliers$Study_ID))
 
+# flag and save
+pData(eset_bg_log2_rsn_0)$SampleNetWork_outlier <- pData(eset_bg_log2_rsn_0)$sampleID %in% ISAoutliers$iac_outlier_samples
+save(eset_bg_log2_rsn_0, file=paste(out_dir,"/",project_name,".eset_bg_log2_rsn.RData",sep="")  , compress=T)
 ```
 
 *****
 
-SampleNetwork : Remove outlier samples 
-======================================
+Remove SampleNetWork outlier samples 
+=======================================
 ```{r remove_SampleNetwork_outliers, eval=TRUE}
 # remove outlier_samples
 eset_bg_log2_rsn <- removeSamples_eset_lumi(eset=eset_bg_log2_rsn_0,sampleRemove=outlier_samples)
@@ -1312,6 +1315,7 @@ sampleNetwork_plot_all_lumi(eset_bg_log2_rsn, colBy="chip");
 sampleNetwork_plot_all_lumi(eset_bg_log2_rsn, colBy="group");
 
 par(def.par)
+dev.off()
 ```
 
 
@@ -1367,6 +1371,7 @@ multivariate_model_terms <- paste(batch_var_names ,collapse="+")
 
 #########################
 # PC1 is run last 
+# START LINEAR REGRESSION 
 #for(pheno in c("PHENOTYPE","GROUPS","PC1") ) {
 for(pheno in c("PC1") ) {
   # make model for lm
@@ -1424,7 +1429,9 @@ if(min_anova_p <= 0.05) {
   sig_terms <- sig_anova_lm_data$terms
   sig_terms <- paste(sig_terms ,collapse=" + ")
   cat(" WARNING!: SIGNIFICANT ASSOCIATION BETWEEN [ ",pheno," ] ~ [",sig_terms," ]. R2=",lm_r2 ," [",most_sig_term,"] MIN_P=",min_anova_p,". YOU MAY WANT TO CORRECT FOR THIS BEFORE THE FINAL ANLYSIS ","\r","\n")
-  ## STEP find best terms
+  ########################
+  ## STEP find best terms#
+  ########################
   cat(" Finding a best model by AIC in a Stepwise Algorithm ","\r","\n" )
   step_lm_batch <- stepAIC(lm_batch,direction = "both")
   # summary step lm
@@ -1433,6 +1440,7 @@ if(min_anova_p <= 0.05) {
   summary_step_lm_batch$terms <- rownames(summary_step_lm_batch)
   # save summary step lm
   write.table(summary_step_lm_batch, file=paste(out_dir,"/",project_name,".eset_bg_log2_rsn.stepAIC_multivariate_model_batch_variables.csv",sep=""),row.names=FALSE,quote=FALSE, sep=",")
+  
   ## anova step #
   anova_step_lm_batch <- anova(step_lm_batch)
   anova_data <- as.data.frame(anova_step_lm_batch)
@@ -1468,6 +1476,9 @@ if(min_anova_p <= 0.05) {
   }
 
 ##
+anova_data
+
+paste(best_model)[3]
 ```
 
 Batch Correction using linear models
@@ -1696,18 +1707,8 @@ project_summary <- data.frame(
   n_outliers=length(outlier_samples),
   n_unique_study_id_outliers=n_unique_study_id_outliers,
   
-  n_good_samples=n_good_probes,
-  n_unique_study_id_good_samples=n_unique_study_id_good_samples,
-
-  
-  
-  raw_RData=paste(out_dir,"/",project_name,".eset_raw.RData",sep=""),
-  bg_corrected_RData=paste(out_dir,"/",project_name,".eset_bg.RData",sep=""),
-  bg_log2_rsn_0_RData=paste(out_dir,"/",project_name,".eset_bg_log2_rsn_0.RData",sep=""),
-  bg_log2_rsn_RData=paste(out_dir,"/",project_name,".eset_bg_log2_rsn.RData",sep=""),
-  bg_log2_rsn_adjusted_RData=paste(out_dir,"/",project_name,".eset_bg_log2_rsn_adj.RData",sep=""),
-  final_RData=paste(out_dir,"/",project_name,".eset_final.RData",sep="")
-
+  n_good_samples=dim(eset_bg_log2_rsn)[1],
+  n_unique_study_id_good_samples=length(unique(pData(eset_bg_log2_rsn)$Study_ID)),
 
 
   )
@@ -1742,7 +1743,7 @@ system( paste(" mkdir ",out_dir,"/batch_regressions/",sep=""));
 
 cat(" Cleaning up data directories","\r","\n")
 # XIST
-system( paste(" mv *.XIST* ",out_dir,"/XIST/",sep=""))
+system( paste(" mv *.XIST* ",out_dir,"/XIST_Gender_checks/",sep=""))
 
 # detected probes
 system( paste(" mv *.detected_probes* ",out_dir,"/detected_probes/",sep=""))
@@ -1754,10 +1755,10 @@ system( paste(" mv *ampleNetwork* ",out_dir,"/SampleNetwork/",sep=""))
 system( paste(" mv *multivariate* ",out_dir,"/batch_regressions/",sep=""))
 
 # eset_****
-system( paste(" mv *.eset_raw* ",out_dir,"/eset_raw/",sep=""))
-system( paste(" mv *.eset_bg* ",out_dir,"/eset_bg/",sep=""))
+system( paste(" mv *.eset_raw.* ",out_dir,"/eset_raw/",sep=""))
+system( paste(" mv *.eset_bg.* ",out_dir,"/eset_bg/",sep=""))
 system( paste(" mv *.eset_bg_log2_rsn* ",out_dir,"/eset_bg_log2_rsn/",sep=""))
-system( paste(" mv *.eset_final* ",out_dir,"/eset_final/",sep=""))
+system( paste(" mv *.eset_final.* ",out_dir,"/eset_final/",sep=""))
 
 ```
 
