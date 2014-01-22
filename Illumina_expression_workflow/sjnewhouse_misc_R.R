@@ -657,7 +657,7 @@ coloured_dendrogram_lumi <- function(eset){
   # plotDendroAndColors
   cat(" plotDendroAndColors","\r","\n")
   def.par <- par(no.readonly = TRUE)
-  par(mar=c(5.1, 16, 4, 2.1)) #bottom, left, top and right margins
+  par(mar=c(5.1, 20, 4, 2.1)) #bottom, left, top and right margins
   plotDendroAndColors(sampleTree,
                       groupLabels=names(datColors),
                       colors=datColors,
@@ -1093,8 +1093,8 @@ rho_pvalue <- signif(cor.test(Z.K,Z.C,method="s")$p.value,2)
 Z.K_outliers <- Z.K < -sd_thrs
 Z.K_outliers <- names(Z.K_outliers[Z.K_outliers==TRUE])
 n_outliers <- length(Z.K_outliers)
-mean_IAC <- mean(IAC[upper.tri(IAC)])
-min_Z.K <- min(Z.K)
+mean_IAC <- round(as.numeric(mean(IAC[upper.tri(IAC)])),2)
+min_Z.K <- round(as.numeric(min(Z.K)),2)
 cat(" Number of Z.K outliers [", n_outliers,"]","\r","\n")
 cat(" mean_IAC [", mean_IAC,"]","\r","\n")
 ## Data frame of .SampleNetwork_Stats.txt
@@ -1217,8 +1217,8 @@ cat(" Groups [",group_list,"]","\r","\n")
 	Z.K_outliers <- Z.K < -sd_thrs
 	Z.K_outliers <- names(Z.K_outliers[Z.K_outliers==TRUE])
 	n_outliers <- length(Z.K_outliers)
-	mean_IAC <- mean(IAC[upper.tri(IAC)])
-	min_Z.K <- min(Z.K)
+	mean_IAC <- round(as.numeric(mean(IAC[upper.tri(IAC)])),2)
+	min_Z.K <- round(as.numeric(min(Z.K)),2)
 	cat(" Number of Z.K outliers [", n_outliers,"]","\r","\n")
 	cat(" mean_IAC [", mean_IAC,"]","\r","\n")
 	## Data frame of .SampleNetwork_Stats.txt
@@ -1310,10 +1310,6 @@ cat(" Groups [",group_list,"]","\r","\n")
 	      }
 }
 
-## test
-##debug( basic_sampleNetwork)
-## test <- basic_sampleNetwork(eset=eset_raw,col_by_chip="0",groups="byGroup",outfile=paste(out_dir,"/",project_name,".XXXXeset_raw",sep=""),sd_thrs=2)
-
 #################################
 ##  basic_sampleNetworkIterate ##
 #################################
@@ -1332,13 +1328,13 @@ basic_sampleNetworkIterate_summary <- matrix(ncol=length(basic_sampleNetworkIter
 out <- basic_sampleNetwork(eset,col_by_chip,groups,outfile=paste(outfile,".group.",mgroup,".round.",iteration,sep="" ))
 n_samp <-  length(sampleNames(eset))
 mgroup <- out$Group
-mean_IAC <- out$mean_IAC;
-min_Z.K <- out$min_Z.K;
+mean_IAC <- round(as.numeric(out$mean_IAC),2);
+min_Z.K <- round(as.numeric(out$min_Z.K),2);
 rho_pvalue <- out$rho_pvalue
-rho <- out$rho
-Z.K_outliers <- out$Z.K_outliers_list
+rho <- round(as.numeric(out$rho), 2)
+Z.K_outliers <- out$Z.K_outliers_list;
 Z.K_outliers_list <- paste(out$Z.K_outliers)
-Z.K_outliers_list <- strsplit(Z.K_outliers_list,";")[[1]]
+Z.K_outliers_list <- strsplit(Z.K_outliers_list,";")[[1]];
 outlier_running_count <- outlier_running_count + length(Z.K_outliers_list);
 iac_outlier_samples <- c(Z.K_outliers_list, iac_outlier_samples)
 res <- list(Group=mgroup,round=iteration,nSamp=n_samp,nOutlier=length(Z.K_outliers_list),mean_IAC=mean_IAC,min_Z.K=min_Z.K,KvC_rho=rho,KvC_rho_pvalue=rho_pvalue,Z.K_outliers=Z.K_outliers)
@@ -1349,21 +1345,23 @@ eset <- removeSamples_eset_lumi(eset,iac_outlier_samples)
 } else {
 eset <- eset;
 cat(" You have no outliers!","\r","\n") ;
-write.table(basic_sampleNetworkIterate_summary,file=paste(outfile,".basic_sampleNetworkIterate_summary.csv",sep=""),sep=",",row.names=FALSE,quote=FALSE)
+write.table(basic_sampleNetworkIterate_summary,file=paste(outfile,".basic_SampleNetworkIterate_summary.csv",sep=""),sep=",",row.names=FALSE,quote=FALSE)
 }
 ##
 n_samp_left <- length(sampleNames(eset))
 cat(" Number of outliers after round [",iteration,"] = [",outlier_running_count,"].  Percentage [",round(outlier_running_count/n_samp,3),"]. Mean IAC [",mean_IAC,"]. Min Z.K [" ,min_Z.K,"]. KvC [",rho,"] [",rho_pvalue ,"] N SAMPLE LEFT [",n_samp_left,"]","\r","\n")
 iteration <- iteration + 1;
-## keep going until Z.K > -2
-while(iteration >= 1 &  round( as.numeric( min_Z.K ),3 )  < -sd_thrs) {
+## keep going until Z.K > -2 or cor(K,C) > 0.98. Added this to prevent LOTS of samples being removed
+while(iteration >= 1  &  ( as.numeric( abs(rho) )  < 0.98  )  ) {
+# while(iteration >= 1  &  ( as.numeric( min_Z.K )  < -sd_thrs  ) | ( as.numeric( abs(rho) )  < 0.98  )  ) {
+  # while(iteration >= 1 &  ( as.numeric( min_Z.K )  <= -sd_thrs  ) ) { 
 n_samp_start <- length(sampleNames(eset))
 out <- basic_sampleNetwork(eset,col_by_chip,groups,outfile=paste(outfile,".round.",iteration,sep="" ))
-mean_IAC <- out$mean_IAC;
-min_Z.K <- out$min_Z.K;
+mean_IAC <- round(as.numeric(out$mean_IAC),2);
+min_Z.K <- round(as.numeric(out$min_Z.K),2);
 Z.K_outliers <- out$Z.K_outliers
 rho_pvalue <- out$rho_pvalue
-rho <- out$rho
+rho <- round(as.numeric(out$rho),2)
 Z.K_outliers_list <- paste(out$Z.K_outliers)
 Z.K_outliers_list <- strsplit(Z.K_outliers_list,";")[[1]]
 outlier_running_count <- outlier_running_count + length(Z.K_outliers_list);
@@ -1465,17 +1463,19 @@ cat(" Number of outliers after round [",iteration,"] = [",outlier_running_count,
 iteration <- iteration + 1; ## increment iteration number
 
 ## keep going until Z.K > -2 ##
-while(iteration >= 1 &  round( as.numeric( min_Z.K ),3 )  < -sd_thrs) {
+while(iteration >= 1  &  ( as.numeric( abs(rho) )  < 0.98  )  ) {
+# while(iteration >= 1  &  ( as.numeric( min_Z.K )  < -sd_thrs  ) | ( as.numeric( abs(rho) )  < 0.98  )  ) {
+# while(iteration >= 1 &  ( as.numeric( min_Z.K )  <= -sd_thrs  ) ) {
 
-n_samp_start <- length(sampleNames(eset))
+    n_samp_start <- length(sampleNames(eset))
 
 out <- basic_sampleNetwork(group_eset,col_by_chip=0,groups="byGroup",outfile=paste(outfile,".group.",mgroup,".round.",iteration,sep="" ))
 
-mean_IAC <- out$mean_IAC;
-min_Z.K <- out$min_Z.K;
+mean_IAC <- round(as.numeric(out$mean_IAC),2);
+min_Z.K <- round(as.numeric(out$min_Z.K),2);
 Z.K_outliers <- out$Z.K_outliers
 rho_pvalue <- out$rho_pvalue
-rho <- out$rho
+rho <- round(as.numeric(out$rho),2)
 
 Z.K_outliers_list <- paste(out$Z.K_outliers)
 
@@ -1514,7 +1514,7 @@ iac_outlier_samples_df <- as.data.frame(outlier_samples)
 
 colnames(iac_outlier_samples_df) <- c("Sample.ID")
 
-write.table(iac_outlier_samples_df,file=paste(outfile,".group.iac_outlier_samples.txt",sep=""),sep="\t",row.names=FALSE,quote=FALSE)
+write.table(iac_outlier_samples_df,file=paste(outfile,".group.iac_SampleNetwork_outlier_samples.txt",sep=""),sep="\t",row.names=FALSE,quote=FALSE)
 
 outlier_samples <- list(iac_outlier_samples=outlier_samples)
 
