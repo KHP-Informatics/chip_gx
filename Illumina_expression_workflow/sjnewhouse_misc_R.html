@@ -1,0 +1,2392 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+<title>sjnewhouse_misc_R.R</title>
+
+<style type="text/css">
+body, td {
+   font-family: sans-serif;
+   background-color: white;
+   font-size: 12px;
+   margin: 8px;
+}
+
+tt, code, pre {
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+}
+
+h1 { 
+   font-size:2.2em; 
+}
+
+h2 { 
+   font-size:1.8em; 
+}
+
+h3 { 
+   font-size:1.4em; 
+}
+
+h4 { 
+   font-size:1.0em; 
+}
+
+h5 { 
+   font-size:0.9em; 
+}
+
+h6 { 
+   font-size:0.8em; 
+}
+
+a:visited {
+   color: rgb(50%, 0%, 50%);
+}
+
+pre {	
+   margin-top: 0;
+   max-width: 95%;
+   border: 1px solid #ccc;
+   white-space: pre-wrap;
+}
+
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code.r, code.cpp {
+   background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: none;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+   border-top-style: dotted;
+   border-top-color: #999999;
+}
+
+@media print {
+   * { 
+      background: transparent !important; 
+      color: black !important; 
+      filter:none !important; 
+      -ms-filter: none !important; 
+   }
+
+   body { 
+      font-size:12pt; 
+      max-width:100%; 
+   }
+       
+   a, a:visited { 
+      text-decoration: underline; 
+   }
+
+   hr { 
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote { 
+      padding-right: 1em; 
+      page-break-inside: avoid; 
+   }
+
+   tr, img { 
+      page-break-inside: avoid; 
+   }
+
+   img { 
+      max-width: 100% !important; 
+   }
+
+   @page :left { 
+      margin: 15mm 20mm 15mm 10mm; 
+   }
+     
+   @page :right { 
+      margin: 15mm 10mm 15mm 20mm; 
+   }
+
+   p, h2, h3 { 
+      orphans: 3; widows: 3; 
+   }
+
+   h2, h3 { 
+      page-break-after: avoid; 
+   }
+}
+
+</style>
+
+<!-- Styles for R syntax highlighter -->
+<style type="text/css">
+   pre .operator,
+   pre .paren {
+     color: rgb(104, 118, 135)
+   }
+
+   pre .literal {
+     color: rgb(88, 72, 246)
+   }
+
+   pre .number {
+     color: rgb(0, 0, 205);
+   }
+
+   pre .comment {
+     color: rgb(76, 136, 107);
+   }
+
+   pre .keyword {
+     color: rgb(0, 0, 255);
+   }
+
+   pre .identifier {
+     color: rgb(0, 0, 0);
+   }
+
+   pre .string {
+     color: rgb(3, 106, 7);
+   }
+</style>
+
+<!-- R syntax highlighter -->
+<script type="text/javascript">
+var hljs=new function(){function m(p){return p.replace(/&/gm,"&amp;").replace(/</gm,"&lt;")}function f(r,q,p){return RegExp(q,"m"+(r.cI?"i":"")+(p?"g":""))}function b(r){for(var p=0;p<r.childNodes.length;p++){var q=r.childNodes[p];if(q.nodeName=="CODE"){return q}if(!(q.nodeType==3&&q.nodeValue.match(/\s+/))){break}}}function h(t,s){var p="";for(var r=0;r<t.childNodes.length;r++){if(t.childNodes[r].nodeType==3){var q=t.childNodes[r].nodeValue;if(s){q=q.replace(/\n/g,"")}p+=q}else{if(t.childNodes[r].nodeName=="BR"){p+="\n"}else{p+=h(t.childNodes[r])}}}if(/MSIE [678]/.test(navigator.userAgent)){p=p.replace(/\r/g,"\n")}return p}function a(s){var r=s.className.split(/\s+/);r=r.concat(s.parentNode.className.split(/\s+/));for(var q=0;q<r.length;q++){var p=r[q].replace(/^language-/,"");if(e[p]){return p}}}function c(q){var p=[];(function(s,t){for(var r=0;r<s.childNodes.length;r++){if(s.childNodes[r].nodeType==3){t+=s.childNodes[r].nodeValue.length}else{if(s.childNodes[r].nodeName=="BR"){t+=1}else{if(s.childNodes[r].nodeType==1){p.push({event:"start",offset:t,node:s.childNodes[r]});t=arguments.callee(s.childNodes[r],t);p.push({event:"stop",offset:t,node:s.childNodes[r]})}}}}return t})(q,0);return p}function k(y,w,x){var q=0;var z="";var s=[];function u(){if(y.length&&w.length){if(y[0].offset!=w[0].offset){return(y[0].offset<w[0].offset)?y:w}else{return w[0].event=="start"?y:w}}else{return y.length?y:w}}function t(D){var A="<"+D.nodeName.toLowerCase();for(var B=0;B<D.attributes.length;B++){var C=D.attributes[B];A+=" "+C.nodeName.toLowerCase();if(C.value!==undefined&&C.value!==false&&C.value!==null){A+='="'+m(C.value)+'"'}}return A+">"}while(y.length||w.length){var v=u().splice(0,1)[0];z+=m(x.substr(q,v.offset-q));q=v.offset;if(v.event=="start"){z+=t(v.node);s.push(v.node)}else{if(v.event=="stop"){var p,r=s.length;do{r--;p=s[r];z+=("</"+p.nodeName.toLowerCase()+">")}while(p!=v.node);s.splice(r,1);while(r<s.length){z+=t(s[r]);r++}}}}return z+m(x.substr(q))}function j(){function q(x,y,v){if(x.compiled){return}var u;var s=[];if(x.k){x.lR=f(y,x.l||hljs.IR,true);for(var w in x.k){if(!x.k.hasOwnProperty(w)){continue}if(x.k[w] instanceof Object){u=x.k[w]}else{u=x.k;w="keyword"}for(var r in u){if(!u.hasOwnProperty(r)){continue}x.k[r]=[w,u[r]];s.push(r)}}}if(!v){if(x.bWK){x.b="\\b("+s.join("|")+")\\s"}x.bR=f(y,x.b?x.b:"\\B|\\b");if(!x.e&&!x.eW){x.e="\\B|\\b"}if(x.e){x.eR=f(y,x.e)}}if(x.i){x.iR=f(y,x.i)}if(x.r===undefined){x.r=1}if(!x.c){x.c=[]}x.compiled=true;for(var t=0;t<x.c.length;t++){if(x.c[t]=="self"){x.c[t]=x}q(x.c[t],y,false)}if(x.starts){q(x.starts,y,false)}}for(var p in e){if(!e.hasOwnProperty(p)){continue}q(e[p].dM,e[p],true)}}function d(B,C){if(!j.called){j();j.called=true}function q(r,M){for(var L=0;L<M.c.length;L++){if((M.c[L].bR.exec(r)||[null])[0]==r){return M.c[L]}}}function v(L,r){if(D[L].e&&D[L].eR.test(r)){return 1}if(D[L].eW){var M=v(L-1,r);return M?M+1:0}return 0}function w(r,L){return L.i&&L.iR.test(r)}function K(N,O){var M=[];for(var L=0;L<N.c.length;L++){M.push(N.c[L].b)}var r=D.length-1;do{if(D[r].e){M.push(D[r].e)}r--}while(D[r+1].eW);if(N.i){M.push(N.i)}return f(O,M.join("|"),true)}function p(M,L){var N=D[D.length-1];if(!N.t){N.t=K(N,E)}N.t.lastIndex=L;var r=N.t.exec(M);return r?[M.substr(L,r.index-L),r[0],false]:[M.substr(L),"",true]}function z(N,r){var L=E.cI?r[0].toLowerCase():r[0];var M=N.k[L];if(M&&M instanceof Array){return M}return false}function F(L,P){L=m(L);if(!P.k){return L}var r="";var O=0;P.lR.lastIndex=0;var M=P.lR.exec(L);while(M){r+=L.substr(O,M.index-O);var N=z(P,M);if(N){x+=N[1];r+='<span class="'+N[0]+'">'+M[0]+"</span>"}else{r+=M[0]}O=P.lR.lastIndex;M=P.lR.exec(L)}return r+L.substr(O,L.length-O)}function J(L,M){if(M.sL&&e[M.sL]){var r=d(M.sL,L);x+=r.keyword_count;return r.value}else{return F(L,M)}}function I(M,r){var L=M.cN?'<span class="'+M.cN+'">':"";if(M.rB){y+=L;M.buffer=""}else{if(M.eB){y+=m(r)+L;M.buffer=""}else{y+=L;M.buffer=r}}D.push(M);A+=M.r}function G(N,M,Q){var R=D[D.length-1];if(Q){y+=J(R.buffer+N,R);return false}var P=q(M,R);if(P){y+=J(R.buffer+N,R);I(P,M);return P.rB}var L=v(D.length-1,M);if(L){var O=R.cN?"</span>":"";if(R.rE){y+=J(R.buffer+N,R)+O}else{if(R.eE){y+=J(R.buffer+N,R)+O+m(M)}else{y+=J(R.buffer+N+M,R)+O}}while(L>1){O=D[D.length-2].cN?"</span>":"";y+=O;L--;D.length--}var r=D[D.length-1];D.length--;D[D.length-1].buffer="";if(r.starts){I(r.starts,"")}return R.rE}if(w(M,R)){throw"Illegal"}}var E=e[B];var D=[E.dM];var A=0;var x=0;var y="";try{var s,u=0;E.dM.buffer="";do{s=p(C,u);var t=G(s[0],s[1],s[2]);u+=s[0].length;if(!t){u+=s[1].length}}while(!s[2]);if(D.length>1){throw"Illegal"}return{r:A,keyword_count:x,value:y}}catch(H){if(H=="Illegal"){return{r:0,keyword_count:0,value:m(C)}}else{throw H}}}function g(t){var p={keyword_count:0,r:0,value:m(t)};var r=p;for(var q in e){if(!e.hasOwnProperty(q)){continue}var s=d(q,t);s.language=q;if(s.keyword_count+s.r>r.keyword_count+r.r){r=s}if(s.keyword_count+s.r>p.keyword_count+p.r){r=p;p=s}}if(r.language){p.second_best=r}return p}function i(r,q,p){if(q){r=r.replace(/^((<[^>]+>|\t)+)/gm,function(t,w,v,u){return w.replace(/\t/g,q)})}if(p){r=r.replace(/\n/g,"<br>")}return r}function n(t,w,r){var x=h(t,r);var v=a(t);var y,s;if(v){y=d(v,x)}else{return}var q=c(t);if(q.length){s=document.createElement("pre");s.innerHTML=y.value;y.value=k(q,c(s),x)}y.value=i(y.value,w,r);var u=t.className;if(!u.match("(\\s|^)(language-)?"+v+"(\\s|$)")){u=u?(u+" "+v):v}if(/MSIE [678]/.test(navigator.userAgent)&&t.tagName=="CODE"&&t.parentNode.tagName=="PRE"){s=t.parentNode;var p=document.createElement("div");p.innerHTML="<pre><code>"+y.value+"</code></pre>";t=p.firstChild.firstChild;p.firstChild.cN=s.cN;s.parentNode.replaceChild(p.firstChild,s)}else{t.innerHTML=y.value}t.className=u;t.result={language:v,kw:y.keyword_count,re:y.r};if(y.second_best){t.second_best={language:y.second_best.language,kw:y.second_best.keyword_count,re:y.second_best.r}}}function o(){if(o.called){return}o.called=true;var r=document.getElementsByTagName("pre");for(var p=0;p<r.length;p++){var q=b(r[p]);if(q){n(q,hljs.tabReplace)}}}function l(){if(window.addEventListener){window.addEventListener("DOMContentLoaded",o,false);window.addEventListener("load",o,false)}else{if(window.attachEvent){window.attachEvent("onload",o)}else{window.onload=o}}}var e={};this.LANGUAGES=e;this.highlight=d;this.highlightAuto=g;this.fixMarkup=i;this.highlightBlock=n;this.initHighlighting=o;this.initHighlightingOnLoad=l;this.IR="[a-zA-Z][a-zA-Z0-9_]*";this.UIR="[a-zA-Z_][a-zA-Z0-9_]*";this.NR="\\b\\d+(\\.\\d+)?";this.CNR="\\b(0[xX][a-fA-F0-9]+|(\\d+(\\.\\d*)?|\\.\\d+)([eE][-+]?\\d+)?)";this.BNR="\\b(0b[01]+)";this.RSR="!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|\\.|-|-=|/|/=|:|;|<|<<|<<=|<=|=|==|===|>|>=|>>|>>=|>>>|>>>=|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~";this.ER="(?![\\s\\S])";this.BE={b:"\\\\.",r:0};this.ASM={cN:"string",b:"'",e:"'",i:"\\n",c:[this.BE],r:0};this.QSM={cN:"string",b:'"',e:'"',i:"\\n",c:[this.BE],r:0};this.CLCM={cN:"comment",b:"//",e:"$"};this.CBLCLM={cN:"comment",b:"/\\*",e:"\\*/"};this.HCM={cN:"comment",b:"#",e:"$"};this.NM={cN:"number",b:this.NR,r:0};this.CNM={cN:"number",b:this.CNR,r:0};this.BNM={cN:"number",b:this.BNR,r:0};this.inherit=function(r,s){var p={};for(var q in r){p[q]=r[q]}if(s){for(var q in s){p[q]=s[q]}}return p}}();hljs.LANGUAGES.cpp=function(){var a={keyword:{"false":1,"int":1,"float":1,"while":1,"private":1,"char":1,"catch":1,"export":1,virtual:1,operator:2,sizeof:2,dynamic_cast:2,typedef:2,const_cast:2,"const":1,struct:1,"for":1,static_cast:2,union:1,namespace:1,unsigned:1,"long":1,"throw":1,"volatile":2,"static":1,"protected":1,bool:1,template:1,mutable:1,"if":1,"public":1,friend:2,"do":1,"return":1,"goto":1,auto:1,"void":2,"enum":1,"else":1,"break":1,"new":1,extern:1,using:1,"true":1,"class":1,asm:1,"case":1,typeid:1,"short":1,reinterpret_cast:2,"default":1,"double":1,register:1,explicit:1,signed:1,typename:1,"try":1,"this":1,"switch":1,"continue":1,wchar_t:1,inline:1,"delete":1,alignof:1,char16_t:1,char32_t:1,constexpr:1,decltype:1,noexcept:1,nullptr:1,static_assert:1,thread_local:1,restrict:1,_Bool:1,complex:1},built_in:{std:1,string:1,cin:1,cout:1,cerr:1,clog:1,stringstream:1,istringstream:1,ostringstream:1,auto_ptr:1,deque:1,list:1,queue:1,stack:1,vector:1,map:1,set:1,bitset:1,multiset:1,multimap:1,unordered_set:1,unordered_map:1,unordered_multiset:1,unordered_multimap:1,array:1,shared_ptr:1}};return{dM:{k:a,i:"</",c:[hljs.CLCM,hljs.CBLCLM,hljs.QSM,{cN:"string",b:"'\\\\?.",e:"'",i:"."},{cN:"number",b:"\\b(\\d+(\\.\\d*)?|\\.\\d+)(u|U|l|L|ul|UL|f|F)"},hljs.CNM,{cN:"preprocessor",b:"#",e:"$"},{cN:"stl_container",b:"\\b(deque|list|queue|stack|vector|map|set|bitset|multiset|multimap|unordered_map|unordered_set|unordered_multiset|unordered_multimap|array)\\s*<",e:">",k:a,r:10,c:["self"]}]}}}();hljs.LANGUAGES.r={dM:{c:[hljs.HCM,{cN:"number",b:"\\b0[xX][0-9a-fA-F]+[Li]?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+(?:[eE][+\\-]?\\d*)?L\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+\\.(?!\\d)(?:i\\b)?",e:hljs.IMMEDIATE_RE,r:1},{cN:"number",b:"\\b\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\.\\d+(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"keyword",b:"(?:tryCatch|library|setGeneric|setGroupGeneric)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\.",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\d+(?![\\w.])",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\b(?:function)",e:hljs.IMMEDIATE_RE,r:2},{cN:"keyword",b:"(?:if|in|break|next|repeat|else|for|return|switch|while|try|stop|warning|require|attach|detach|source|setMethod|setClass)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"literal",b:"(?:NA|NA_integer_|NA_real_|NA_character_|NA_complex_)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"literal",b:"(?:NULL|TRUE|FALSE|T|F|Inf|NaN)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"identifier",b:"[a-zA-Z.][a-zA-Z0-9._]*\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"<\\-(?!\\s*\\d)",e:hljs.IMMEDIATE_RE,r:2},{cN:"operator",b:"\\->|<\\-",e:hljs.IMMEDIATE_RE,r:1},{cN:"operator",b:"%%|~",e:hljs.IMMEDIATE_RE},{cN:"operator",b:">=|<=|==|!=|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||\\$|:",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"%",e:"%",i:"\\n",r:1},{cN:"identifier",b:"`",e:"`",r:0},{cN:"string",b:'"',e:'"',c:[hljs.BE],r:0},{cN:"string",b:"'",e:"'",c:[hljs.BE],r:0},{cN:"paren",b:"[[({\\])}]",e:hljs.IMMEDIATE_RE,r:0}]}};
+hljs.initHighlightingOnLoad();
+</script>
+
+
+
+
+</head>
+
+<body>
+<!-- Automatically generated by RStudio [12861c30b10411e1afa60800200c9a66] -->
+
+<h3>sjnewhouse_misc_R.R</h3>
+
+<p>sjnewhousebrc &mdash; <em>Jan 22, 2014, 10:51 AM</em></p>
+
+<pre><code class="r">
+############################
+## subset eset
+############################
+
+removeSamples_eset_lumi &lt;- function(eset, sampleRemove) {
+sample &lt;- sampleNames(eset)
+samples_to_remove &lt;- sampleRemove
+samples_to_keep &lt;- (sample %in% samples_to_remove)==FALSE
+sel_samp_names &lt;- sampleNames(eset)[samples_to_keep]
+eset &lt;- eset[,samples_to_keep]
+ControlData &lt;- getControlData(eset)
+ControlData  &lt;- ControlData[,c(&quot;controlType&quot;,&quot;ProbeID&quot;,sel_samp_names)]
+eset &lt;- addControlData2lumi(ControlData , eset)
+return(eset)
+}
+
+############################
+## shuffle_cols
+############################
+shuffle_cols &lt;- function(data) {
+data_var &lt;- names(data)
+data_var_shuffled &lt;- sample(data_var,size=length(data_var),replace=FALSE)
+return(data_var_shuffled)
+}
+############################
+## shuffle_rows
+############################
+shuffle_rows &lt;- function(data) {
+data_var &lt;- rownames(data)
+data_var_shuffled &lt;- sample(data_var,size=length(data_var),replace=FALSE)
+return(data_var_shuffled)
+}
+
+############################
+## data_summary_plots
+############################
+data_summary_plots &lt;- function(data,results_prefix) {
+##library(car)
+##library(psych)
+##library(mi)
+if(require(&quot;car&quot;)){
+    print(&quot;car is loaded correctly&quot;)
+} else {
+    print(&quot;trying to install car&quot;)
+    install.packages(&quot;car&quot;)
+    if(require(car)){
+        print(&quot;car installed and loaded&quot;)
+    } else {
+        stop(&quot;could not install car&quot;)
+    }
+}
+##
+if(require(&quot;psych&quot;)){
+    print(&quot;psych is loaded correctly&quot;)
+} else {
+    print(&quot;trying to install psych&quot;)
+    install.packages(&quot;psych&quot;)
+    if(require(psych)){
+        print(&quot;psych installed and loaded&quot;)
+    } else {
+        stop(&quot;could not install psych&quot;)
+    }
+}
+if(require(&quot;mi&quot;)){
+    print(&quot;mi is loaded correctly&quot;)
+} else {
+    print(&quot;trying to install mi&quot;)
+    install.packages(&quot;mi&quot;)
+    if(require(mi)){
+        print(&quot;mi installed and loaded&quot;)
+    } else {
+        stop(&quot;could not install mi&quot;)
+    }
+}
+### get data
+
+## res fil names ##
+plotfile &lt;- paste(results_prefix,&quot;.data_summary_plots.pdf&quot;,sep=&quot;&quot;)
+resfile_num &lt;- paste(results_prefix,&quot;.numerical_data_summary.csv&quot;,sep=&quot;&quot;)
+resfile_cat &lt;- paste(results_prefix,&quot;.categorical_data_summary.csv&quot;,sep=&quot;&quot;)
+
+## save default, for resetting...c(5, 4, 4, 2) + 0.1 ## c(bottom, left, top, right)
+def.par &lt;- par(no.readonly = TRUE)
+
+## missing.data.analysis
+cat(&quot; missing.data.analysis &quot;,&quot;\r&quot;,&quot;\n&quot;)
+missing_TF &lt;- is.na(data)
+missing_counts &lt;- rowSums(missing_TF)
+n_sample_with_missing_data &lt;- sum(missing_counts&gt;=1)
+n_sample_with_complete_data &lt;- sum(missing_counts==0)
+data_with_missing_var &lt;- data[missing_counts&gt;=1,]
+data_with_complete_var &lt;- data[missing_counts==0,]
+cat(&quot; missing.data.plot &quot;,&quot;\r&quot;,&quot;\n&quot;)
+cat(&quot; missing.pattern.plot &quot;,&quot;\r&quot;,&quot;\n&quot;)
+pdf(file=paste(results_prefix,&quot;.missing.pattern.plot.pdf&quot;,sep=&quot;&quot;),width=11,height=8)
+par(mar=c(4.1, 12.1, 1.1, 2.1))
+missing.pattern.plot ( data, y.order = FALSE, x.order = FALSE,obs.col=&quot;white&quot;, mis.col=&quot;black&quot; )
+par(def.par)
+dev.off()
+
+## data classes
+data_class &lt;- sapply(data ,class)
+class_list &lt;- unique(data_class)
+cat(&quot; The following data classes are observed [&quot;,unique(data_class),&quot;]&quot;,&quot;\r&quot;,&quot;\n&quot;)
+
+## get numerical data and summarize
+sel_numerical &lt;- sapply(data ,class) %in% c(&quot;numeric&quot;,&quot;integer&quot;)
+num_data &lt;- data[,sel_numerical]
+## write to csv
+sink(resfile_num)
+cat(&quot;VARNAME,N,NMISS,PROP_MISS,MEAN,SD,VAR,MEDIAN,IQR,MAD,MIN,MAX,SHAPIRO_WILKS_W,SHAPIRO_WILKS_P,SKEW,KURTOSIS&quot;,&quot;\n&quot;)
+for(myvar in names(num_data) ){
+X &lt;- num_data[,myvar]
+name_var &lt;- paste(myvar,sep=&quot;&quot;)
+mean_var &lt;- signif(mean(X,na.rm=TRUE),3)
+sd_var &lt;- signif(sd(X,na.rm=TRUE),3)
+Var_var &lt;- signif(var(X,na.rm=TRUE),3)
+med_var &lt;- median(X, na.rm = FALSE)
+iqr_var &lt;- IQR(X, na.rm = FALSE, type = 7)
+mad_var &lt;- mad(X, center = median(X), constant = 1.4826, na.rm = FALSE,low = FALSE, high = FALSE)
+range_var_min &lt;- range(X, na.rm = FALSE)[1]
+range_var_max &lt;- range(X, na.rm = FALSE)[2]
+normtest_sw_p &lt;- signif(shapiro.test(X)$p.value,3)
+normtest_sw_w &lt;- signif(shapiro.test(X)$statistic,3)
+skew_var &lt;- skew(X, na.rm = TRUE)
+kurtosi_var &lt;- kurtosi(X, na.rm = TRUE)
+nmiss &lt;- sum(is.na(X))
+nsamp &lt;- length(X)
+pecentage_missing &lt;- round(nmiss/nsamp,3)
+res &lt;- paste(name_var,nsamp,nmiss,pecentage_missing,mean_var,sd_var,Var_var,med_var,iqr_var,mad_var,range_var_min,range_var_max,normtest_sw_w,normtest_sw_p,skew_var,kurtosi_var,sep=&quot;,&quot;)
+cat(res,&quot;\n&quot;)
+}
+sink()
+
+## get categorical data and make tables of counts
+sel_categorical &lt;- sapply(data ,class) %in% c(&quot;character&quot;,&quot;factor&quot;)
+categorica_data &lt;- as.data.frame(data[,sel_categorical])
+colnames(categorica_data) &lt;- names(data)[sel_categorical]
+sink(resfile_cat)
+for(myvar in names(categorica_data) ){
+X &lt;- categorica_data[,myvar]
+name_var &lt;- paste(myvar,sep=&quot;&quot;)
+table_var &lt;- table(X)
+nmiss &lt;- sum(is.na(X))
+nsamp &lt;- length(X)
+pecentage_missing &lt;- round(nmiss/nsamp,3)
+###observed_var &lt;- paste(unique(X),collapse=&quot;,&quot;)
+observed_var &lt;- paste(X,collapse=&quot;,&quot;)
+SINGLUARITY &lt;- min(table_var)==1; ## any var seen only once??
+min_count &lt;- min(table_var)
+cat(&quot;VARNAME,&quot;,name_var,&quot;\n&quot;,sep=&quot;&quot;)
+cat(&quot;N,&quot;,nsamp,&quot;\n&quot;,sep=&quot;&quot;)
+cat(&quot;NMISS,&quot;,nmiss,&quot;\n&quot;,sep=&quot;&quot;)
+cat(&quot;PROP_MISS,&quot;,pecentage_missing,&quot;\n&quot;,sep=&quot;&quot;)
+cat(&quot;MIN_COUNT,&quot;,min_count,&quot;\n&quot;,sep=&quot;&quot;)
+cat(&quot;SINGLUARITY,&quot;,SINGLUARITY,&quot;\n&quot;,sep=&quot;&quot;)
+cat(&quot;OBSERVED_TERMS,&quot;,observed_var,&quot;\n&quot;,sep=&quot;&quot;)
+cat(&quot;COUNTS,&quot;,paste(table_var,collapse=&quot;,&quot;,sep=&quot;&quot;),&quot;\n&quot;,&quot;\n&quot;,sep=&quot;&quot;)
+}
+sink()
+
+#################
+## Start plots ##
+#################
+pdf(file=plotfile,width=11,height=8)
+
+par(mar=c(4.1, 12.1, 1.1, 2.1))
+###missing.pattern.plot(data, y.order = FALSE, x.order = FALSE,obs.col=&quot;white&quot;, mis.col=&quot;black&quot; )
+par(def.par)
+
+for( class_type in class_list ) {
+
+cat(&quot; doing &quot;,class_type,&quot;\r&quot;,&quot;\n&quot;)
+
+          if(class_type ==&quot;character&quot;) {
+                    new_data &lt;- data[,data_class==class_type]
+                        for(myvar in names(new_data) ){
+                        var_table &lt;- sort(table(new_data[,myvar]),decreasing=FALSE)
+                        par(mar=c(5.1, 8, 4, 2.1))
+                        bp &lt;- barplot(var_table,las=2,main=paste(myvar), horiz=TRUE,col=&quot;light blue&quot;)
+                        text(0,bp,round(var_table, 1),cex=1,pos=4)
+                            }
+          }
+          else if(class_type==&quot;factor&quot;) {
+                          new_data &lt;- data[,data_class==class_type]
+                          for(myvar in names(new_data) ){
+                          var_table &lt;- sort(table(new_data[,myvar]),decreasing=FALSE)
+                          par(mar=c(5.1, 8, 4, 2.1))
+                          bp &lt;- barplot(var_table,las=2,main=paste(myvar), horiz=TRUE,col=&quot;light blue&quot;)
+                          text(0,bp,round(var_table, 1),cex=1,pos=4)
+                                  }
+          }
+          else if(class_type==&quot;numeric&quot;) {
+                              new_data &lt;- data[,data_class==class_type]
+                              for(myvar in names(new_data) ){
+                              nf &lt;- layout(mat = matrix(c(1,2),2,1, byrow=TRUE),  height = c(1,3))
+                              par(mar=c(4.1, 4.1, 1.1, 2.1))
+                              X &lt;- as.numeric(new_data[,myvar])
+                              boxplot(X, horizontal=TRUE,  outline=TRUE,main=paste(myvar))
+                              hist(X,xlab=paste(myvar),breaks=50,main=&quot;&quot;,prob=TRUE)
+                              lines(density(X),col=&quot;blue&quot;)
+                              meanvar &lt;- signif(mean(X,na.rm=TRUE),3)
+                              sdvar &lt;- signif(sd(X,na.rm=TRUE),3)
+                              normtest_sw &lt;- signif(shapiro.test(X)$p.value,3)
+                              nmiss &lt;- sum(is.na(X))
+                              pecentage_missing &lt;- round(nmiss/length(X),3)
+                              mtext(paste(&quot;\nMean:[&quot;,meanvar,&quot;]\nSD:[&quot;,sdvar,&quot;]\nnormP:[&quot;,normtest_sw,&quot;]\n NSAMPLE:[&quot;,length(X),&quot;]\nNMISS:[&quot;,nmiss,&quot;]\n %Missing:[&quot;,pecentage_missing,&quot;]&quot;,sep=&quot; &quot;), side = 3, adj=1, padj=1)
+                              par(def.par) # 1=bottom, 2=left, 3=top, 4=right
+                              qqPlot(X,main=paste(myvar),pch=20,ylab=paste(myvar),col=&quot;blue&quot;)
+                                                          }
+              }
+              else if(class_type==&quot;integer&quot;) {
+                              new_data &lt;- data[,data_class==class_type]
+                              new_data &lt;- apply(new_data,2,as.numeric)
+                              for(myvar in names(new_data) ){
+                              nf &lt;- layout(mat = matrix(c(1,2),2,1, byrow=TRUE),  height = c(1,3))
+                              par(mar=c(4.1, 4.1, 1.1, 2.1))
+                              X &lt;- as.numeric(new_data[,myvar])
+                              boxplot(X, horizontal=TRUE,  outline=TRUE,main=paste(myvar))
+                              hist(X,xlab=paste(myvar),breaks=50,main=&quot;&quot;,prob=TRUE)
+                              lines(density(X),col=&quot;blue&quot;)
+                              meanvar &lt;- signif(mean(X,na.rm=TRUE),3)
+                              sdvar &lt;- signif(sd(X,na.rm=TRUE),3)
+                              normtest_sw &lt;- signif(shapiro.test(X)$p.value,3)
+                               nmiss &lt;- sum(is.na(X))
+                              pecentage_missing &lt;- round(nmiss/length(X),3)
+                              mtext(paste(&quot;\nMean:[&quot;,meanvar,&quot;]\nSD:[&quot;,sdvar,&quot;]\nnormP:[&quot;,normtest_sw,&quot;]\n NSAMPLE:[&quot;,length(X),&quot;]\nNMISS:[&quot;,nmiss,&quot;]\n %Missing:[&quot;,pecentage_missing,&quot;]&quot;,sep=&quot; &quot;), side = 3, adj=1, padj=1)
+                              par(def.par)
+                              qqPlot(X,main=paste(myvar),pch=20,ylab=paste(myvar),col=&quot;blue&quot;)
+                              }
+          }
+          else if(class_type==&quot;logical&quot;) {
+                          new_data &lt;- data[,data_class==class_type]
+                          for(myvar in names(new_data) ){
+                          var_table &lt;- sort(table(new_data[,myvar]),decreasing=FALSE)
+                          par(mar=c(5.1, 8, 4, 2.1))
+                          bp &lt;-  barplot(var_table,las=2,main=paste(myvar), horiz=TRUE,col=&quot;light blue&quot;)
+                          text(0,bp,round(var_table, 1),cex=1,pos=4)
+                          par(def.par)
+                  }
+          }
+      }
+      dev.off()
+          dev.off()
+              dev.off()
+                  dev.off()
+                  dev.off()
+      }
+
+############################
+## negBeadOutlierRepMean
+#############################
+negBeadOutlierRepMean &lt;- function(x) {
+        z_out_samp &lt;- abs(  as.numeric( scale(x) )  ) &gt; 2
+        mean_pop &lt;- mean(x[z_out_samp==FALSE])
+        sd_pop &lt;- sd(x[z_out_samp==FALSE])
+        new_x &lt;- ifelse( abs(  as.numeric( scale(x) )  ) &gt; 2, mean_pop, x )
+        return(new_x)
+}
+##############
+## quantfun ##
+##############
+quantfun &lt;- function(x,probs=c(seq(0,1,0.20))) {
+as.integer(cut(x, quantile(x, probs ), include.lowest=TRUE))
+}
+##############
+## var_gene ##
+##############
+zero_var_probe &lt;- function(gx_matrix) {
+gx &lt;- gx_matrix
+var_gx &lt;- apply(gx,1,var)
+zero_var &lt;- var_gx==0
+return(zero_var)
+}
+mean_probe &lt;- function(gx_matrix) {
+gx &lt;- gx_matrix
+mean_gx &lt;- apply(gx,1,mean)
+return(mean_gx)
+}
+sd_probe &lt;- function(gx_matrix) {
+gx &lt;- gx_matrix
+sd_gx &lt;- apply(gx,1,sd)
+return(sd_gx)
+}
+var_probe &lt;- function(gx_matrix) {
+gx &lt;- gx_matrix
+var_gx &lt;- apply(gx,1,var)
+return(var_gx)
+}
+max_probe &lt;- function(gx_matrix) {
+gx &lt;- gx_matrix
+max_gx &lt;- apply(gx,1,max)
+return(max_gx)
+}
+min_probe &lt;- function(gx_matrix) {
+gx &lt;- gx_matrix
+min_gx &lt;- apply(gx,1,min)
+return(min_gx)
+}
+has_var_probe &lt;- function(gx_matrix) {
+gx &lt;- gx_matrix
+var_gx &lt;- apply(gx,1,var)
+has_var &lt;- var_gx!=0
+return(has_var)
+}
+has_var_probe2 &lt;- function(gx_matrix) {
+gx &lt;- gx_matrix
+var_gx &lt;- apply(gx,1,var)
+has_var &lt;- var_gx &gt;= quantile(var_gx, probs=&quot;0.1&quot; );
+return(has_var)
+}
+############################
+## write_expression_files ##
+############################
+write_expression_files &lt;- function(eset, outfile) {
+
+cat(&quot; Writing probe exprs matrix [&quot;, paste(outfile,&quot;.exprs_matrix.txt&quot;,sep=&quot;&quot;)  ,&quot;]&quot;,&quot;\r&quot;,&quot;\n&quot;)
+gx &lt;- exprs(eset)
+gx &lt;- as.data.frame(gx)
+gx$nuID &lt;- rownames(gx)
+gx &lt;- merge(fData(eset),gx,by.x=&quot;nuID&quot;,by.y=&quot;nuID&quot;,sort=FALSE)
+write.table(gx , file=paste(outfile,&quot;.exprs_matrix.txt&quot;,sep=&quot;&quot;),sep=&quot;\t&quot;,row.names=FALSE, quote=FALSE)
+
+cat(&quot; Writing probe se.exprs matrix [&quot;, paste(outfile,&quot;.se.exprs_matrix.txt&quot;,sep=&quot;&quot;)  ,&quot;]&quot;,&quot;\r&quot;,&quot;\n&quot;)
+gx &lt;- se.exprs(eset)
+gx &lt;- as.data.frame(gx)
+gx$nuID &lt;- rownames(gx)
+gx &lt;- merge(fData(eset),gx,by.x=&quot;nuID&quot;,by.y=&quot;nuID&quot;,sort=FALSE)
+write.table(gx , file=paste(outfile,&quot;.se.exprs_matrix.txt&quot;,sep=&quot;&quot;),sep=&quot;\t&quot;,row.names=FALSE, quote=FALSE)
+
+cat(&quot; Writing probe detection matrix [&quot;, paste(outfile,&quot;.detection_matrix.txt&quot;,sep=&quot;&quot;)  ,&quot;]&quot;,&quot;\r&quot;,&quot;\n&quot;)
+gx &lt;- detection(eset)
+gx &lt;- as.data.frame(gx)
+gx$nuID &lt;- rownames(gx)
+gx &lt;- merge(fData(eset),gx,by.x=&quot;nuID&quot;,by.y=&quot;nuID&quot;,sort=FALSE)
+write.table(gx , file=paste(outfile,&quot;.detection_matrix.txt&quot;,sep=&quot;&quot;),sep=&quot;\t&quot;,row.names=FALSE, quote=FALSE)
+
+cat(&quot; Writing probe beadNum matrix [&quot;, paste(outfile,&quot;.beadNum_matrix.txt&quot;,sep=&quot;&quot;)  ,&quot;]&quot;,&quot;\r&quot;,&quot;\n&quot;)
+gx &lt;- beadNum(eset)
+gx &lt;- as.data.frame(gx)
+gx$nuID &lt;- rownames(gx)
+gx &lt;- merge(fData(eset),gx,by.x=&quot;nuID&quot;,by.y=&quot;nuID&quot;,sort=FALSE)
+write.table(gx , file=paste(outfile,&quot;.beadNum_matrix.txt&quot;,sep=&quot;&quot;),sep=&quot;\t&quot;,row.names=FALSE, quote=FALSE)
+
+cat(&quot; Writing probe PCA matrix [&quot;, paste(outfile,&quot;.pca_matrix.txt&quot;,sep=&quot;&quot;)  ,&quot;]&quot;,&quot;\r&quot;,&quot;\n&quot;)
+gx &lt;- exprs(eset)
+gx &lt;- gx[zero_var_probe(gx)==FALSE,]
+pca_gx &lt;- prcomp(t(gx))$x
+pca_gx &lt;- pca_gx[,1:20]
+pca_gx &lt;- cbind(rownames(pca_gx),pca_gx)
+grep_pc &lt;- grep(&quot;PC&quot;,colnames(pca_gx))
+colnames(pca_gx) &lt;-   c(&quot;sampleID&quot;,colnames(pca_gx)[grep_pc])
+write.table(pca_gx  , file=paste(outfile,&quot;.pca_matrix.txt&quot;,sep=&quot;&quot;),sep=&quot;\t&quot;,row.names=FALSE, quote=FALSE)
+
+cat(&quot; Writing pData slot of eset and adding PCA data to [&quot;, paste(outfile,&quot;.pData.txt&quot;,sep=&quot;&quot;)  ,&quot;]&quot;,&quot;\r&quot;,&quot;\n&quot;)
+pgx &lt;- pData(eset)
+pgx &lt;- merge(pgx, pca_gx, by.x=&quot;sampleID&quot;,by.y=&quot;sampleID&quot;,sort=FALSE,all.x=TRUE)
+write.table(pgx  , file=paste(outfile,&quot;.pData.txt&quot;,sep=&quot;&quot;),sep=&quot;\t&quot;,row.names=FALSE, quote=FALSE)
+
+cat(&quot; Writing fData slot of eset [&quot;, paste(outfile,&quot;.fData.txt&quot;,sep=&quot;&quot;)  ,&quot;]&quot;,&quot;\r&quot;,&quot;\n&quot;)
+fgx &lt;- fData(eset)
+sel_probe &lt;- paste(fgx$nuID,sep=&quot;&quot;)
+gx &lt;- exprs(eset)
+gx &lt;- gx[sel_probe,]
+fgx$mean_probe &lt;- mean_probe(gx);
+fgx$sd_probe &lt;- sd_probe(gx);
+fgx$var_probe &lt;- var_probe(gx);
+fgx$min_probe &lt;- min_probe(gx);
+fgx$max_probe &lt;- max_probe(gx);
+write.table(fgx  , file=paste(outfile,&quot;.fData.txt&quot;,sep=&quot;&quot;),sep=&quot;\t&quot;,row.names=FALSE, quote=FALSE)
+rm(&quot;gx&quot;,&quot;pca_gx&quot;,&quot;pgx&quot;,&quot;fgx&quot;)
+}
+
+##############
+## qc_plots ##
+##############
+
+
+gx_qc_plots_lumi &lt;- function(eset, outfile ,do_pca=TRUE ) {
+  outpdf &lt;- paste(outfile,&quot;.qc_plots.pdf&quot;,sep=&quot;&quot;);
+  cat(&quot; startin qc plots&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  cat(&quot; saving all plots to &quot;,outpdf,&quot;\r&quot;,&quot;\n&quot;)
+  ## get pheno data
+  pheno &lt;- pData(eset)
+  ## basic colours
+  chip_col &lt;- labels2colors( as.character(pData(eset)$Sentrix.Barcode))
+  group_col &lt;- labels2colors( as.character(pData(eset)$GROUPS))
+  pheno_col &lt;- labels2colors( as.character(pData(eset)$PHENOTYPE))
+  gender_col &lt;- labels2colors( as.character(pData(eset)$SEX))
+  tissue_col &lt;- labels2colors( as.character(pData(eset)$TISSUE))
+  ## batch pheno data
+  sel_tech &lt;- grep(&quot;tech&quot;,names(pheno))
+  batch_pheno &lt;- pheno[,sel_tech]
+  ## id what is char/fav versus numerical
+  sel_batch &lt;- sapply(batch_pheno ,class) %in% c(&quot;character&quot;,&quot;factor&quot;)
+  sel_num_batch &lt;- sapply(batch_pheno ,class) %in% c(&quot;numeric&quot;)
+  ## get names
+  batch_var_names &lt;- names( batch_pheno[sel_batch])
+  batch_var_names_numeric &lt;- names(batch_pheno[sel_num_batch])
+  ## quantfun numeric data
+  numeric_tech &lt;- as.data.frame(batch_pheno[,sel_num_batch])
+  colnames(numeric_tech) &lt;- batch_var_names_numeric
+  quant_numeric &lt;- apply( numeric_tech,2,quantfun)
+  ## colours
+  batch_col &lt;- apply(batch_pheno[,sel_batch],2,labels2colors) ## colours
+  quant_numeric_col &lt;- apply(quant_numeric,2,numbers2colors)
+  datColors &lt;- cbind(chip_col,group_col,pheno_col,gender_col,tissue_col,batch_col,quant_numeric_col)
+  ## expression matrix and IAC
+  gx &lt;- t(exprs(eset));
+  datExprs &lt;- exprs(eset)
+  IAC &lt;- cor(datExprs)
+  IAC_d &lt;- 1-IAC
+  #
+  #
+  samle_names &lt;- sampleNames(eset)
+  IAC=cor(datExprs, method=&quot;p&quot;,use=&quot;p&quot;)
+  diag(IAC)=0
+  A.IAC=((1+IAC)/2)^2  ## ADJACENCY MATRIX
+  FNC=fundamentalNetworkConcepts(A.IAC) ## WGCNA
+  K2=FNC$ScaledConnectivity
+  Z.K=(K2-mean(K2))/sd(K2)
+  Z.C=(FNC$ClusterCoef-mean(FNC$ClusterCoef))/sd(FNC$ClusterCoef)
+  Z.MAR=(FNC$MAR-mean(FNC$MAR))/sd(FNC$MAR)
+  rho &lt;- signif(cor.test(Z.K,Z.C,method=&quot;s&quot;)$estimate,2)
+  rho_pvalue &lt;- signif(cor.test(Z.K,Z.C,method=&quot;s&quot;)$p.value,2)
+  colorvec &lt;- labels2colors(as.character(pData(eset)$Sentrix.Barcode))
+  mean_IAC &lt;- mean(IAC[upper.tri(IAC)])
+  ## flashClust
+  dist_exprs &lt;- dist( t(datExprs), method=&quot;e&quot; )
+  sampleTree &lt;- flashClust( dist_exprs, method = &quot;average&quot;);
+  ## PLOTS
+  if(do_pca==TRUE) {
+    pca_raw &lt;- prcomp(gx)$x;
+    pdf(outpdf, width=16.5,height=11.7)
+    ## Standard plots
+    plot(eset, what=&#39;boxplot&#39;, col=chip_col )
+    plot(eset, what=&#39;density&#39; )
+    plot(eset, what=&#39;cv&#39;  )
+    ## PCA plots
+    scatterplot3d(pca_raw[,&quot;PC1&quot;],pca_raw[,&quot;PC2&quot;],pca_raw[,&quot;PC3&quot;], main=&quot;3D Scatterplot coloured by chip &quot;,color=&quot;black&quot;, pch=21,bg=chip_col)
+    scatterplot3d(pca_raw[,&quot;PC1&quot;],pca_raw[,&quot;PC2&quot;],pca_raw[,&quot;PC3&quot;], main=&quot;3D Scatterplot coloured by Group &quot;,color=&quot;black&quot;, pch=21,bg=group_col)
+    scatterplot3d(pca_raw[,&quot;PC1&quot;],pca_raw[,&quot;PC2&quot;],pca_raw[,&quot;PC3&quot;], main=&quot;3D Scatterplot coloured by Phenotype &quot;,color=&quot;black&quot;, pch=21,bg=pheno_col)
+    scatterplot3d(pca_raw[,&quot;PC1&quot;],pca_raw[,&quot;PC2&quot;],pca_raw[,&quot;PC3&quot;], main=&quot;3D Scatterplot coloured by Gender &quot;,color=&quot;black&quot;, pch=21,bg=gender_col)
+    scatterplot3d(pca_raw[,&quot;PC1&quot;],pca_raw[,&quot;PC2&quot;],pca_raw[,&quot;PC3&quot;], main=&quot;3D Scatterplot coloured by Gender &quot;,color=&quot;black&quot;, pch=21,bg=tissue_col)
+    ## loop PCA and plot by tech var
+    for(tech_var in batch_var_names) {
+      tech_var_name &lt;- paste(tech_var,sep=&quot;&quot;)
+      tech_var_col &lt;- labels2colors( as.character(batch_pheno[,tech_var_name]) )
+      scatterplot3d(pca_raw[,&quot;PC1&quot;],pca_raw[,&quot;PC2&quot;],pca_raw[,&quot;PC3&quot;], main=paste(&quot;3D Scatterplot coloured by &quot;,tech_var_name,sep=&quot;&quot;),color=&quot;black&quot;,pch=21,bg=tech_var_col)
+    }
+    for(tech_var in batch_var_names_numeric) {
+      tech_var_name &lt;- paste(tech_var,sep=&quot;&quot;)
+      tech_var_col &lt;- numbers2colors( quant_numeric[,tech_var_name])
+      scatterplot3d(pca_raw[,&quot;PC1&quot;],pca_raw[,&quot;PC2&quot;],pca_raw[,&quot;PC3&quot;], main=paste(&quot;3D Scatterplot coloured by &quot;,tech_var_name,sep=&quot;&quot;),color=&quot;black&quot;,bg=tech_var_col,pch=21)
+    }
+    ## other plots
+    #tmp_iac &lt;- outlierSamples(datExprs,thresh=iac_sd_thrs, showplots=TRUE)
+    plotDendroAndColors(sampleTree,groupLabels=names(datColors), colors=datColors,dendroLabels = pData(eset)$Sample.ID, main=&quot;Sample dendrogram and trait heatmap&quot;)
+    heatmap.2(IAC , trace=&quot;none&quot;, ColSideColors=labels2colors( as.character(pData(eset)$PHENOTYPE)), RowSideColors=labels2colors( as.character(pData(eset)$GROUPS)), col=&quot;bluered&quot;, main=&quot;IAC&quot;,hclustfun=function(x) hclust(x,method=&#39;complete&#39;), distfun= function(x) dist(x,method=&#39;euclidean&#39;) )
+    #
+    # heatmap A.IAC
+    heatmap.2(A.IAC , trace=&quot;none&quot;, ColSideColors=labels2colors( as.character(pData(eset)$PHENOTYPE)), RowSideColors=labels2colors( as.character(pData(eset)$GROUPS)), col=&quot;bluered&quot;, main=&quot;A.IAC&quot;,hclustfun=function(x) hclust(x,method=&#39;complete&#39;), distfun= function(x) dist(x,method=&#39;euclidean&#39;) )
+    ## samplenetwork
+    local( 
+      {colLab &lt;&lt;- function(n,treeorder) { 
+        if(is.leaf(n)) {
+          a &lt;- attributes(n)
+          i &lt;&lt;- i+1
+          attr(n, &quot;nodePar&quot;) &lt;-   c(a$nodePar, list(lab.col = colorvec[treeorder][i], lab.font = i%%3))
+        } 
+        n 
+      } 
+       i &lt;- 0
+       })
+    ## Cluster for pics
+    cluster1 &lt;- hclust(as.dist(1-A.IAC),method=&quot;average&quot;)
+    cluster1order &lt;- cluster1$order
+    cluster2 &lt;- as.dendrogram(cluster1,hang=0.1)
+    cluster3 &lt;- dendrapply(cluster2,colLab,cluster1order)
+    ## PLOTS
+    ## cluster IAC
+    par(mfrow=c(2,2))
+    par(mar=c(5,6,4,2))
+    plot(cluster3,nodePar=list(lab.cex=1,pch=NA),main=paste(&quot;Mean ISA = &quot;,signif(mean(A.IAC[upper.tri(A.IAC)]),3),sep=&quot;&quot;),xlab=&quot;&quot;,ylab=&quot;1 - ISA&quot;,sub=&quot;&quot;,cex.main=1.8,cex.lab=1.4)
+    mtext(paste(&quot;distance: 1 - ISA &quot;,sep=&quot;&quot;),cex=0.8,line=0.2)
+    ## Connectivity
+    par(mar=c(5,5,4,2))
+    plot(Z.K,main=&quot;Connectivity&quot;, ylab=&quot;Z.K&quot;,xaxt=&quot;n&quot;,xlab=&quot;Sample&quot;,type=&quot;n&quot;,cex.main=1.8,cex.lab=1.4)
+    text(Z.K,labels=samle_names,cex=0.8,col=colorvec)
+    abline(h=-2)
+    abline(h=-3)
+    ## ClusterCoef
+    par(mar=c(5,5,4,2))
+    plot(Z.C,main=&quot;ClusterCoef&quot;, ylab=&quot;Z.C&quot;,xaxt=&quot;n&quot;,xlab=&quot;Sample&quot;,cex.main=1.8,cex.lab=1.4,type=&quot;n&quot;)
+    text(Z.C,labels=samle_names,cex=0.8,col=colorvec)
+    abline(h=-2)
+    abline(h=-3)
+    ## Connectivity vs ClusterCoef
+    par(mar=c(5,5,4,2))
+    plot(Z.K,Z.C,main=&quot;Connectivity vs ClusterCoef&quot;,xlab=&quot;Z.K&quot;,ylab=&quot;Z.C&quot;,col=colorvec,cex.main=1.8,cex.lab=1.4)
+    abline(lm(Z.C~Z.K),col=&quot;black&quot;,lwd=2)
+    mtext(paste(&quot;rho = &quot;,signif(cor.test(Z.K,Z.C,method=&quot;s&quot;)$estimate,2),&quot; p = &quot;,signif(cor.test(Z.K,Z.C,method=&quot;s&quot;)$p.value,2),sep=&quot;&quot;),cex=0.8,line=0.2)
+    abline(v=-2,lty=2,col=&quot;grey&quot;)
+    abline(h=-2,lty=2,col=&quot;grey&quot;)
+    dev.off()
+  } else {
+    pdf(outpdf, width=16.5,height=11.7)
+    plot(eset, what=&#39;boxplot&#39;, col=chip_col )
+    plot(eset, what=&#39;density&#39; )
+    plot(eset, what=&#39;cv&#39;  )
+    #tmp_iac &lt;- outlierSamples(datExprs,thresh=iac_sd_thrs, showplots=TRUE)
+    plotDendroAndColors(sampleTree,groupLabels=names(datColors), colors=datColors,dendroLabels = pData(eset)$Sample.ID, main=&quot;Sample dendrogram and trait heatmap&quot;)
+    heatmap.2(IAC , trace=&quot;none&quot;, ColSideColors=labels2colors( as.character(pData(eset)$PHENOTYPE)), RowSideColors=labels2colors( as.character(pData(eset)$GROUPS)), col=&quot;bluered&quot;, main=&quot;IAC&quot;,hclustfun=function(x) hclust(x,method=&#39;complete&#39;), distfun= function(x) dist(x,method=&#39;euclidean&#39;) )
+    dev.off()
+  }
+}
+
+
+
+
+
+#################
+## qc_plots_2 ##
+##  no 3D scatter plot, no save pdf
+##############
+
+# basic_qc_plot_lumi
+basic_qc_plot_lumi &lt;- function(eset) {
+
+  ## flashClust
+  cat(&quot; Running flashClust&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  chip_col &lt;- labels2colors( as.character(pData(eset)$Sentrix.Barcode))
+  datExprs &lt;- exprs(eset)
+  dist_exprs &lt;- dist( t(datExprs), method=&quot;e&quot; )
+  sampleTree &lt;- flashClust( dist_exprs, method = &quot;average&quot;);
+  ## Standard plots
+  cat(&quot; beging plotting boxplot&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  plot(eset, what=&#39;boxplot&#39;, col=chip_col )
+  cat(&quot; beging plotting outlier&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  plot(eset, what=&#39;outlier&#39;  )
+  cat(&quot; beging plotting sampleTree &lt;- flashClust( dist_exprs, method = \&quot;average\&quot;)&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  plot(sampleTree)
+  cat(&quot; beging plotting density&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  plot(eset, what=&#39;density&#39; )
+  cat(&quot; beging plotting cv&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  plot(eset, what=&#39;cv&#39;  )
+
+}
+
+## pca_plot_lumi
+pca_plot_lumi &lt;- function(eset) {
+
+  cat(&quot; setting up data for qc plots&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  ## get pheno data
+  cat(&quot; get pheno data&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  pheno &lt;- pData(eset)
+  ## basic colours
+  cat(&quot; basic colours&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  chip_col &lt;- labels2colors( as.character(pData(eset)$Sentrix.Barcode))
+  group_col &lt;- labels2colors( as.character(pData(eset)$GROUPS))
+  pheno_col &lt;- labels2colors( as.character(pData(eset)$PHENOTYPE))
+  gender_col &lt;- labels2colors( as.character(pData(eset)$SEX))
+  tissue_col &lt;- labels2colors( as.character(pData(eset)$TISSUE))
+  ## batch pheno data
+  cat(&quot; batch pheno data&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  sel_tech &lt;- grep(&quot;tech&quot;,names(pheno))
+  batch_pheno &lt;- pheno[,sel_tech]
+  ## id what is char/fav versus numerical
+  sel_batch &lt;- sapply(batch_pheno ,class) %in% c(&quot;character&quot;,&quot;factor&quot;)
+  sel_num_batch &lt;- sapply(batch_pheno ,class) %in% c(&quot;numeric&quot;)
+  ## get names
+  batch_var_names &lt;- names( batch_pheno[sel_batch])
+  batch_var_names_numeric &lt;- names(batch_pheno[sel_num_batch])
+  ## quantfun numeric data
+  numeric_tech &lt;- as.data.frame(batch_pheno[,sel_num_batch])
+  colnames(numeric_tech) &lt;- batch_var_names_numeric
+  quant_numeric &lt;- apply( numeric_tech,2,quantfun)
+  ## colours
+  batch_col &lt;- apply(batch_pheno[,sel_batch],2,labels2colors) ## colours
+  quant_numeric_col &lt;- apply(quant_numeric,2,numbers2colors)
+  datColors &lt;- cbind(chip_col,group_col,pheno_col,gender_col,tissue_col,batch_col,quant_numeric_col)
+  #
+  cat(&quot; begin PCA plots&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  cat(&quot; calculating PCs using prcomp()&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  def.par &lt;- par(no.readonly = TRUE)
+  gx &lt;- t(exprs(eset));
+  pca_gx &lt;- prcomp(gx);
+  pca_summary &lt;- summary(pca_gx)
+  pca_importance_var_exp &lt;- summary(pca_gx)$importance[2,]
+  pca_importance_var_exp_cum &lt;- summary(pca_gx)$importance[3,]
+  cat(&quot; plotting Proportion of Variance Explained&quot;,&quot;\r&quot;,&quot;\n&quot;) 
+  par(mfrow=c(1,2))
+  plot(pca_importance_var_exp[1:20],ylab=&quot;PCA Proportion of Variance Explained&quot;, type=&quot;b&quot;,col=&quot;blue&quot;)
+  plot(pca_importance_var_exp_cum[1:20],ylab=&quot;PCA Cumulative Proportion of Variance Explained&quot;, ylim=c(0,1.1),type=&quot;b&quot;,col=&quot;blue&quot;);abline(h=0.90);abline(h=1.00)
+  par(def.par)
+  #dev.off()
+  # PCA MATRIX
+  pca_raw &lt;- pca_gx$x;
+  ## PCA plots
+  plot(pca_raw[,&quot;PC1&quot;],pca_raw[,&quot;PC2&quot;], main=&quot; PCA plot coloured by chip &quot;,col=&quot;black&quot;, pch=21,bg=chip_col)
+  plot(pca_raw[,&quot;PC1&quot;],pca_raw[,&quot;PC2&quot;], main=&quot; PCA plot  coloured by Group &quot;,col=&quot;black&quot;, pch=21,bg=group_col)
+  plot(pca_raw[,&quot;PC1&quot;],pca_raw[,&quot;PC2&quot;], main=&quot; PCA plot  coloured by Phenotype &quot;,col=&quot;black&quot;, pch=21,bg=pheno_col)
+  plot(pca_raw[,&quot;PC1&quot;],pca_raw[,&quot;PC2&quot;], main=&quot; PCA plot  coloured by Gender &quot;,col=&quot;black&quot;, pch=21,bg=gender_col)
+  plot(pca_raw[,&quot;PC1&quot;],pca_raw[,&quot;PC2&quot;], main=&quot; PCA plot  coloured by Tissue &quot;,col=&quot;black&quot;, pch=21,bg=tissue_col)
+  ## loop PCA and plot by tech var
+  for(tech_var in batch_var_names) {
+    cat(&quot; begin looping through batch variable PCA plots &quot;,tech_var,&quot;\r&quot;,&quot;\n&quot;)
+    tech_var_name &lt;- paste(tech_var,sep=&quot;&quot;)
+    tech_var_col &lt;- labels2colors( as.character(batch_pheno[,tech_var_name]) )
+    plot(pca_raw[,&quot;PC1&quot;],pca_raw[,&quot;PC2&quot;], main=paste(&quot; PCA plot coloured by &quot;,tech_var_name,sep=&quot;&quot;),col=&quot;black&quot;,pch=21,bg=tech_var_col)
+  }
+  for(tech_var in batch_var_names_numeric) {
+    cat(&quot; begin looping through batch variable PCA plots &quot;,tech_var,&quot;\r&quot;,&quot;\n&quot;)
+    tech_var_name &lt;- paste(tech_var,sep=&quot;&quot;)
+    tech_var_col &lt;- numbers2colors( quant_numeric[,tech_var_name])
+    plot(pca_raw[,&quot;PC1&quot;],pca_raw[,&quot;PC2&quot;], main=paste(&quot; PCA plot coloured by &quot;,tech_var_name,sep=&quot;&quot;),col=&quot;black&quot;,bg=tech_var_col,pch=21)
+  }
+}
+
+# coloured_dendrogram_lumi
+coloured_dendrogram_lumi &lt;- function(eset){
+  ## get pheno data
+  cat(&quot; get pheno data&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  pheno &lt;- pData(eset)
+  ## basic colours
+  cat(&quot; basic colours&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  chip_col &lt;- labels2colors( as.character(pData(eset)$Sentrix.Barcode))
+  group_col &lt;- labels2colors( as.character(pData(eset)$GROUPS))
+  pheno_col &lt;- labels2colors( as.character(pData(eset)$PHENOTYPE))
+  gender_col &lt;- labels2colors( as.character(pData(eset)$SEX))
+  tissue_col &lt;- labels2colors( as.character(pData(eset)$TISSUE))
+  ## batch pheno data
+  cat(&quot; batch pheno data&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  sel_tech &lt;- grep(&quot;tech&quot;,names(pheno))
+  batch_pheno &lt;- pheno[,sel_tech]
+  ## id what is char/fav versus numerical
+  sel_batch &lt;- sapply(batch_pheno ,class) %in% c(&quot;character&quot;,&quot;factor&quot;)
+  sel_num_batch &lt;- sapply(batch_pheno ,class) %in% c(&quot;numeric&quot;)
+  ## get names
+  batch_var_names &lt;- names( batch_pheno[sel_batch])
+  batch_var_names_numeric &lt;- names(batch_pheno[sel_num_batch])
+  ## quantfun numeric data
+  numeric_tech &lt;- as.data.frame(batch_pheno[,sel_num_batch])
+  colnames(numeric_tech) &lt;- batch_var_names_numeric
+  quant_numeric &lt;- apply( numeric_tech,2,quantfun)
+  ## colours
+  cat(&quot; batch colours&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  batch_col &lt;- apply(batch_pheno[,sel_batch],2,labels2colors) ## colours
+  quant_numeric_col &lt;- apply(quant_numeric,2,numbers2colors)
+  datColors &lt;- cbind(chip_col,group_col,pheno_col,gender_col,tissue_col,batch_col,quant_numeric_col)
+  # sampleTree
+  cat(&quot; datExprs and sampleTree&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  datExprs &lt;- exprs(eset)
+  dist_exprs &lt;- dist( t(datExprs), method=&quot;e&quot; )
+  sampleTree &lt;- flashClust( dist_exprs, method = &quot;average&quot;);
+  # plotDendroAndColors
+  cat(&quot; plotDendroAndColors&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  def.par &lt;- par(no.readonly = TRUE)
+  par(mar=c(5.1, 16, 4, 2.1)) #bottom, left, top and right margins
+  plotDendroAndColors(sampleTree,
+                      groupLabels=names(datColors),
+                      colors=datColors,
+                      dendroLabels = pData(eset)$Sample.ID, 
+                      main=&quot;Sample dendrogram and trait heatmap&quot;)
+  par(def.par)
+
+}
+
+# heatmap_plot_lumi_eset_raw
+heatmap_plot_lumi &lt;- function(eset){
+
+  cat(&quot; setting up data for qc plots&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  ## get pheno data
+  cat(&quot; get pheno data&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  pheno &lt;- pData(eset)
+  ## basic colours
+  cat(&quot; basic colours&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  chip_col &lt;- labels2colors( as.character(pData(eset)$Sentrix.Barcode))
+  group_col &lt;- labels2colors( as.character(pData(eset)$GROUPS))
+  pheno_col &lt;- labels2colors( as.character(pData(eset)$PHENOTYPE))
+  gender_col &lt;- labels2colors( as.character(pData(eset)$SEX))
+  tissue_col &lt;- labels2colors( as.character(pData(eset)$TISSUE))
+  ## batch pheno data
+  cat(&quot; batch pheno data&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  sel_tech &lt;- grep(&quot;tech&quot;,names(pheno))
+  batch_pheno &lt;- pheno[,sel_tech]
+  ## id what is char/fav versus numerical
+  sel_batch &lt;- sapply(batch_pheno ,class) %in% c(&quot;character&quot;,&quot;factor&quot;)
+  sel_num_batch &lt;- sapply(batch_pheno ,class) %in% c(&quot;numeric&quot;)
+  ## get names
+  batch_var_names &lt;- names( batch_pheno[sel_batch])
+  batch_var_names_numeric &lt;- names(batch_pheno[sel_num_batch])
+  ## quantfun numeric data
+  numeric_tech &lt;- as.data.frame(batch_pheno[,sel_num_batch])
+  colnames(numeric_tech) &lt;- batch_var_names_numeric
+  quant_numeric &lt;- apply( numeric_tech,2,quantfun)
+  ## colours
+  batch_col &lt;- apply(batch_pheno[,sel_batch],2,labels2colors) ## colours
+  quant_numeric_col &lt;- apply(quant_numeric,2,numbers2colors)
+  datColors &lt;- cbind(chip_col,group_col,pheno_col,gender_col,tissue_col,batch_col,quant_numeric_col)
+  ## expression matrix and IAC
+  cat(&quot; expression matrix and IAC&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  gx &lt;- t(exprs(eset));
+  datExprs &lt;- exprs(eset)
+  IAC &lt;- cor(datExprs)
+  IAC_d &lt;- 1-IAC
+  samle_names &lt;- sampleNames(eset)
+  IAC=cor(datExprs, method=&quot;p&quot;,use=&quot;p&quot;)
+  diag(IAC)=0
+  A.IAC=((1+IAC)/2)^2  ## ADJACENCY MATRIX
+
+  #  heatmap IAC
+  heatmap.2(IAC , trace=&quot;none&quot;, 
+            ColSideColors=labels2colors( as.character(pData(eset)$PHENOTYPE)), 
+            RowSideColors=labels2colors( as.character(pData(eset)$GROUPS)), 
+            col=&quot;bluered&quot;, main=&quot;IAC&quot;,
+            hclustfun=function(x) hclust(x,method=&#39;complete&#39;), 
+            distfun= function(x) dist(x,method=&#39;euclidean&#39;) )
+
+  # heatmap A.IAC
+  heatmap.2(A.IAC , trace=&quot;none&quot;, 
+            ColSideColors=labels2colors( as.character(pData(eset)$PHENOTYPE)),
+            RowSideColors=labels2colors( as.character(pData(eset)$GROUPS)), 
+            col=&quot;bluered&quot;, main=&quot;A.IAC&quot;,
+            hclustfun=function(x) hclust(x,method=&#39;complete&#39;), 
+            distfun= function(x) dist(x,method=&#39;euclidean&#39;) )
+
+}
+
+
+# sampleNetwork_plot_all_lumi
+
+sampleNetwork_plot_all_lumi &lt;- function(eset, colBy=c(&quot;chip&quot;,&quot;group&quot;) ) {
+
+  gp_col &lt;- colBy
+  cat(&quot; setting up data for qc plots&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  ## expression matrix and IAC
+  cat(&quot; expression matrix and IAC&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  datExprs &lt;- exprs(eset)
+  IAC &lt;- cor(datExprs)
+  IAC_d &lt;- 1-IAC
+  samle_names &lt;- sampleNames(eset)
+  IAC=cor(datExprs, method=&quot;p&quot;,use=&quot;p&quot;)
+  diag(IAC)=0
+  A.IAC=((1+IAC)/2)^2  ## ADJACENCY MATRIX
+  cat(&quot; fundamentalNetworkConcepts&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  FNC=fundamentalNetworkConcepts(A.IAC) ## WGCNA
+  K2=FNC$ScaledConnectivity
+  Z.K=(K2-mean(K2))/sd(K2)
+  Z.C=(FNC$ClusterCoef-mean(FNC$ClusterCoef))/sd(FNC$ClusterCoef)
+  rho &lt;- signif(cor.test(Z.K,Z.C,method=&quot;s&quot;)$estimate,2)
+  rho_pvalue &lt;- signif(cor.test(Z.K,Z.C,method=&quot;s&quot;)$p.value,2)
+# set colours
+  cat(&quot; colorvec [&quot;,paste(gp_col),&quot;]&quot;,&quot;\r&quot;,&quot;\n&quot;)
+if(gp_col==&quot;chip&quot;) { colorvec &lt;- labels2colors(as.character(pData(eset)$Sentrix.Barcode)) }
+if(gp_col==&quot;group&quot;) { colorvec &lt;- labels2colors(as.character(pData(eset)$GROUPS)) }
+  mean_IAC &lt;- mean(IAC[upper.tri(IAC)])
+   ## samplenetwork
+  local( 
+{colLab &lt;&lt;- function(n,treeorder) { 
+  if(is.leaf(n)) {
+    a &lt;- attributes(n)
+    i &lt;&lt;- i+1
+    attr(n, &quot;nodePar&quot;) &lt;-   c(a$nodePar, list(lab.col = colorvec[treeorder][i], lab.font = i%%3))
+  } 
+  n 
+} 
+ i &lt;- 0
+})
+  cat(&quot; begin SampleNetwork plots&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  ## Cluster for pics
+  cluster1 &lt;- hclust(as.dist(1-A.IAC),method=&quot;average&quot;)
+  cluster1order &lt;- cluster1$order
+  cluster2 &lt;- as.dendrogram(cluster1,hang=0.1)
+  cluster3 &lt;- dendrapply(cluster2,colLab,cluster1order)
+  ## PLOTS
+  ## cluster IAC
+  par(mfrow=c(2,2))
+  par(mar=c(5,6,4,2))
+  plot(cluster3,nodePar=list(lab.cex=1,pch=NA),
+       main=paste(&quot;Mean ISA = &quot;,signif(mean(A.IAC[upper.tri(A.IAC)]),3),sep=&quot;&quot;),
+       xlab=&quot;&quot;,ylab=&quot;1 - ISA&quot;,sub=&quot;&quot;,cex.main=1.8,cex.lab=1.4)
+  mtext(paste(&quot;distance: 1 - ISA &quot;,sep=&quot;&quot;),cex=0.8,line=0.2)
+  ## Connectivity
+  par(mar=c(5,5,4,2))
+  plot(Z.K,main=&quot;Connectivity&quot;, ylab=&quot;Z.K&quot;,xaxt=&quot;n&quot;,xlab=&quot;Sample&quot;,type=&quot;n&quot;,cex.main=1.8,cex.lab=1.4)
+  text(Z.K,labels=samle_names,cex=0.8,col=colorvec)
+  abline(h=-2)
+  abline(h=-3)
+  ## ClusterCoef
+  par(mar=c(5,5,4,2))
+  plot(Z.C,main=&quot;ClusterCoef&quot;, ylab=&quot;Z.C&quot;,xaxt=&quot;n&quot;,xlab=&quot;Sample&quot;,cex.main=1.8,cex.lab=1.4,type=&quot;n&quot;)
+  text(Z.C,labels=samle_names,cex=0.8,col=colorvec)
+  abline(h=-2)
+  abline(h=-3)
+  ## Connectivity vs ClusterCoef
+  par(mar=c(5,5,4,2))
+  plot(Z.K,Z.C,main=&quot;Connectivity vs ClusterCoef&quot;,xlab=&quot;Z.K&quot;,ylab=&quot;Z.C&quot;,col=colorvec,cex.main=1.8,cex.lab=1.4)
+  abline(lm(Z.C~Z.K),col=&quot;black&quot;,lwd=2)
+  mtext(paste(&quot;rho = &quot;,signif(cor.test(Z.K,Z.C,method=&quot;s&quot;)$estimate,2),&quot; p = &quot;,signif(cor.test(Z.K,Z.C,method=&quot;s&quot;)$p.value,2),sep=&quot;&quot;),cex=0.8,line=0.2)
+  abline(v=-2,lty=2,col=&quot;grey&quot;)
+  abline(h=-2,lty=2,col=&quot;grey&quot;)
+}
+
+# gx_qc_plots_lumi_2
+gx_qc_plots_lumi_2 &lt;- function(eset, do_pca=TRUE ) {
+  cat(&quot; starting qc plots&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  cat(&quot; setting up data for qc plots&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  ## get pheno data
+  cat(&quot; get pheno data&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  pheno &lt;- pData(eset)
+  ## basic colours
+  cat(&quot; basic colours&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  chip_col &lt;- labels2colors( as.character(pData(eset)$Sentrix.Barcode))
+  group_col &lt;- labels2colors( as.character(pData(eset)$GROUPS))
+  pheno_col &lt;- labels2colors( as.character(pData(eset)$PHENOTYPE))
+  gender_col &lt;- labels2colors( as.character(pData(eset)$SEX))
+  tissue_col &lt;- labels2colors( as.character(pData(eset)$TISSUE))
+  ## batch pheno data
+  cat(&quot; batch pheno data&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  sel_tech &lt;- grep(&quot;tech&quot;,names(pheno))
+  batch_pheno &lt;- pheno[,sel_tech]
+  ## id what is char/fav versus numerical
+  sel_batch &lt;- sapply(batch_pheno ,class) %in% c(&quot;character&quot;,&quot;factor&quot;)
+  sel_num_batch &lt;- sapply(batch_pheno ,class) %in% c(&quot;numeric&quot;)
+  ## get names
+  batch_var_names &lt;- names( batch_pheno[sel_batch])
+  batch_var_names_numeric &lt;- names(batch_pheno[sel_num_batch])
+  ## quantfun numeric data
+  numeric_tech &lt;- as.data.frame(batch_pheno[,sel_num_batch])
+  colnames(numeric_tech) &lt;- batch_var_names_numeric
+  quant_numeric &lt;- apply( numeric_tech,2,quantfun)
+  ## colours
+  batch_col &lt;- apply(batch_pheno[,sel_batch],2,labels2colors) ## colours
+  quant_numeric_col &lt;- apply(quant_numeric,2,numbers2colors)
+  datColors &lt;- cbind(chip_col,group_col,pheno_col,gender_col,tissue_col,batch_col,quant_numeric_col)
+  ## expression matrix and IAC
+  cat(&quot; expression matrix and IAC&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  gx &lt;- t(exprs(eset));
+  datExprs &lt;- exprs(eset)
+  IAC &lt;- cor(datExprs)
+  IAC_d &lt;- 1-IAC
+  samle_names &lt;- sampleNames(eset)
+  IAC=cor(datExprs, method=&quot;p&quot;,use=&quot;p&quot;)
+  diag(IAC)=0
+  A.IAC=((1+IAC)/2)^2  ## ADJACENCY MATRIX
+  cat(&quot; fundamentalNetworkConcepts&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  FNC=fundamentalNetworkConcepts(A.IAC) ## WGCNA
+  K2=FNC$ScaledConnectivity
+  Z.K=(K2-mean(K2))/sd(K2)
+  Z.C=(FNC$ClusterCoef-mean(FNC$ClusterCoef))/sd(FNC$ClusterCoef)
+  rho &lt;- signif(cor.test(Z.K,Z.C,method=&quot;s&quot;)$estimate,2)
+  rho_pvalue &lt;- signif(cor.test(Z.K,Z.C,method=&quot;s&quot;)$p.value,2)
+  colorvec &lt;- labels2colors(as.character(pData(eset)$Sentrix.Barcode))
+  mean_IAC &lt;- mean(IAC[upper.tri(IAC)])
+  ## flashClust
+  cat(&quot; flashClust&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  dist_exprs &lt;- dist( t(datExprs), method=&quot;e&quot; )
+  sampleTree &lt;- flashClust( dist_exprs, method = &quot;average&quot;);
+  ## Standard plots
+  cat(&quot; beging plotting boxplot&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  plot(eset, what=&#39;boxplot&#39;, col=chip_col )
+  cat(&quot; beging plotting density&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  plot(eset, what=&#39;density&#39; )
+  cat(&quot; beging plotting cv&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  plot(eset, what=&#39;cv&#39;  )
+  cat(&quot; beging plotting outlier&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  plot(eset, what=&#39;outlier&#39;  )
+  cat(&quot; beging plotting sampleTree&quot;,&quot;\r&quot;,&quot;\n&quot;)
+  plot(sampleTree)
+  if(do_pca==TRUE) {
+    cat(&quot; begin PCA plots&quot;,&quot;\r&quot;,&quot;\n&quot;)
+    pca_raw &lt;- prcomp(gx)$x;
+    ## PCA plots
+    plot(pca_raw[,&quot;PC1&quot;],pca_raw[,&quot;PC2&quot;], main=&quot; PCA plot coloured by chip &quot;,col=&quot;black&quot;, pch=21,bg=chip_col)
+    plot(pca_raw[,&quot;PC1&quot;],pca_raw[,&quot;PC2&quot;], main=&quot; PCA plot  coloured by Group &quot;,col=&quot;black&quot;, pch=21,bg=group_col)
+    plot(pca_raw[,&quot;PC1&quot;],pca_raw[,&quot;PC2&quot;], main=&quot; PCA plot  coloured by Phenotype &quot;,col=&quot;black&quot;, pch=21,bg=pheno_col)
+    plot(pca_raw[,&quot;PC1&quot;],pca_raw[,&quot;PC2&quot;], main=&quot; PCA plot  coloured by Gender &quot;,col=&quot;black&quot;, pch=21,bg=gender_col)
+    plot(pca_raw[,&quot;PC1&quot;],pca_raw[,&quot;PC2&quot;], main=&quot; PCA plot  coloured by Tissue &quot;,col=&quot;black&quot;, pch=21,bg=tissue_col)
+    ## loop PCA and plot by tech var
+    for(tech_var in batch_var_names) {
+      cat(&quot; begin looping through batch variable PCA plots &quot;,tech_var,&quot;\r&quot;,&quot;\n&quot;)
+      tech_var_name &lt;- paste(tech_var,sep=&quot;&quot;)
+      tech_var_col &lt;- labels2colors( as.character(batch_pheno[,tech_var_name]) )
+      plot(pca_raw[,&quot;PC1&quot;],pca_raw[,&quot;PC2&quot;], main=paste(&quot; PCA plot coloured by &quot;,tech_var_name,sep=&quot;&quot;),col=&quot;black&quot;,pch=21,bg=tech_var_col)
+    }
+    for(tech_var in batch_var_names_numeric) {
+      cat(&quot; begin looping through batch variable PCA plots &quot;,tech_var,&quot;\r&quot;,&quot;\n&quot;)
+      tech_var_name &lt;- paste(tech_var,sep=&quot;&quot;)
+      tech_var_col &lt;- numbers2colors( quant_numeric[,tech_var_name])
+      plot(pca_raw[,&quot;PC1&quot;],pca_raw[,&quot;PC2&quot;], main=paste(&quot; PCA plot coloured by &quot;,tech_var_name,sep=&quot;&quot;),col=&quot;black&quot;,bg=tech_var_col,pch=21)
+    }
+  }
+    ## other plots
+    #tmp_iac &lt;- outlierSamples(datExprs,thresh=iac_sd_thrs, showplots=TRUE)
+    cat(&quot; begin plotDendroAndColors and  heatmap.2 plots&quot;,&quot;\r&quot;,&quot;\n&quot;)
+    plotDendroAndColors(sampleTree,groupLabels=names(datColors), colors=datColors,dendroLabels = pData(eset)$Sample.ID, main=&quot;Sample dendrogram and trait heatmap&quot;)
+    heatmap.2(IAC , trace=&quot;none&quot;, ColSideColors=labels2colors( as.character(pData(eset)$PHENOTYPE)), RowSideColors=labels2colors( as.character(pData(eset)$GROUPS)), col=&quot;bluered&quot;, main=&quot;IAC&quot;,hclustfun=function(x) hclust(x,method=&#39;complete&#39;), distfun= function(x) dist(x,method=&#39;euclidean&#39;) )
+    # heatmap A.IAC
+    heatmap.2(A.IAC , trace=&quot;none&quot;, ColSideColors=labels2colors( as.character(pData(eset)$PHENOTYPE)), RowSideColors=labels2colors( as.character(pData(eset)$GROUPS)), col=&quot;bluered&quot;, main=&quot;A.IAC&quot;,hclustfun=function(x) hclust(x,method=&#39;complete&#39;), distfun= function(x) dist(x,method=&#39;euclidean&#39;) )
+    ## samplenetwork
+    local( 
+{colLab &lt;&lt;- function(n,treeorder) { 
+  if(is.leaf(n)) {
+    a &lt;- attributes(n)
+    i &lt;&lt;- i+1
+    attr(n, &quot;nodePar&quot;) &lt;-   c(a$nodePar, list(lab.col = colorvec[treeorder][i], lab.font = i%%3))
+  } 
+  n 
+} 
+ i &lt;- 0
+})
+    cat(&quot; begin SampleNetwork plots&quot;,&quot;\r&quot;,&quot;\n&quot;)
+    ## Cluster for pics
+    cluster1 &lt;- hclust(as.dist(1-A.IAC),method=&quot;average&quot;)
+    cluster1order &lt;- cluster1$order
+    cluster2 &lt;- as.dendrogram(cluster1,hang=0.1)
+    cluster3 &lt;- dendrapply(cluster2,colLab,cluster1order)
+    ## PLOTS
+    ## cluster IAC
+    par(mfrow=c(2,2))
+    par(mar=c(5,6,4,2))
+    plot(cluster3,nodePar=list(lab.cex=1,pch=NA),main=paste(&quot;Mean ISA = &quot;,signif(mean(A.IAC[upper.tri(A.IAC)]),3),sep=&quot;&quot;),xlab=&quot;&quot;,ylab=&quot;1 - ISA&quot;,sub=&quot;&quot;,cex.main=1.8,cex.lab=1.4)
+    mtext(paste(&quot;distance: 1 - ISA &quot;,sep=&quot;&quot;),cex=0.8,line=0.2)
+    ## Connectivity
+    par(mar=c(5,5,4,2))
+    plot(Z.K,main=&quot;Connectivity&quot;, ylab=&quot;Z.K&quot;,xaxt=&quot;n&quot;,xlab=&quot;Sample&quot;,type=&quot;n&quot;,cex.main=1.8,cex.lab=1.4)
+    text(Z.K,labels=samle_names,cex=0.8,col=colorvec)
+    abline(h=-2)
+    abline(h=-3)
+    ## ClusterCoef
+    par(mar=c(5,5,4,2))
+    plot(Z.C,main=&quot;ClusterCoef&quot;, ylab=&quot;Z.C&quot;,xaxt=&quot;n&quot;,xlab=&quot;Sample&quot;,cex.main=1.8,cex.lab=1.4,type=&quot;n&quot;)
+    text(Z.C,labels=samle_names,cex=0.8,col=colorvec)
+    abline(h=-2)
+    abline(h=-3)
+    ## Connectivity vs ClusterCoef
+    par(mar=c(5,5,4,2))
+    plot(Z.K,Z.C,main=&quot;Connectivity vs ClusterCoef&quot;,xlab=&quot;Z.K&quot;,ylab=&quot;Z.C&quot;,col=colorvec,cex.main=1.8,cex.lab=1.4)
+    abline(lm(Z.C~Z.K),col=&quot;black&quot;,lwd=2)
+    mtext(paste(&quot;rho = &quot;,signif(cor.test(Z.K,Z.C,method=&quot;s&quot;)$estimate,2),&quot; p = &quot;,signif(cor.test(Z.K,Z.C,method=&quot;s&quot;)$p.value,2),sep=&quot;&quot;),cex=0.8,line=0.2)
+    abline(v=-2,lty=2,col=&quot;grey&quot;)
+    abline(h=-2,lty=2,col=&quot;grey&quot;)
+  }
+
+
+
+
+
+####################
+## bgcor_mbcb ######
+####################
+bgcor_mbcb &lt;- function(eset, outfile) {
+
+cat(&quot; Start background correction &quot;, &quot;\r&quot;,&quot;\n&quot;)
+
+sig &lt;- paste(outfile,&quot;.exprsSignal.txt&quot;,sep=&quot;&quot;)
+neg &lt;- paste(outfile,&quot;.negative.control.txt&quot;,sep=&quot;&quot;)
+
+cat(&quot; get negativeControl bead data &quot;,&quot;\r&quot;,&quot;\n&quot;)
+
+negativeControl &lt;- getControlData(eset)
+negativeControl &lt;- subset(negativeControl, negativeControl$controlType==&quot;NEGATIVE&quot;)
+negativeControl_orig &lt;- negativeControl[,c(3:dim(negativeControl)[2])]
+
+#############################################################
+## removing outlier neg beads and replace with mean
+#############################################################
+
+negBeadOutlierRepMean2 &lt;- function(x) {
+    z_out_samp &lt;- abs(  as.numeric( scale(x) )  ) &gt; 2
+    mean_pop &lt;- mean(x[z_out_samp==FALSE])
+    sd_pop &lt;- sd(x[z_out_samp==FALSE])
+    new_x &lt;- ifelse( abs(  as.numeric( scale(x) )  ) &gt; 2, mean_pop, x )
+    return(new_x)
+  }
+
+negativeControl &lt;- apply(negativeControl_orig ,2, negBeadOutlierRepMean2)
+
+neg_max &lt;- apply(negativeControl,2,max)
+neg_sd &lt;- apply(negativeControl,2,sd)
+neg_mean &lt;- apply(negativeControl,2,mean)
+
+#############################################################
+## save negativeControl bead expression data
+#############################################################
+write.table(negativeControl, file=neg, sep=&quot;\t&quot;);
+
+#############################################################
+## get expression data
+#############################################################
+cat(&quot; get expression bead data &quot;,&quot;\r&quot;,&quot;\n&quot;)
+
+expressionSignal &lt;- exprs(eset)
+
+#############################################################
+## save expression data
+#############################################################
+write.table(expressionSignal, file=sig, sep=&quot;\t&quot;);
+
+#############################################################
+## set data for mbcb
+#############################################################
+cat(&quot; set data for mbcb &quot;,&quot;\r&quot;,&quot;\n&quot;)
+
+data &lt;- mbcb.parseFile(sig, neg);
+
+signal &lt;- data$sig;
+negCon &lt;- data$con;
+
+#############################################################
+## run mbcb
+#############################################################
+cat(&quot; run background correct using mbcb.correct(method=\&quot;MLE\&quot;)  &quot;,&quot;\r&quot;,&quot;\n&quot;)
+
+gx_mbcb &lt;- mbcb.correct(signal,negCon,npBool=FALSE,mleBool=TRUE, isRawBead=FALSE)
+
+###############
+## save mbcb ##
+###############
+cat(&quot; mbcb complete &quot;,&quot;\r&quot;,&quot;\n&quot;)
+cat(&quot; saveing raw mbcb matrix to &quot;,paste(outfile,&quot;.mbcb.correct.output.RData&quot;,sep=&quot;&quot;), &quot;\r&quot;,&quot;\n&quot;)
+save(gx_mbcb , file=paste(outfile,&quot;.mbcb.correct.output.RData&quot;,sep=&quot;&quot;))
+
+################################
+## select mbcb method results ##
+################################
+cat(&quot; Selected mbcb method: &quot;,mbcb_method,&quot;\r&quot;,&quot;\n&quot;)
+##if(mbcb_method==&quot;NP&quot;) { gx_mbcb &lt;- gx_mbcb$NP }
+if(mbcb_method==&quot;MLE&quot;) { gx_mbcb &lt;- gx_mbcb$MLE }
+
+#############################################################
+## replace names with original as R adds &quot;X&quot; to numbers #####
+#############################################################
+cat(&quot; replace names with original sampleNames(eset_raw), as R adds X to numbers &quot;,&quot;\r&quot;,&quot;\n&quot;)
+colnames(gx_mbcb) &lt;- sampleNames(eset)
+gx_mbcb[1:10,1:10]
+#############################################################
+## make new eset for bk corrected data
+#############################################################
+cat(&quot; Creating Background Corrected Data set: eset_bg  &quot;,&quot;\r&quot;,&quot;\n&quot;)
+eset_bg &lt;- eset
+#############################################################
+## replace old exprs data with new mbcb bk corrected data
+#############################################################
+cat(&quot; replace old exprs data with new mbcb Background corrected data &quot;,&quot;\r&quot;,&quot;\n&quot;)
+exprs(eset_bg) &lt;- as.matrix(gx_mbcb)
+sampleNames(eset_bg) &lt;- sampleNames(eset)
+sampleNames(eset_bg)
+## return 
+cat(&quot; returning new mbcb Background corrected data: eset_bg &quot;,&quot;\r&quot;,&quot;\n&quot;)
+return(eset_bg)
+}
+
+
+###################
+## sampleNetwork ##
+###################
+## eset &lt;- eset_raw  ## testing
+## col_by_chip &lt;- 1
+## enforce all then group then all on good samples
+
+basic_sampleNetwork &lt;- function(eset,col_by_chip=c(&quot;1&quot;,&quot;0&quot;),groups=c(&quot;all&quot;,&quot;byGroup&quot;),outfile,sd_thrs=2) {
+
+if(groups==&quot;all&quot;) {
+
+mgroup &lt;- &quot;all&quot;
+n_groups &lt;- length(mgroup)
+res_names &lt;- c(&quot;Group&quot;,&quot;mean_IAC&quot;,&quot;n_outliers&quot;,&quot;min_Z.K&quot;,&quot;rho&quot;,&quot;rho_pvalue&quot;,&quot;Z.K_outliers&quot;)
+res &lt;- matrix(ncol=length(res_names),nrow=n_groups, dimnames=list(mgroup,res_names))
+
+cat(&quot; doing group [&quot;,mgroup,&quot;]&quot;,&quot;\r&quot;,&quot;\n&quot;)
+gx &lt;- exprs(eset)
+sample_info &lt;- pData(eset)
+samle_names &lt;- sampleNames(eset)
+groups &lt;- as.character(sample_info$GROUPS)
+pheno &lt;- as.character(sample_info$PHENOTYPE)
+gpcolors &lt;- labels2colors(groups)
+## IAC, ADJACENCY &amp; fundamentalNetworkConcepts, Z.K, Z.C, Z.MAR
+cat(&quot; Calculating fundamentalNetworkConcepts Metrics &quot;,&quot;\r&quot;,&quot;\n&quot;)
+IAC=cor(gx,method=&quot;p&quot;,use=&quot;p&quot;)
+diag(IAC)=0
+A.IAC=((1+IAC)/2)^2  ## ADJACENCY MATRIX
+FNC=fundamentalNetworkConcepts(A.IAC) ## WGCNA
+K2=FNC$ScaledConnectivity
+Z.K=(K2-mean(K2))/sd(K2)
+Z.C=(FNC$ClusterCoef-mean(FNC$ClusterCoef))/sd(FNC$ClusterCoef)
+Z.MAR=(FNC$MAR-mean(FNC$MAR))/sd(FNC$MAR)
+rho &lt;- signif(cor.test(Z.K,Z.C,method=&quot;s&quot;)$estimate,2)
+rho_pvalue &lt;- signif(cor.test(Z.K,Z.C,method=&quot;s&quot;)$p.value,2)
+## OUTLIERS
+Z.K_outliers &lt;- Z.K &lt; -sd_thrs
+Z.K_outliers &lt;- names(Z.K_outliers[Z.K_outliers==TRUE])
+n_outliers &lt;- length(Z.K_outliers)
+mean_IAC &lt;- mean(IAC[upper.tri(IAC)])
+min_Z.K &lt;- min(Z.K)
+cat(&quot; Number of Z.K outliers [&quot;, n_outliers,&quot;]&quot;,&quot;\r&quot;,&quot;\n&quot;)
+cat(&quot; mean_IAC [&quot;, mean_IAC,&quot;]&quot;,&quot;\r&quot;,&quot;\n&quot;)
+## Data frame of .SampleNetwork_Stats.txt
+cat(&quot; Making Data fram of fundamentalNetworkConcepts Metrics &quot;,&quot;\r&quot;,&quot;\n&quot;)
+FNC_DF &lt;- as.data.frame(FNC)
+FNC_DF$Z.K=(K2-mean(K2))/sd(K2)
+FNC_DF$Z.C=(FNC_DF$ClusterCoef-mean(FNC_DF$ClusterCoef))/sd(FNC_DF$ClusterCoef)
+FNC_DF$Z.MAR=(FNC_DF$MAR-mean(FNC_DF$MAR))/sd(FNC_DF$MAR)
+FNC_DF$mean_IAC &lt;- mean(IAC[upper.tri(IAC)])
+FNC_DF$Mean_Connectivity &lt;- mean(FNC$Connectivity)
+FNC_DF$Mean_ScaledConnectivity &lt;- mean(FNC$ScaledConnectivity)
+FNC_DF$Mean_ClusterCoef &lt;- mean(FNC$ClusterCoef)
+FNC_DF$Mean_MAR &lt;- mean(FNC$MAR)
+FNC_DF$Decentralization &lt;- 1-FNC_DF$Centralization
+FNC_DF$Homogeneity &lt;- 1-FNC_DF$Heterogeneity
+FNC_DF$rho &lt;- signif(cor.test(FNC_DF$Z.K,FNC_DF$Z.C,method=&quot;s&quot;)$estimate,2)
+FNC_DF$rho_pvalue &lt;- signif(cor.test(FNC_DF$Z.K,FNC_DF$Z.C,method=&quot;s&quot;)$p.value,2)
+FNC_DF &lt;- cbind(rownames(FNC_DF),FNC_DF)
+colnames(FNC_DF) &lt;- c(&quot;Sample.ID&quot;,names(FNC_DF[-1]))
+## write data
+cat(&quot; Saving Data fram of fundamentalNetworkConcepts Metrics [&quot;,paste(outfile,&quot;.SampleNetwork_Stats.txt&quot;,sep=&quot;&quot;),&quot;]&quot;,&quot;\r&quot;,&quot;\n&quot;)
+write.table(FNC_DF,file=paste(outfile,&quot;.group.&quot;,mgroup,&quot;.SampleNetwork_Stats.txt&quot;,sep=&quot;&quot;),sep=&quot;\t&quot;,row.name=FALSE,quote=FALSE)
+## write data for IAC
+cat(&quot; Saving Data fram of fundamentalNetworkConcepts Z.K outliers [&quot;,paste(outfile,&quot;.SampleNetwork_Stats_Z.K_outliers.txt&quot;,sep=&quot;&quot;),&quot;]&quot;,&quot;\r&quot;,&quot;\n&quot;)
+write.table(FNC_DF[Z.K_outliers,],file=paste(outfile,&quot;.group.&quot;,mgroup,&quot;.SampleNetwork_Stats_Z.K_outliers.txt&quot;,sep=&quot;&quot;),sep=&quot;\t&quot;,row.name=FALSE,quote=FALSE)
+## set colours by chip of GROUPS
+if(col_by_chip == 1) {   colorvec &lt;- labels2colors(as.character(pData(eset)$Sentrix.Barcode)) }
+if(col_by_chip == 0) {   colorvec &lt;- gpcolors }
+## plots of fundamentalNetworkConcepts
+local({
+colLab &lt;&lt;- function(n,treeorder) {
+if(is.leaf(n)) {
+a &lt;- attributes(n)
+i &lt;&lt;- i+1
+attr(n, &quot;nodePar&quot;) &lt;-   c(a$nodePar, list(lab.col = colorvec[treeorder][i], lab.font = i%%3))
+}
+n
+}
+i &lt;- 0
+})
+## Cluster for pics
+cat(&quot; Plotting SampleNetwork Metrics [&quot;,paste(outfile,&quot;.group.&quot;,mgroup,&quot;.SampleNetwork.qc.pdf&quot;,sep=&quot;&quot;),&quot;]&quot;,&quot;\r&quot;,&quot;\n&quot;)
+meanIAC &lt;- mean(IAC[upper.tri(IAC)],na.rm=T)
+cluster1 &lt;- hclust(as.dist(1-A.IAC),method=&quot;average&quot;)
+cluster1order &lt;- cluster1$order
+cluster2 &lt;- as.dendrogram(cluster1,hang=0.1)
+cluster3 &lt;- dendrapply(cluster2,colLab,cluster1order)
+## PLOTS
+## cluster IAC
+pdf(file=paste(outfile,&quot;.group.&quot;,mgroup,&quot;.SampleNetwork.qc.pdf&quot;,sep=&quot;&quot;),width=11,height=8)
+par(mfrow=c(2,2))
+par(mar=c(5,6,4,2))
+plot(cluster3,nodePar=list(lab.cex=1,pch=NA),main=paste(&quot;Mean ISA = &quot;,signif(mean(A.IAC[upper.tri(A.IAC)]),3),sep=&quot;&quot;),xlab=&quot;&quot;,ylab=&quot;1 - ISA&quot;,sub=&quot;&quot;,cex.main=1.8,cex.lab=1.4)
+mtext(paste(&quot;distance: 1 - ISA &quot;,sep=&quot;&quot;),cex=0.8,line=0.2)
+## Connectivity
+par(mar=c(5,5,4,2))
+plot(Z.K,main=&quot;Connectivity&quot;, ylab=&quot;Z.K&quot;,xaxt=&quot;n&quot;,xlab=&quot;Sample&quot;,type=&quot;n&quot;,cex.main=1.8,cex.lab=1.4)
+text(Z.K,labels=samle_names,cex=0.8,col=colorvec)
+abline(h=-2)
+abline(h=-3)
+## ClusterCoef
+par(mar=c(5,5,4,2))
+plot(Z.C,main=&quot;ClusterCoef&quot;, ylab=&quot;Z.C&quot;,xaxt=&quot;n&quot;,xlab=&quot;Sample&quot;,cex.main=1.8,cex.lab=1.4,type=&quot;n&quot;)
+text(Z.C,labels=samle_names,cex=0.8,col=colorvec)
+abline(h=-2)
+abline(h=-3)
+## Connectivity vs ClusterCoef
+par(mar=c(5,5,4,2))
+plot(Z.K,Z.C,main=&quot;Connectivity vs ClusterCoef&quot;,xlab=&quot;Z.K&quot;,ylab=&quot;Z.C&quot;,col=gpcolors,cex.main=1.8,cex.lab=1.4)
+abline(lm(Z.C~Z.K),col=&quot;black&quot;,lwd=2)
+mtext(paste(&quot;rho = &quot;,signif(cor.test(Z.K,Z.C,method=&quot;s&quot;)$estimate,2),&quot; p = &quot;,signif(cor.test(Z.K,Z.C,method=&quot;s&quot;)$p.value,2),sep=&quot;&quot;),cex=0.8,line=0.2)
+abline(v=-2,lty=2,col=&quot;grey&quot;)
+abline(h=-2,lty=2,col=&quot;grey&quot;)
+dev.off()
+##
+Z.K_outliers &lt;- paste(Z.K_outliers,collapse=&quot;;&quot;)
+res[mgroup,] &lt;- c(mgroup,mean_IAC,n_outliers,min_Z.K,rho,rho_pvalue,Z.K_outliers)
+res_out &lt;- as.data.frame(res)
+return(res_out)
+}
+
+################# if byGroup ####################
+
+if(groups==&quot;byGroup&quot;) {
+
+group_list &lt;- unique(pData(eset)$GROUPS)
+
+n_groups &lt;- length(group_list)
+
+res_names &lt;- c(&quot;Group&quot;,&quot;mean_IAC&quot;,&quot;n_outliers&quot;,&quot;min_Z.K&quot;,&quot;rho&quot;,&quot;rho_pvalue&quot;,&quot;Z.K_outliers&quot;)
+
+res &lt;- matrix(ncol=length(res_names),nrow=1000, dimnames=list(1:1000,res_names))
+
+cat(&quot; Groups [&quot;,group_list,&quot;]&quot;,&quot;\r&quot;,&quot;\n&quot;)
+
+    row &lt;- 1
+
+    for(mgroup in group_list) {
+
+    cat(&quot; doing group [&quot;,mgroup,&quot;]&quot;,&quot;\r&quot;,&quot;\n&quot;)
+    gx &lt;- exprs(eset[,pData(eset)$GROUPS==mgroup])
+    sample_info &lt;- pData(eset[,pData(eset)$GROUPS==mgroup])
+    samle_names &lt;- sampleNames(eset[,pData(eset)$GROUPS==mgroup])
+    groups &lt;- as.character(sample_info$GROUPS)
+    pheno &lt;- as.character(sample_info$PHENOTYPE)
+    gpcolors &lt;- labels2colors(groups)
+    ## IAC, ADJACENCY &amp; fundamentalNetworkConcepts, Z.K, Z.C, Z.MAR
+    cat(&quot; Calculating fundamentalNetworkConcepts Metrics &quot;,&quot;\r&quot;,&quot;\n&quot;)
+    IAC=cor(gx,method=&quot;p&quot;,use=&quot;p&quot;)
+    diag(IAC)=0
+    A.IAC=((1+IAC)/2)^2  ## ADJACENCY MATRIX
+    FNC=fundamentalNetworkConcepts(A.IAC) ## WGCNA
+    K2=FNC$ScaledConnectivity
+    Z.K=(K2-mean(K2))/sd(K2)
+    Z.C=(FNC$ClusterCoef-mean(FNC$ClusterCoef))/sd(FNC$ClusterCoef)
+    Z.MAR=(FNC$MAR-mean(FNC$MAR))/sd(FNC$MAR)
+    rho &lt;- signif(cor.test(Z.K,Z.C,method=&quot;s&quot;)$estimate,2)
+    rho_pvalue &lt;- signif(cor.test(Z.K,Z.C,method=&quot;s&quot;)$p.value,2)
+    ## OUTLIERS
+    Z.K_outliers &lt;- Z.K &lt; -sd_thrs
+    Z.K_outliers &lt;- names(Z.K_outliers[Z.K_outliers==TRUE])
+    n_outliers &lt;- length(Z.K_outliers)
+    mean_IAC &lt;- mean(IAC[upper.tri(IAC)])
+    min_Z.K &lt;- min(Z.K)
+    cat(&quot; Number of Z.K outliers [&quot;, n_outliers,&quot;]&quot;,&quot;\r&quot;,&quot;\n&quot;)
+    cat(&quot; mean_IAC [&quot;, mean_IAC,&quot;]&quot;,&quot;\r&quot;,&quot;\n&quot;)
+    ## Data frame of .SampleNetwork_Stats.txt
+    cat(&quot; Making Data fram of fundamentalNetworkConcepts Metrics &quot;,&quot;\r&quot;,&quot;\n&quot;)
+    FNC_DF &lt;- as.data.frame(FNC)
+    FNC_DF$Z.K=(K2-mean(K2))/sd(K2)
+    FNC_DF$Z.C=(FNC_DF$ClusterCoef-mean(FNC_DF$ClusterCoef))/sd(FNC_DF$ClusterCoef)
+    FNC_DF$Z.MAR=(FNC_DF$MAR-mean(FNC_DF$MAR))/sd(FNC_DF$MAR)
+    FNC_DF$mean_IAC &lt;- mean(IAC[upper.tri(IAC)])
+    FNC_DF$Mean_Connectivity &lt;- mean(FNC$Connectivity)
+    FNC_DF$Mean_ScaledConnectivity &lt;- mean(FNC$ScaledConnectivity)
+    FNC_DF$Mean_ClusterCoef &lt;- mean(FNC$ClusterCoef)
+    FNC_DF$Mean_MAR &lt;- mean(FNC$MAR)
+    FNC_DF$Decentralization &lt;- 1-FNC_DF$Centralization
+    FNC_DF$Homogeneity &lt;- 1-FNC_DF$Heterogeneity
+    FNC_DF$rho &lt;- signif(cor.test(FNC_DF$Z.K,FNC_DF$Z.C,method=&quot;s&quot;)$estimate,2)
+    FNC_DF$rho_pvalue &lt;- signif(cor.test(FNC_DF$Z.K,FNC_DF$Z.C,method=&quot;s&quot;)$p.value,2)
+    FNC_DF &lt;- cbind(rownames(FNC_DF),FNC_DF)
+    colnames(FNC_DF) &lt;- c(&quot;Sample.ID&quot;,names(FNC_DF[-1]))
+    ## write data
+    cat(&quot; Saving Data fram of fundamentalNetworkConcepts Metrics [&quot;,paste(outfile,&quot;.SampleNetwork_Stats.txt&quot;,sep=&quot;&quot;),&quot;]&quot;,&quot;\r&quot;,&quot;\n&quot;)
+    write.table(FNC_DF,file=paste(outfile,&quot;.group.&quot;,mgroup,&quot;.SampleNetwork_Stats.txt&quot;,sep=&quot;&quot;),sep=&quot;\t&quot;,row.name=FALSE,quote=FALSE)
+    ## write data for IAC
+    cat(&quot; Saving Data fram of fundamentalNetworkConcepts Z.K outliers [&quot;,paste(outfile,&quot;.SampleNetwork_Stats_Z.K_outliers.txt&quot;,sep=&quot;&quot;),&quot;]&quot;,&quot;\r&quot;,&quot;\n&quot;)
+    write.table(FNC_DF[Z.K_outliers,],file=paste(outfile,&quot;.group.&quot;,mgroup,&quot;.SampleNetwork_Stats_Z.K_outliers.txt&quot;,sep=&quot;&quot;),sep=&quot;\t&quot;,row.name=FALSE,quote=FALSE)
+    ## set colours by chip of GROUPS
+    colorvec &lt;- labels2colors(as.character(pData(eset[,pData(eset)$GROUPS==mgroup])$Sentrix.Barcode))
+    ##if(col_by_chip == 1) {   colorvec &lt;- labels2colors(as.character(pData(eset[,pData(eset)$GROUPS==mgroup])$Sentrix.Barcode)) }
+    ##if(col_by_chip == 0) {   colorvec &lt;- gpcolors }
+    ## plots of fundamentalNetworkConcepts
+    local({
+    colLab &lt;&lt;- function(n,treeorder) {
+    if(is.leaf(n)) {
+    a &lt;- attributes(n)
+    i &lt;&lt;- i+1
+    attr(n, &quot;nodePar&quot;) &lt;-   c(a$nodePar, list(lab.col = colorvec[treeorder][i], lab.font = i%%3))
+    }
+    n
+    }
+    i &lt;- 0
+    })
+    ## Cluster for pics
+    cat(&quot; Plotting SampleNetwork Metrics [&quot;,paste(outfile,&quot;.group.&quot;,mgroup,&quot;.SampleNetwork.qc.pdf&quot;,sep=&quot;&quot;),&quot;]&quot;,&quot;\r&quot;,&quot;\n&quot;)
+    meanIAC &lt;- mean(IAC[upper.tri(IAC)],na.rm=T)
+    cluster1 &lt;- hclust(as.dist(1-A.IAC),method=&quot;average&quot;)
+    cluster1order &lt;- cluster1$order
+    cluster2 &lt;- as.dendrogram(cluster1,hang=0.1)
+    cluster3 &lt;- dendrapply(cluster2,colLab,cluster1order)
+    ## PLOTS
+    ## cluster IAC
+    pdf(file=paste(outfile,&quot;.group.&quot;,mgroup,&quot;.SampleNetwork.qc.pdf&quot;,sep=&quot;&quot;),width=11,height=8)
+    par(mfrow=c(2,2))
+    par(mar=c(5,6,4,2))
+    plot(cluster3,nodePar=list(lab.cex=1,pch=NA),main=paste(&quot;Mean ISA = &quot;,signif(mean(A.IAC[upper.tri(A.IAC)]),3),sep=&quot;&quot;),xlab=&quot;&quot;,ylab=&quot;1 - ISA&quot;,sub=&quot;&quot;,cex.main=1.8,cex.lab=1.4)
+    mtext(paste(&quot;distance: 1 - ISA &quot;,sep=&quot;&quot;),cex=0.8,line=0.2)
+    ## Connectivity
+    par(mar=c(5,5,4,2))
+    plot(Z.K,main=&quot;Connectivity&quot;, ylab=&quot;Z.K&quot;,xaxt=&quot;n&quot;,xlab=&quot;Sample&quot;,type=&quot;n&quot;,cex.main=1.8,cex.lab=1.4)
+    text(Z.K,labels=samle_names,cex=0.8,col=colorvec)
+    abline(h=-2);   abline(h=-3)
+    ## ClusterCoef
+    par(mar=c(5,5,4,2))
+    plot(Z.C,main=&quot;ClusterCoef&quot;, ylab=&quot;Z.C&quot;,xaxt=&quot;n&quot;,xlab=&quot;Sample&quot;,cex.main=1.8,cex.lab=1.4,type=&quot;n&quot;)
+    text(Z.C,labels=samle_names,cex=0.8,col=colorvec)
+    abline(h=-2);   abline(h=-3)
+    ## Connectivity vs ClusterCoef
+    par(mar=c(5,5,4,2))
+    plot(Z.K,Z.C,main=&quot;Connectivity vs ClusterCoef&quot;,xlab=&quot;Z.K&quot;,ylab=&quot;Z.C&quot;,col=gpcolors,cex.main=1.8,cex.lab=1.4)
+    abline(lm(Z.C~Z.K),col=&quot;black&quot;,lwd=2)
+    mtext(paste(&quot;rho = &quot;,signif(cor.test(Z.K,Z.C,method=&quot;s&quot;)$estimate,2),&quot; p = &quot;,signif(cor.test(Z.K,Z.C,method=&quot;s&quot;)$p.value,2),sep=&quot;&quot;),cex=0.8,line=0.2)
+    abline(v=-2,lty=2,col=&quot;grey&quot;);abline(h=-2,lty=2,col=&quot;grey&quot;)
+    dev.off()
+
+    ## RESULTS
+
+    Z.K_outliers &lt;- paste(Z.K_outliers, collapse=&quot;;&quot;)
+
+    res[row,] &lt;- c(mgroup,mean_IAC,n_outliers,min_Z.K,rho,rho_pvalue,Z.K_outliers)
+
+    row &lt;- row + 1
+    }
+          ## FINAL RESULTS
+    res_out &lt;- as.data.frame(res)
+    res_out &lt;- subset(res_out, res_out$mean_IAC!=&quot;NA&quot;)
+
+    save(res_out,file=paste(outfile,&quot;.group.&quot;,mgroup,&quot;.SampleNetwork.qc.RData&quot;,sep=&quot;&quot;))
+
+    return(res_out)
+          }
+}
+
+## test
+##debug( basic_sampleNetwork)
+## test &lt;- basic_sampleNetwork(eset=eset_raw,col_by_chip=&quot;0&quot;,groups=&quot;byGroup&quot;,outfile=paste(out_dir,&quot;/&quot;,project_name,&quot;.XXXXeset_raw&quot;,sep=&quot;&quot;),sd_thrs=2)
+
+#################################
+##  basic_sampleNetworkIterate ##
+#################################
+
+basic_sampleNetworkIterate &lt;- function(eset, col_by_chip=c(&quot;1&quot;,&quot;0&quot;), groups=c(&quot;all&quot;,&quot;byGroup&quot;) , outfile, IACthresh=0.95, sd_thrs=2) {
+## sampleNetwork round 1
+if(groups==&quot;all&quot;) {
+mgroup &lt;- &quot;all&quot;
+outlier_running_count &lt;- 0;
+iteration &lt;- 1;
+sd_thrs &lt;- sd_thrs
+iac_outlier_samples &lt;- c();
+n_groups &lt;- 1
+basic_sampleNetworkIterate_summary_names &lt;- c(&quot;Group&quot;,&quot;round&quot;,&quot;nSamp&quot;,&quot;nOutlier&quot;,&quot;mean_IAC&quot;,&quot;min_Z.K&quot;,&quot;rho&quot;,&quot;rho_pvalue&quot;,&quot;Z.K_outliers&quot;)
+basic_sampleNetworkIterate_summary &lt;- matrix(ncol=length(basic_sampleNetworkIterate_summary_names),nrow=1000, dimnames=list(1:1000,basic_sampleNetworkIterate_summary_names))
+out &lt;- basic_sampleNetwork(eset,col_by_chip,groups,outfile=paste(outfile,&quot;.group.&quot;,mgroup,&quot;.round.&quot;,iteration,sep=&quot;&quot; ))
+n_samp &lt;-  length(sampleNames(eset))
+mgroup &lt;- out$Group
+mean_IAC &lt;- out$mean_IAC;
+min_Z.K &lt;- out$min_Z.K;
+rho_pvalue &lt;- out$rho_pvalue
+rho &lt;- out$rho
+Z.K_outliers &lt;- out$Z.K_outliers_list
+Z.K_outliers_list &lt;- paste(out$Z.K_outliers)
+Z.K_outliers_list &lt;- strsplit(Z.K_outliers_list,&quot;;&quot;)[[1]]
+outlier_running_count &lt;- outlier_running_count + length(Z.K_outliers_list);
+iac_outlier_samples &lt;- c(Z.K_outliers_list, iac_outlier_samples)
+res &lt;- list(Group=mgroup,round=iteration,nSamp=n_samp,nOutlier=length(Z.K_outliers_list),mean_IAC=mean_IAC,min_Z.K=min_Z.K,KvC_rho=rho,KvC_rho_pvalue=rho_pvalue,Z.K_outliers=Z.K_outliers)
+basic_sampleNetworkIterate_summary &lt;- rbind(basic_sampleNetworkIterate_summary,res)
+## if outlier samples then remove them
+if(outlier_running_count &gt;= 1) {
+eset &lt;- removeSamples_eset_lumi(eset,iac_outlier_samples)
+} else {
+eset &lt;- eset;
+cat(&quot; You have no outliers!&quot;,&quot;\r&quot;,&quot;\n&quot;) ;
+write.table(basic_sampleNetworkIterate_summary,file=paste(outfile,&quot;.basic_sampleNetworkIterate_summary.csv&quot;,sep=&quot;&quot;),sep=&quot;,&quot;,row.names=FALSE,quote=FALSE)
+}
+##
+n_samp_left &lt;- length(sampleNames(eset))
+cat(&quot; Number of outliers after round [&quot;,iteration,&quot;] = [&quot;,outlier_running_count,&quot;].  Percentage [&quot;,round(outlier_running_count/n_samp,3),&quot;]. Mean IAC [&quot;,mean_IAC,&quot;]. Min Z.K [&quot; ,min_Z.K,&quot;]. KvC [&quot;,rho,&quot;] [&quot;,rho_pvalue ,&quot;] N SAMPLE LEFT [&quot;,n_samp_left,&quot;]&quot;,&quot;\r&quot;,&quot;\n&quot;)
+iteration &lt;- iteration + 1;
+## keep going until Z.K &gt; -2
+while(iteration &gt;= 1 &amp;  round( as.numeric( min_Z.K ),3 )  &lt; -sd_thrs) {
+n_samp_start &lt;- length(sampleNames(eset))
+out &lt;- basic_sampleNetwork(eset,col_by_chip,groups,outfile=paste(outfile,&quot;.round.&quot;,iteration,sep=&quot;&quot; ))
+mean_IAC &lt;- out$mean_IAC;
+min_Z.K &lt;- out$min_Z.K;
+Z.K_outliers &lt;- out$Z.K_outliers
+rho_pvalue &lt;- out$rho_pvalue
+rho &lt;- out$rho
+Z.K_outliers_list &lt;- paste(out$Z.K_outliers)
+Z.K_outliers_list &lt;- strsplit(Z.K_outliers_list,&quot;;&quot;)[[1]]
+outlier_running_count &lt;- outlier_running_count + length(Z.K_outliers_list);
+iac_outlier_samples &lt;- c(Z.K_outliers_list, iac_outlier_samples)
+eset &lt;- removeSamples_eset_lumi(eset,iac_outlier_samples)
+n_samp_left &lt;- length(sampleNames(eset))
+res &lt;- list(Group=mgroup,round=iteration,nSamp=n_samp,nOutlier=length(Z.K_outliers_list),mean_IAC=mean_IAC,min_Z.K=min_Z.K,KvC_rho=rho,KvC_rho_pvalue=rho_pvalue,Z.K_outliers=Z.K_outliers)
+basic_sampleNetworkIterate_summary &lt;- rbind(basic_sampleNetworkIterate_summary,res)
+cat(&quot; Number of outliers after round [&quot;,iteration,&quot;] = [&quot;,outlier_running_count,&quot;].  Percentage [&quot;,round(outlier_running_count/n_samp,3),&quot;]. Mean IAC [&quot;,mean_IAC,&quot;]. Min Z.K [&quot; ,min_Z.K,&quot;]. KvC [&quot;,rho,&quot;] [&quot;,rho_pvalue ,&quot;] N SAMPLE LEFT [&quot;,n_samp_left,&quot;]&quot;,&quot;\r&quot;,&quot;\n&quot;)
+iteration &lt;- iteration + 1;
+};
+final_basic_sampleNetworkIterate_summary &lt;- as.data.frame(basic_sampleNetworkIterate_summary)
+final_basic_sampleNetworkIterate_summary &lt;- subset(final_basic_sampleNetworkIterate_summary, final_basic_sampleNetworkIterate_summary$mean_IAC!=&quot;NA&quot;)
+write.table(final_basic_sampleNetworkIterate_summary,file=paste(outfile,&quot;.group.basic_sampleNetworkIterate_summary.csv&quot;,sep=&quot;&quot;),sep=&quot;,&quot;,row.names=FALSE,quote=FALSE)
+outlier_samples &lt;- iac_outlier_samples
+iac_outlier_samples_df &lt;- as.data.frame(outlier_samples)
+colnames(iac_outlier_samples_df) &lt;- c(&quot;Sample.ID&quot;)
+write.table(iac_outlier_samples_df,file=paste(outfile,&quot;.group.&quot;,mgroup,&quot;.iac_outlier_samples.txt&quot;,sep=&quot;&quot;),sep=&quot;\t&quot;,row.names=FALSE,quote=FALSE)
+outlier_samples &lt;- list(iac_outlier_samples=outlier_samples)
+return(outlier_samples)
+}
+
+## if byGroup ##
+
+if(groups==&quot;byGroup&quot;) {
+
+## make results matrix basic_sampleNetworkIterate_summary
+basic_sampleNetworkIterate_summary_names &lt;- c(&quot;Group&quot;,&quot;round&quot;,&quot;nSamp&quot;,&quot;nOutlier&quot;,&quot;mean_IAC&quot;,&quot;min_Z.K&quot;,&quot;rho&quot;,&quot;rho_pvalue&quot;,&quot;Z.K_outliers&quot;)
+
+basic_sampleNetworkIterate_summary &lt;- matrix(ncol=length(basic_sampleNetworkIterate_summary_names),nrow=1000, dimnames=list(1:1000,basic_sampleNetworkIterate_summary_names))
+
+## get group names
+group_list &lt;- unique(pData(eset)$GROUPS); 
+cat(&quot; Number of Groups [&quot;,length(group_list),&quot;]\nGroup Names [&quot;,group_list,&quot;]&quot;,&quot;\r&quot;,&quot;\n&quot;)
+## set outlier running count to 0
+outlier_running_count &lt;- 0;
+## iteration count
+iteration &lt;- 1;
+## sd threshold
+sd_thrs &lt;- sd_thrs
+## outlier count
+iac_outlier_samples &lt;- c();
+## n groups
+n_groups &lt;- length(group_list)
+
+## loop through groups and run basic_sampleNetwork
+
+ for(mgroup in group_list)  {
+
+## subset eset to group samples
+group_samples &lt;- sampleNames(eset[,pData(eset)$GROUPS==mgroup]) ## sample names in group
+cat(&quot; Subset eset to group [&quot;,mgroup,&quot;]&quot;,&quot;\r&quot;,&quot;\n&quot;)
+group_eset &lt;- eset[,pData(eset)$GROUPS==mgroup] ## get eset for group
+cat(&quot; doing group [&quot;,mgroup,&quot;]&quot;,&quot;\r&quot;,&quot;\n&quot;)
+
+## run basic_sampleNetwork
+out &lt;- basic_sampleNetwork(group_eset,col_by_chip=0,groups=&quot;byGroup&quot;,outfile=paste(outfile,&quot;.group.&quot;,mgroup,&quot;.round.&quot;,iteration,sep=&quot;&quot; ))
+
+## get stats from basic_sampleNetwork
+n_samp &lt;-  length(sampleNames(group_eset))
+mgroup &lt;- out$Group
+mean_IAC &lt;- as.numeric(out$mean_IAC);
+min_Z.K &lt;- as.numeric(out$min_Z.K);
+rho_pvalue &lt;- as.numeric(out$rho_pvalue);
+rho &lt;- as.numeric(out$rho)
+
+## Outlier samples
+Z.K_outliers &lt;- out$Z.K_outliers
+
+Z.K_outliers_list &lt;- paste(out$Z.K_outliers)
+
+Z.K_outliers_list &lt;- strsplit(Z.K_outliers_list,&quot;;&quot;)[[1]]
+
+## update outlier_running_count
+outlier_running_count &lt;- outlier_running_count + length(Z.K_outliers_list);
+
+## make list of outlier samples
+iac_outlier_samples &lt;- c(Z.K_outliers_list, iac_outlier_samples)
+
+## store in basic_sampleNetworkIterate_summary results matrix
+res &lt;- cbind(mgroup,iteration,n_samp,length(Z.K_outliers_list),mean_IAC,min_Z.K,rho,rho_pvalue,Z.K_outliers)
+
+basic_sampleNetworkIterate_summary[iteration,] &lt;- res
+
+## if outlier samples then remove them
+if(outlier_running_count &gt;= 1) {
+group_eset &lt;- removeSamples_eset_lumi(group_eset,iac_outlier_samples)
+} else {
+group_eset &lt;- group_eset;
+cat(&quot; You have no outliers!&quot;,&quot;\r&quot;,&quot;\n&quot;) ;
+write.table(basic_sampleNetworkIterate_summary,file=paste(outfile,&quot;.basic_sampleNetworkIterate_summary.csv&quot;,sep=&quot;&quot;),sep=&quot;,&quot;,row.names=FALSE,quote=FALSE)
+}
+
+## number of samples remaining
+n_samp_left &lt;- length(sampleNames(group_eset))
+
+cat(&quot; Number of outliers after round [&quot;,iteration,&quot;] = [&quot;,outlier_running_count,&quot;].  Percentage [&quot;,round(outlier_running_count/n_samp,3),&quot;]. Mean IAC [&quot;,mean_IAC,&quot;]. Min Z.K [&quot; ,min_Z.K,&quot;]. KvC [&quot;,rho,&quot;] [&quot;,rho_pvalue ,&quot;] N SAMPLE LEFT [&quot;,n_samp_left,&quot;]&quot;,&quot;\r&quot;,&quot;\n&quot;)
+
+iteration &lt;- iteration + 1; ## increment iteration number
+
+## keep going until Z.K &gt; -2 ##
+while(iteration &gt;= 1 &amp;  round( as.numeric( min_Z.K ),3 )  &lt; -sd_thrs) {
+
+n_samp_start &lt;- length(sampleNames(eset))
+
+out &lt;- basic_sampleNetwork(group_eset,col_by_chip=0,groups=&quot;byGroup&quot;,outfile=paste(outfile,&quot;.group.&quot;,mgroup,&quot;.round.&quot;,iteration,sep=&quot;&quot; ))
+
+mean_IAC &lt;- out$mean_IAC;
+min_Z.K &lt;- out$min_Z.K;
+Z.K_outliers &lt;- out$Z.K_outliers
+rho_pvalue &lt;- out$rho_pvalue
+rho &lt;- out$rho
+
+Z.K_outliers_list &lt;- paste(out$Z.K_outliers)
+
+Z.K_outliers_list &lt;- strsplit(Z.K_outliers_list,&quot;;&quot;)[[1]]
+
+outlier_running_count &lt;- outlier_running_count + length(Z.K_outliers_list);
+
+iac_outlier_samples &lt;- c(Z.K_outliers_list, iac_outlier_samples)
+
+group_eset &lt;- removeSamples_eset_lumi(group_eset,iac_outlier_samples)
+
+n_samp_left &lt;- length(sampleNames(group_eset))
+
+res &lt;- c(mgroup,iteration,n_samp_left,length(Z.K_outliers_list),mean_IAC,min_Z.K,rho,rho_pvalue,Z.K_outliers)
+
+basic_sampleNetworkIterate_summary[iteration,] &lt;- res
+
+cat(&quot; Number of outliers after round [&quot;,iteration,&quot;] = [&quot;,outlier_running_count,&quot;].  Percentage [&quot;,round(outlier_running_count/n_samp,3),&quot;]. Mean IAC [&quot;,mean_IAC,&quot;]. Min Z.K [&quot; ,min_Z.K,&quot;]. KvC [&quot;,rho,&quot;] [&quot;,rho_pvalue ,&quot;] N SAMPLE LEFT [&quot;,n_samp_left,&quot;]&quot;,&quot;\r&quot;,&quot;\n&quot;)
+
+iteration &lt;- iteration + 1;
+
+};
+##
+}
+## DONE LOOPING THROUGH GROUPS ##
+
+final_basic_sampleNetworkIterate_summary &lt;- as.data.frame(basic_sampleNetworkIterate_summary)
+
+final_basic_sampleNetworkIterate_summary &lt;- subset(final_basic_sampleNetworkIterate_summary, final_basic_sampleNetworkIterate_summary$mean_IAC!=&quot;NA&quot;)
+
+write.table(final_basic_sampleNetworkIterate_summary,file=paste(outfile,&quot;.group.basic_sampleNetworkIterate_summary.csv&quot;,sep=&quot;&quot;),sep=&quot;,&quot;,row.names=FALSE,quote=FALSE)
+
+outlier_samples &lt;- iac_outlier_samples
+
+iac_outlier_samples_df &lt;- as.data.frame(outlier_samples)
+
+colnames(iac_outlier_samples_df) &lt;- c(&quot;Sample.ID&quot;)
+
+write.table(iac_outlier_samples_df,file=paste(outfile,&quot;.group.iac_outlier_samples.txt&quot;,sep=&quot;&quot;),sep=&quot;\t&quot;,row.names=FALSE,quote=FALSE)
+
+outlier_samples &lt;- list(iac_outlier_samples=outlier_samples)
+
+return(outlier_samples)
+
+}
+
+}
+
+
+
+
+##################
+##lumi.N &lt;- lumiExpresso(eset_raw, variance.stabilize=TRUE,  varianceStabilize.param=list(method=&#39;vst&#39;),  normalize.param=list(method=&#39;rsn&#39;), bg.correct=FALSE)
+
+
+# Austin Hilliard, White lab UCLA, Sep 2009
+#
+# group of functions for removing outlier probes and samples in microarray data
+#
+# removeOutlierProbes removes probes outside of specified stdev range from mean, runs on probesets (rows) or samples (cols) of input data 
+#
+# removeOutlierProbesIterate runs removeOutlierProbes iteratively until no outliers remain
+# 
+# removeTooManyNAs looks for probesets (rows) and samples (cols) with more than a specified number of missing values and removes them
+# 
+# outlierSamples computes inter-sample correlations and performs hierarchical clustering to find sample outliers as taught by Mike Oldham (formerly of the Geschwind lab), 
+# written prior to MO giving me beta version of his RemoveOutliers function.
+### MO&#39;s function RemoveOutliers function does this iteratively, as well as running ComBat, with user interactivity
+#
+# outlierSamplesIterate runs outlierSamples iteratively until user quits or chooses not to remove any more samples
+#
+# preProc runs all of the above and saves their output lists, including each iteration of processed data
+#
+#########################################################################
+
+### libraries
+library(lattice)
+library(Biobase)
+</code></pre>
+
+<pre><code>Loading required package: BiocGenerics
+Loading required package: parallel
+
+Attaching package: &#39;BiocGenerics&#39;
+
+The following objects are masked from &#39;package:parallel&#39;:
+
+    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+    clusterExport, clusterMap, parApply, parCapply, parLapply,
+    parLapplyLB, parRapply, parSapply, parSapplyLB
+
+The following object is masked from &#39;package:stats&#39;:
+
+    xtabs
+
+The following objects are masked from &#39;package:base&#39;:
+
+    anyDuplicated, append, as.data.frame, as.vector, cbind,
+    colnames, duplicated, eval, evalq, Filter, Find, get,
+    intersect, is.unsorted, lapply, Map, mapply, match, mget,
+    order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+    rbind, Reduce, rep.int, rownames, sapply, setdiff, sort,
+    table, tapply, union, unique, unlist
+
+Welcome to Bioconductor
+
+    Vignettes contain introductory material; view with
+    &#39;browseVignettes()&#39;. To cite Bioconductor, see
+    &#39;citation(&quot;Biobase&quot;)&#39;, and for packages &#39;citation(&quot;pkgname&quot;)&#39;.
+</code></pre>
+
+<pre><code class="r">library(affy)
+library(limma)
+</code></pre>
+
+<pre><code>
+Attaching package: &#39;limma&#39;
+
+The following object is masked from &#39;package:BiocGenerics&#39;:
+
+    plotMA
+</code></pre>
+
+<pre><code class="r">library(vsn)
+library(preprocessCore)
+library(lumi)
+</code></pre>
+
+<pre><code>Warning: replacing previous import by &#39;graphics::image&#39; when loading
+&#39;methylumi&#39;
+</code></pre>
+
+<pre><code>KernSmooth 2.23 loaded
+Copyright M. P. Wand 1997-2009
+</code></pre>
+
+<pre><code>Warning: replacing previous import by &#39;nleqslv::nleqslv&#39; when loading
+&#39;lumi&#39;
+</code></pre>
+
+<pre><code>
+Attaching package: &#39;lumi&#39;
+
+The following objects are masked from &#39;package:affy&#39;:
+
+    MAplot, plotDensity
+</code></pre>
+
+<pre><code class="r">library(annotate)
+</code></pre>
+
+<pre><code>Loading required package: AnnotationDbi
+</code></pre>
+
+<pre><code class="r">library(lumiHumanAll.db)
+</code></pre>
+
+<pre><code>Loading required package: org.Hs.eg.db
+Loading required package: DBI
+
+
+lumiHumanAll.db is using or is likely to need access to special
+  nuID identifiers.  Users can learn about these identifiers from
+  vignette documentation provided with the lumi package.
+</code></pre>
+
+<pre><code class="r">library(affy)
+library(cluster)
+library(impute)
+library(WGCNA)
+</code></pre>
+
+<pre><code>Loading required package: dynamicTreeCut
+Loading required package: flashClust
+
+Attaching package: &#39;flashClust&#39;
+
+The following object is masked from &#39;package:stats&#39;:
+
+    hclust
+
+Loading required package: Hmisc
+Loading required package: grid
+Loading required package: survival
+Loading required package: splines
+Loading required package: Formula
+Hmisc library by Frank E Harrell Jr
+
+Type library(help=&#39;Hmisc&#39;), ?Overview, or ?Hmisc.Overview&#39;)
+to see overall documentation.
+
+
+Attaching package: &#39;Hmisc&#39;
+
+The following object is masked from &#39;package:survival&#39;:
+
+    untangle.specials
+
+The following object is masked from &#39;package:AnnotationDbi&#39;:
+
+    contents
+
+The following object is masked from &#39;package:lumi&#39;:
+
+    combine
+
+The following objects are masked from &#39;package:Biobase&#39;:
+
+    combine, contents
+
+The following object is masked from &#39;package:BiocGenerics&#39;:
+
+    combine
+
+The following objects are masked from &#39;package:base&#39;:
+
+    format.pval, round.POSIXt, trunc.POSIXt, units
+</code></pre>
+
+<pre><code>==========================================================================
+*
+*  Package WGCNA 1.34 loaded.
+*
+*    Important note: It appears that your system supports multi-threading,
+*    but it is not enabled within WGCNA in R. 
+*    To allow multi-threading within WGCNA with all available cores, use 
+*
+*          allowWGCNAThreads()
+*
+*    within R. Use disableWGCNAThreads() to disable threading if necessary.
+*    Alternatively, set the following environment variable on your system:
+*
+*          ALLOW_WGCNA_THREADS=&lt;number_of_processors&gt;
+*
+*    for example 
+*
+*          ALLOW_WGCNA_THREADS=8
+*
+*    To set the environment variable in linux bash shell, type 
+*
+*           export ALLOW_WGCNA_THREADS=8
+*
+*     before running R. Other operating systems or shells will
+*     have a similar command to achieve the same aim.
+*
+==========================================================================
+</code></pre>
+
+<pre><code>
+Attaching package: &#39;WGCNA&#39;
+
+The following object is masked from &#39;package:stats&#39;:
+
+    cor
+</code></pre>
+
+<pre><code class="r">library(gplots)
+</code></pre>
+
+<pre><code>
+Attaching package: &#39;gplots&#39;
+
+The following object is masked from &#39;package:stats&#39;:
+
+    lowess
+</code></pre>
+
+<pre><code class="r">library(limma)
+library(MBCB)
+</code></pre>
+
+<pre><code>Loading required package: tcltk
+Loading required package: tcltk2
+
+Attaching package: &#39;tcltk2&#39;
+
+The following objects are masked from &#39;package:Hmisc&#39;:
+
+    label, label&lt;-
+</code></pre>
+
+<pre><code class="r">library(lumiHumanIDMapping)
+library(scatterplot3d)
+########################################
+
+########################################
+
+# utility functions
+
+cv = function(x) {
+  # compute coefficient of variation
+  stdev = sd(as.numeric(x), na.rm=TRUE);
+  avg = mean(as.numeric(x), na.rm=TRUE);
+  cv = stdev/avg;
+  return(cv)
+}
+
+# run vsn
+runVSN = function(data, plot=T) {
+  if (!is.matrix(data)) {data = as.matrix(data)};
+  dataSet = new(&quot;ExpressionSet&quot;, exprs = data);
+  dataSetVSN = justvsn(dataSet);
+  dataVSN = exprs(dataSetVSN);
+  dataVSN = as.data.frame(dataVSN);
+
+  if (plot) {par(mfrow=c(1,2)); meanSdPlot(data); meanSdPlot(dataSetVSN)};
+
+  return(dataVSN);
+
+}
+##########################################################################
+
+removeOutlierProbes = function(data, deviate=3, rowORcol=1) {
+
+  # deviate is number of stdevs away from mean probe must surpass to be outlier.
+  #     could be assessing distribution of single probe across samples,
+  # or distribution of all probes on single sample
+  #
+  # rowORcol chooses whether computation is over probesets(1) or samples(2)
+  #     if 1, looking for single probe outliers within probeset across samples
+  # if 2, looking for outliers within samples
+
+  if(rowORcol==1){label=rownames(data)}; 
+  if(rowORcol==2){label=names(data)};
+
+  data_dim = dim(data);
+
+  # set up data frame to hold mean, sd, cv, and cut-offs for each probeset/sample
+  data_stats = data.frame(mean=numeric(data_dim[rowORcol]),
+                          sd=numeric(data_dim[rowORcol]),
+                          cv=numeric(data_dim[rowORcol]),
+                          up_thresh=numeric(data_dim[rowORcol]), 
+                          low_thresh=numeric(data_dim[rowORcol]), 
+                          row.names=label 
+  );
+
+  # compute mean, sd, cv, and cut-offs for each probeset/sample
+  data_stats[,1] = apply(data, rowORcol, mean, na.rm=TRUE);
+  data_stats[,2] = apply(data, rowORcol, sd, na.rm=TRUE);
+  data_stats[,3] = data_stats[,2] / data_stats[,1];
+  data_stats[,4] = data_stats[,1] + (deviate * data_stats[,2]);
+  data_stats[,5] = data_stats[,1] - (deviate * data_stats[,2]);  
+
+  # get indices and values of outliers
+  outlier_positions = which(data &gt; data_stats[,4] | data &lt; data_stats[,5], arr.ind=T); 
+  outlier_vals = data[outlier_positions];
+  outlier_vals = cbind(outlier_positions,outlier_vals);
+
+  # get number of outliers and compute percentage of total probes they represent
+  total_outliers = dim(outlier_positions)[1];
+  total_probes = dim(data)[1] * dim(data)[2];
+  percent_outliers = 100 * total_outliers / total_probes;
+
+  # make copy of data and insert NAs for outliers
+  dataClean = data;
+  dataClean[data &gt; data_stats[,4] | data &lt; data_stats[,5]] = NA; 
+
+  out = list(data_stats=data_stats,
+             deviate=deviate,
+             outlier_positions=outlier_positions,
+             outlier_vals=outlier_vals,
+             total_probes=total_probes,
+             total_outliers=total_outliers,
+             percent_outliers=percent_outliers,
+             dataClean=dataClean
+  );
+  return(out);
+
+}
+
+########################################################
+
+removeOutlierProbesIterate = function(data, deviate=3, rowORcol=1) {
+
+  if(rowORcol==1){cat(&#39;Removing probes &gt;&#39;,deviate,&#39;stdevs from probeset mean...\n&#39;)}; 
+  if(rowORcol==2){cat(&#39;Removing probes &gt;&#39;,deviate,&#39;stdevs from sample mean...\n&#39;)};
+
+  single_round_outliers = 1;
+  outlier_running_count = 0;
+  iteration = 0;
+  total_probes = dim(data)[1] * dim(data)[2];
+  outlier_positions = list();
+  outlier_vals = list(); 
+  outliers_by_round = c();
+
+  while (single_round_outliers &gt; 0) {
+
+    out = removeOutlierProbes(data, deviate, rowORcol);
+    single_round_outliers = out$total_outliers;
+    outlier_running_count = outlier_running_count + out$total_outliers;
+    data = out$dataClean;
+    iteration = iteration + 1;
+    outlier_positions[[iteration]] = out$outlier_positions;
+    outlier_vals[[iteration]] = out$outlier_vals; 
+    outliers_by_round[iteration] = single_round_outliers;
+    cat(&#39;Round&#39;,iteration, &#39;outliers:&#39;, single_round_outliers, &#39;\n&#39;);
+
+  };
+
+  names(outlier_positions) = paste(&#39;round&#39;, c(1:iteration), sep=&#39;&#39;);
+  names(outlier_vals) = paste(&#39;round&#39;, c(1:iteration), sep=&#39;&#39;);
+  names(outliers_by_round) = paste(&#39;round&#39;, c(1:iteration), sep=&#39;&#39;);
+  percent_outliers = 100 * outlier_running_count / total_probes;
+  dataClean = out$dataClean;
+
+  cat(&#39;\n&#39;);
+  cat(&#39;Total outliers:&#39;, outlier_running_count, &#39;\n&#39;);
+  cat(&#39;Percentage of probes that were outliers:&#39;, percent_outliers, &#39;\n&#39;);
+
+  output = list(dataClean=dataClean, 
+                outlier_positions=outlier_positions,
+                outlier_vals=outlier_vals,
+                outliers_by_round=outliers_by_round,
+                total_outliers=outlier_running_count,
+                total_probes=total_probes,
+                percent_outliers=percent_outliers, 
+                sd_cutoff=deviate
+  );
+  return(output);
+
+}
+
+#######################################################
+
+removeTooManyNAs = function (data, probe_thresh=NULL, sample_thresh=NULL) {
+
+  if(is.numeric(probe_thresh)){
+    probe_thresh=probe_thresh;
+  } else {
+    probe_thresh = floor(ncol(data)/2);
+  }
+  cat(&#39;\nremoving probes with &gt;&#39;, probe_thresh, &#39; missing measurements\n&#39;, sep=&#39;&#39;);
+
+  if(is.numeric(sample_thresh)){
+    sample_thresh=sample_thresh;
+  } else {
+    sample_thresh = floor(nrow(data)/2);
+  }
+  cat(&#39;removing samples with &gt;&#39;, sample_thresh, &#39; missing measurements\n&#39;, sep=&#39;&#39;);
+
+  countNAs = apply(is.na(data), 1, sum);
+  probes_over_thresh = (1:dim(data)[1])[countNAs &gt; probe_thresh];
+  cat(&#39;\n&#39;);
+  cat(length(probes_over_thresh),&#39;probes removed \n&#39;);
+
+  countNAsSamps = apply(is.na(data), 2, sum);
+  samples_over_thresh = (1:dim(data)[2])[countNAsSamps &gt; sample_thresh]; 
+  cat(length(samples_over_thresh),&#39;samples removed \n&#39;);
+
+  dataClean = data;
+  if (length(probes_over_thresh) &gt; 0) {dataClean = data[-probes_over_thresh, ] };
+  if (length(samples_over_thresh) &gt; 0) {dataClean = data[ , -samples_over_thresh] };    
+  names(probes_over_thresh) = names(countNAs)[probes_over_thresh];
+  names(samples_over_thresh) = names(countNAsSamps)[samples_over_thresh];
+
+  output = list(dataClean=dataClean,
+                countNAs=countNAs, 
+                countNAsSamps=countNAsSamps,
+                probes_over_thresh=probes_over_thresh,
+                samples_over_thresh=samples_over_thresh,
+                probe_thresh=probe_thresh,  
+                sample_thresh=sample_thresh 
+  );
+
+  return(output);
+
+}
+
+##########################################################
+
+outlierSamples = function(data, thresh=2, showplots=T) {
+
+  if (thresh &lt; 0) {thresh = -thresh};
+
+  IAC=cor(data,method=&quot;p&quot;,use=&quot;complete.obs&quot;);
+  clust=hclust(as.dist(1-IAC),method=&quot;average&quot;);
+
+  meanIAC=mean(IAC[upper.tri(IAC)]);
+  meanIACdiag=mean(IAC);
+  samplemeanIAC=apply(IAC,2,mean);
+  sdCorr=sd(samplemeanIAC);    
+  numbersd=(samplemeanIAC-meanIACdiag)/sdCorr;
+
+  cat(&#39;\n&#39;);
+  cat(&#39;Looking for outlier samples (&gt;&#39;,thresh,&#39;stdevs from meanIACdiag)...\n&#39;);
+  cat(&#39;meanIAC =&#39;,meanIAC,&#39;\n&#39;);
+  cat(&#39;meanIACdiag =&#39;,meanIACdiag,&#39;\n&#39;);
+  cat(&#39;\n&#39;) 
+
+  over_thresh = numbersd &lt; -thresh | numbersd &gt; thresh; 
+  samples_to_remove = numbersd[over_thresh];
+  #formatted = data.frame(z.IAC=samples_to_remove);
+
+  dataClean = data[, !over_thresh]; 
+
+  cat(&#39;All samples z.IAC: \n&#39;);
+  print(numbersd);
+  cat(&#39;\n\n&#39;);
+  if (length(samples_to_remove)!=0) {
+    cat(&#39;Possible outliers: \n&#39;)
+    #print(formatted);
+    print(samples_to_remove);
+    cat(&#39;\n&#39;);
+  } else {
+    cat(&#39;No samples &gt;&#39;,thresh,&#39;stdevs from meanIACdiag \n&#39;);
+  };
+
+  output = list(dataClean=dataClean,
+                IAC=IAC,
+                meanIAC=meanIAC,
+                meanIACdiag=meanIACdiag,
+                samplemeanIAC=samplemeanIAC,
+                numbersd=numbersd,
+                clust=clust,
+                samples_to_remove=samples_to_remove
+  );
+
+  if (showplots) {
+    par(mfrow=c(1,2)); 
+    plot(clust); 
+    plot(numbersd, type=&#39;n&#39;); 
+    text(numbersd, labels=names(numbersd), cex=0.75);
+  };
+
+  return(output);
+
+}
+
+##########################################################
+
+outlierSamplesIterate = function (data, IACthresh=2, showplots=T) {
+
+  if (IACthresh &lt; 0) {IACthresh = -IACthresh};
+  samples_removed = c();
+  temp = data;
+
+  while (TRUE) {
+
+    out = outlierSamples(temp,as.numeric(IACthresh),showplots);
+    to_remove = out$samples_to_remove; 
+    if (length(to_remove) &lt; 1) {break}; 
+
+    answer_raw = readline(prompt=&#39;List samples (0 if none) to remove with single spaces in between (no commas): &#39;);
+    if (answer_raw==0) {cat(&#39;You didn\&#39;t remove any samples!!! \n&#39;); break};
+    answer = strsplit(answer_raw, &#39; &#39;);
+    answer = answer[[1]]; 
+
+    temp = temp[, -match(answer, names(temp))];
+    samples_removed = c(samples_removed, to_remove[names(to_remove)==answer]); 
+    cat(&#39;Sample(s)&#39;, answer_raw, &#39;removed \n&#39;);
+
+  };
+
+  cat(&#39;\n&#39;);
+  cat(&#39;Any more suspicious samples to remove?&#39;);
+  choose = menu(c(&#39;Yes&#39;,&#39;No&#39;));
+
+  if (choose==1) {
+    answer_raw = readline(prompt=&#39;List samples to remove with single spaces in between (no commas): &#39;);
+    answer = strsplit(answer_raw, &#39; &#39;);
+    answer = answer[[1]]; 
+    temp = temp[, -match(answer, names(temp))];
+    samples_removed = c(samples_removed, out$numbersd[answer]); 
+    cat(&#39;Sample(s)&#39;, answer_raw, &#39;removed \n&#39;);
+  } else {
+    cat(&#39;Ok... finished\n&#39;)
+  };
+
+  output = list(dataClean=temp, 
+                IAC=out$IAC, 
+                meanIACdiag=out$meanIACdiag,
+                samplemeanIAC=out$samplemeanIAC,
+                numbersd=out$numbersd,
+                samples_removed=samples_removed
+  );
+
+  return(output);
+
+}
+
+##########################################################
+
+
+preProcess = function (datIN,
+                       removeOutlierProbes=T, deviate=3, rowORcol=1,
+                       removeTooManyNAs=T, probe_thresh=NULL, sample_thresh=NULL,
+                       removeOutlierSamples=T, IACthresh=2, showplots=T,
+                       Qnorm=T,
+                       vsn=F, vsnPlot=F,
+                       CVsort=F) {
+
+  # check input, if ok, assign input to &#39;temp&#39;. if not, quit 
+  if (is.data.frame(datIN) || is.matrix(datIN)) {
+    temp = datIN;
+    cat(&#39;Input data has&#39;,nrow(temp),&#39;rows (genes) and&#39;,ncol(temp),&#39;columns (samples) \n\n&#39;);
+  } else {
+    stop(&#39;Input data must be in the form of a data frame or matrix!&#39;);
+  };
+
+  # if removeOutlierProbes=T, run on &#39;temp&#39; and save processed data in &#39;temp&#39; for further processing
+  # if removeOutlierProbes=F, skip. &#39;temp&#39; continues to hold input data.
+  #     set outlierProbesOUTPUT to NULL
+  if (removeOutlierProbes) {
+    outlierProbesOUTPUT = removeOutlierProbesIterate(temp, deviate, rowORcol);
+    temp = outlierProbesOUTPUT$dataClean;
+    cat(&#39;Processed data available in output as $data_removedOutlierProbes \n&#39;);
+  } else {
+    cat(&#39;Skipping removal of outlier probes, checking for probesets and samples with too much missing data...\n&#39;);
+    outlierProbesOUTPUT = NULL;
+  };
+
+  # if removeTooManyNAs=T, run on &#39;temp&#39; and save processed data in &#39;temp&#39; for further processing   
+  # if removeTooManyNAs=F, skip. &#39;temp&#39; holds output of removeOutlierProbes or input data.
+  #     set checkMissingDataOUTPUT to NULL
+  if (removeTooManyNAs) {
+    checkMissingDataOUTPUT = removeTooManyNAs(temp, probe_thresh, sample_thresh);
+    temp = checkMissingDataOUTPUT$dataClean;        
+    cat(&#39;...Processed data ($data_checkedMissingData) has&#39;,nrow(temp),&#39;rows and&#39;,ncol(temp),&#39;columns \n&#39;);
+  } else {
+    cat(&#39;Skipping removal of probesets and samples with too much missing data, checking for outlier samples...\n&#39;);
+    checkMissingDataOUTPUT = NULL;  
+  };
+
+  # if removeOutlierSamples=T, run on &#39;temp&#39; and save processed data in &#39;temp&#39; for further processing
+  # if removeOutlierSamples=F, skip. &#39;temp&#39; holds output of removeTooManyNAs, removeOutlierProbes, or input 
+  #     set outlierSamplesOUTPUT to NULL
+  if (removeOutlierSamples) {
+    outlierSamplesOUTPUT = outlierSamplesIterate(temp, IACthresh, showplots);
+    temp = outlierSamplesOUTPUT$dataClean;
+    cat(&#39;...Processed data ($data_removedOutlierSamples) now has&#39;,nrow(temp),&#39;rows and&#39;,ncol(temp),&#39;columns \n\n&#39;);
+  } else {
+    cat(&#39;Skipping removal of outlier samples...\n&#39;);
+    outlierSamplesOUTPUT = NULL;
+  };
+
+  # if Qnorm=T, run on &#39;temp&#39;, save output to &#39;tempQnorm&#39; for function output as &#39;data_Qnorm&#39;.
+  #     set &#39;temp&#39; equal to &#39;tempQnorm&#39; for further processing.
+  #     ask if user wants to re-check for outlier samples but don&#39;t run iterative version as it is just a check
+  # if Qnorm=F, skip and set data_Qnorm to NULL.
+  #     &#39;temp&#39; holds output of removeOutlierSamples, removeTooManyNAs, removeOutlierProbes, or input  
+  if (Qnorm) {
+    cat(&#39;..........\n&#39;);
+    cat(&#39;Performing quantile normalization...\n&#39;)
+    data_Qnorm = as.data.frame(normalize.quantiles(as.matrix(temp)));
+    names(data_Qnorm) = names(temp); rownames(data_Qnorm) = rownames(temp);
+    temp = data_Qnorm;
+    cat(&#39;Normalized data available in output as $data_Qnorm \n\n&#39;);
+    cat(&#39;Re-check for sample outliers?\n&#39;)
+    answer = menu(c(&#39;Yes&#39;,&#39;No&#39;));
+    if (answer==1) {
+      postNormOutlierSamples = outlierSamples(data_Qnorm, IACthresh, showplots);
+      cat(&#39;\n&#39;);
+      cat(&#39;Don\&#39;t remove suspicious samples after normalizing!!!\n&#39;);
+      cat(&#39;Instead, re-run and remove right before normalizing \n\n&#39;);
+    } else {
+      cat(&#39;You may want to re-check for outlier samples \n\n&#39;);
+    };
+  } else {
+    cat(&#39;Skipping quantile normalization...\n\n&#39;);
+    data_Qnorm = NULL;
+  };
+
+  # if vsn=T, run on &#39;temp&#39;, save output to &#39;tempVSN&#39; for function output as &#39;data_VSN&#39;.
+  #     set &#39;temp&#39; equal to &#39;tempVSN&#39; for further processing
+  # if vsn=F, skip and set data_VSN to NULL.
+  #     &#39;temp&#39; holds output of Qnorm, removeOutlierSamples, removeTooManyNAs, removeOutlierProbes, or input
+  if (vsn) {
+    cat(&#39;Performing variance stabilization...\n\n&#39;);
+    data_VSN = runVSN(temp, vsnPlot);
+    temp = data_VSN;
+    cat(&#39;Variance stabilized data available in output as $data_VSN \n\n&#39;);
+  } else {
+    cat (&#39;Skipping variance stabilization...\n\n&#39;);
+    data_VSN = NULL;
+  };
+
+  # if CVsort=T, compute CVs of rows in &#39;temp&#39; and sort rows of &#39;temp&#39; by CVs
+  #     save sorted &#39;temp&#39; as &#39;tempCVsort&#39; for function output as &#39;data_Sorted&#39;
+  #     &#39;temp&#39; holds output of vsn, Qnorm, removeOutlierSamples, removeTooManyNAs, removeOutlierProbes, or input
+  # if CVsort=F, skip and set &#39;data_Sorted&#39; to NULL
+  if (CVsort) {
+    cat(&#39;Sorting probes by CV...\n&#39;)
+    data_CVs = apply(temp, 1, cv);
+    data_Sorted = temp[order(data_CVs, decreasing=T), ];
+    cat(&#39;Sorted data available in output as $data_Sorted, CVs in $data_CVs \n\n&#39;);
+  } else {
+    cat(&#39;Skipping CV sort...\n\n&#39;);
+    data_Sorted = NULL;
+    data_CVs = NULL;
+  };
+
+  cat(&#39;Creating list for output...\n&#39;);
+  output = list(outlierProbesOUTPUT=outlierProbesOUTPUT,
+                checkMissingDataOUTPUT=checkMissingDataOUTPUT,
+                outlierSamplesOUTPUT=outlierSamplesOUTPUT,
+                data_removedOutlierProbes=outlierProbesOUTPUT$dataClean,
+                data_checkedMissingData=checkMissingDataOUTPUT$dataClean,
+                data_removedOutlierSamples=outlierSamplesOUTPUT$dataClean,
+                data_Qnorm=data_Qnorm,
+                data_VSN=data_VSN,
+                data_CVs=data_CVs,
+                data_Sorted=data_Sorted
+  );
+
+  cat(&#39;Write any of the output to .csv file?\n&#39;);
+  choose = menu(c(&#39;Yes&#39;,&#39;No&#39;));
+  if (choose==1) {
+    choices = names(output)[4:10];
+    cat(&#39;Choose one...\n&#39;);
+    choose = 3 + menu(choices=choices);
+    file = readline(&#39;Enter a name for the output file, including .csv extension... &#39;);
+    write_out = output[[choose]];
+    write.csv(write_out, file);
+  } else {
+    cat(&#39;You didn\&#39;t write any of the output to a file\n&#39;);
+  };
+
+  cat(&#39;All done!\n&#39;);
+  return(output); 
+
+}
+
+</code></pre>
+
+</body>
+
+</html>
+
