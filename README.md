@@ -1,5 +1,9 @@
 Illumina Gene Expression Analysis Workflow
 ===========================================
+```
+***Authors:***  amos.folarin@kcl.ac.uk, hamel.patel@kcl.ac.uk, stephen.newhouse@kcl.ac.uk
+```
+
 Illumina Chip based Gene Expression Pipeline (QC, Normalization, Differential Expression)  
 
 This is an example of a typical workflow we apply at the NIHR BRC-MH Bioinformatics unit.  
@@ -22,10 +26,10 @@ More soon...
 
 ******
 
-Making Lumi input files in Genomestudio
-=========================================
+Making Lumi input files from Genomestudio
+==============================================
 
-## Creating a new gene expression project in GenomeStudio
+## 1. Creating a new gene expression project in GenomeStudio
 
 - Select “File” > “New Project” > “Gene Expression” and follow the GenomeStudio Project Wizard.
 - Select “Direct Hyb”.
@@ -44,7 +48,7 @@ Making Lumi input files in Genomestudio
 
 *******
 
-## Initial quality control
+## 2.  Initial quality control
 
 - The screen will present you next with the various tables of data. Select "Sample Table"
 - Click on the Scatter Graph, then look at the following plots
@@ -55,7 +59,7 @@ Making Lumi input files in Genomestudio
 
 *******
 
-## Excluding samples and imputing
+## 3. Excluding samples and imputing
 
 - Select “Analysis” > “Manage Group Sets...”
 - Under “Groupset” create a project name in the format of: [PROJECT_NAME]_expression_[DATE]_02 e.g “project_expression_130111_02”
@@ -65,5 +69,73 @@ Under the “Name” tab select “Default”. Click “Finish”.
 - A message window will appear stating: “GenomeStudio detected that some samples have missing bead types. Would you like to impute missing data?” select “Yes”.
 
 *******
+
+## 4. Creating Final Reports
+
+***Group_Probe_Profile_Final_Report.txt***
+
+- Select “Analysis” > “Reports” > “Final Report”
+- Browse” and locate the “GenomeStudio_Final_Report” folder created in step 1 and name the file to be created as: “Group_Probe_Profile_Final_Report.txt”. Click “OK”
+- From the “Tables” sub-window check the “Group Probe Profile” box
+- From the “Columns” sub window check all boxes. Use the shift key to check multiple boxes.
+- From the “Subcolumns” sub window check all boxes. Click “OK”.
+
+***Sample_Probe_Profile_Final_Report.txt***
+
+- Select “Analysis” > “Reports” > “Final Report”
+- Browse” and locate the “GenomeStudio_Final_Report” folder created in step 1 and name the file to be created as: “Sample_Probe_Profile_Final_Report.txt”. Click “OK”
+- From the “Tables” sub-window check the “Sample Probe Profile” box
+- From the “Columns” sub window check all boxes. Use the shift key to check multiple boxes.
+- From the “Subcolumns” sub window check all boxes. Click “OK”.
+
+***Samples_Table_Final_Report.txt***
+
+- Select “Analysis” > “Reports” > “Final Report”
+- Browse” and locate the “GenomeStudio_Final_Report” folder created in step 1 and name the file to be created as: - “Samples_Table_Final_Report.txt”. Click “OK”
+- From the “Tables” sub-window check the “Samples Table” box
+- From the “Columns” sub window check all boxes except those beginning with “ERCC”. Click “OK”.
+
+*******
+
+## 5 Make Lumi Input
+
+To make the input file for `lumiR()` the three final report file generated in step 4 above need to be merged.
+
+### Input files
+
+1 Group_Probe_Profile_FinalReport.txt
+2 Control_Probe_Profile_FinalReport.txt
+3 Probe_Annotation_FinalReport.txt
+
+***example script for generating lumiR input***
+
+```
+#  example script for generating lumiR input
+
+# Get Control Data
+awk 'NR >7' Control_Probe_Profile_FinalReport.txt > control.probe;
+
+# Get Sample Data
+awk 'NR >7' Sample_Table_FinalReport.txt > sample.table;
+
+# Concatenate All Data 
+cat \
+Group_Probe_Profile_FinalReport.txt \
+control.probe \
+sample.table > lumiR_input.txt;
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
 
 
