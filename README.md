@@ -1,8 +1,7 @@
 Illumina Gene Expression Analysis Workflow
 ===========================================
-```
+
 ***Authors:***  amos.folarin@kcl.ac.uk, hamel.patel@kcl.ac.uk, stephen.newhouse@kcl.ac.uk
-```
 
 Illumina Chip based Gene Expression Pipeline (QC, Normalization, Differential Expression)  
 
@@ -21,8 +20,6 @@ Network methods for describing sample relationships in genomic datasets: applica
 Oldham MC1, Langfelder P, Horvath S. URL http://ccforum.com/1752-0509/6/63)
 - Analysis of ***Batch Effects***
 - Removal of ***Batch Effects*** using `sva`, `ComBat` or `lm` PCA Batch regressions
-
-More soon...
 
 ******
 
@@ -110,8 +107,6 @@ To make the input file for `lumiR()` the three final report file generated in st
 ***example script for generating lumiR input***
 
 ```
-#  example script for generating lumiR input
-
 # Get Control Data
 awk 'NR >7' Control_Probe_Profile_FinalReport.txt > control.probe;
 
@@ -123,7 +118,6 @@ cat \
 Group_Probe_Profile_FinalReport.txt \
 control.probe \
 sample.table > lumiR_input.txt;
-
 ```
 
 
