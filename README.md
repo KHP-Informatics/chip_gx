@@ -41,3 +41,29 @@ Making Lumi input files in Genomestudio
 - A message window will appear stating: “GenomeStudio detected that some samples have missing bead types. Would you like to impute missing data?” select “No”. Poor performing samples will be removed at a later step, after which the samples can be imputed.
 
 ***NOTE:*** The data will take a long time to load, check using Windows Task Manager (Performance panel) that at least one core is maxed out (otherwise it could mean GS has hung unexpectedly, restart the whole process if that's the case
+
+*******
+
+## Initial quality control
+
+- The screen will present you next with the various tables of data. Select "Sample Table"
+- Click on the Scatter Graph, then look at the following plots
+- x=index, y=P05, labels=Sample Id
+- x=index, y=Average Signal, labels=Sample Id
+- x=index, y=Detected Genes, labels=Sample Id
+- In each case note any samples which deviate substantially from the main chord of data points, some discretion is required here. Refer back to the gene expression log spread sheet to investigate deviated samples. This spread sheet is created by the geneticist conducting the gene expression assay, and can indicate samples of low amplification, gene expression failure or any technical problems associated with the assay.
+
+*******
+
+## Excluding samples and imputing
+
+- Select “Analysis” > “Manage Group Sets...”
+- Under “Groupset” create a project name in the format of: [PROJECT_NAME]_expression_[DATE]_02 e.g “project_expression_130111_02”
+- From the “Sentrix Array Products” sub window select and highlight the chip barcodes which require processing.
+- Use the “Create a group for each selected sample” icon to add the chip barcodes into the “Project Groups” window. This will show each individual sample from the chips selected. Using the “Remove selected groups and samples from the project” icon, remove all samples which have failed the initial quality control step. Select “Next”
+Under the “Name” tab select “Default”. Click “Finish”.
+- A message window will appear stating: “GenomeStudio detected that some samples have missing bead types. Would you like to impute missing data?” select “Yes”.
+
+*******
+
+
