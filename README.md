@@ -25,18 +25,19 @@ More soon...
 Making Lumi input files in Genomestudio
 =========================================
 
-## Creating a new gene expression project in GenomeStudio:
--Select “File” > “New Project” > “Gene Expression” and follow the GenomeStudio Project Wizard
--Select “Direct Hyb”
--Locate the “GenomeStudio_project” folder created in step one under “Project Repository”
--Create a “project name” as [PROJECT_NAME]_expression_[DATE]_01
--In the next window, under “Repository” specify the location of the “Data” folder created in step one. Once selected this should show all available chips within the “Sentrix Array Products” sub-window.
--Select and highlight the chip barcodes which require processing. Use the shift key to select multiple barcodes.
--Use the “Add Selected Samples to Project” icon to add the chip barcodes into the “Project Data” window. Click “Next”.
--Under “Groupset” repeat the project name followed by “raw” e.g project_expression_131101_01_raw
--In the “Sentrix Array Products” sub-window select and highlight the chip barcodes which require processing.
--Use the “Add Selected Samples to Project” icon to add the chip barcodes into the “Project Data” window. Click “Next”.
--Under the “Name” tab select “Default” and click “Finish”.
--A message window will appear stating: “GenomeStudio detected that some samples have missing bead types. Would you like to impute missing data?” select “No”. Poor performing samples will be removed at a later step, after which the samples can be imputed.
+## Creating a new gene expression project in GenomeStudio
+
+- Select “File” > “New Project” > “Gene Expression” and follow the GenomeStudio Project Wizard.
+- Select “Direct Hyb”.
+- Locate the “GenomeStudio_project” folder created in step one under “Project Repository”.
+- Create a “project name” as [PROJECT_NAME]_expression_[DATE]_01.
+- In the next window, under “Repository” specify the location of the “Data” folder created in step one. Once selected this should show all available chips within the “Sentrix Array Products” sub-window.
+- Select and highlight the chip barcodes which require processing. Use the shift key to select multiple barcodes.
+- Use the “Add Selected Samples to Project” icon to add the chip barcodes into the “Project Data” window. Click “Next”.
+- Under “Groupset” repeat the project name followed by “raw” e.g project_expression_131101_01_raw.
+- In the “Sentrix Array Products” sub-window select and highlight the chip barcodes which require processing.
+- Use the “Add Selected Samples to Project” icon to add the chip barcodes into the “Project Data” window. Click “Next”.
+- Under the “Name” tab select “Default” and click “Finish”.
+- A message window will appear stating: “GenomeStudio detected that some samples have missing bead types. Would you like to impute missing data?” select “No”. Poor performing samples will be removed at a later step, after which the samples can be imputed.
 
 ***NOTE:*** The data will take a long time to load, check using Windows Task Manager (Performance panel) that at least one core is maxed out (otherwise it could mean GS has hung unexpectedly, restart the whole process if that's the case
